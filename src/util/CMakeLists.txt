@@ -22,6 +22,15 @@ project(util)
 
 add_library(utillib
     arg.cpp
+    file.cpp
+    string.cpp
     nixutil.cpp
+)
+target_include_directories(utillib PUBLIC
+    ${spdlog_INCLUDE_DIRS}
+)
+target_link_libraries(utillib
+    stdc++fs
+    spdlog::spdlog
 )
 
