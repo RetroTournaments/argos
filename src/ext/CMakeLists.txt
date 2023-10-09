@@ -4,7 +4,7 @@
 ##
 ## Argos is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation; either version 3 of the License, or
+## the Free Software Foundation; either version 2 of the License, or
 ## (at your option) any later version.
 ##
 ## Argos is distributed in the hope that it will be useful,
@@ -18,23 +18,14 @@
 ##
 ################################################################################
 cmake_minimum_required(VERSION 3.6)
-project(src)
+project(ext)
 
-include_directories(.)
-
-################################################################################
-# General purpose libraries
-add_subdirectory(ext)   # extensions to third party things
-add_subdirectory(util)  # annoying utilities required for c++
-#add_subdirectory(ui)    # the ui (based on imgui)
-#add_subdirectory(video) # working with video files and streams
-
-################################################################################
-# More specific libraries
-#add_subdirectory(console)
-#add_subdirectory(game)
-
-################################################################################
-# And the main library / exe that uses all that stuff
-add_subdirectory(argos)
+add_subdirectory(jsonext)
+#add_subdirectory(opencvext)
+#add_subdirectory(sqliteext)
+#add_subdirectory(pulseaudioext)
+#    SDL3::SDL3 
+#    spdlog::spdlog
+#    ${ZeroMQ_LIBRARY}
+#    3rdimgui
 
