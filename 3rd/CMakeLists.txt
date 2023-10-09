@@ -59,3 +59,12 @@ set(cppzmq_INCLUDE_DIRS
     PARENT_SCOPE
 )
 
+################################################################################
+# nlohmann/json is a header only json library (embedded instead of submoduled
+# because of size)
+set(json_INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/json/single_include/"
+    PARENT_SCOPE
+)
+
+
