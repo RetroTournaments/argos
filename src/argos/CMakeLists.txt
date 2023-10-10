@@ -21,21 +21,24 @@ cmake_minimum_required(VERSION 3.6)
 project(argos)
 
 add_library(argoslib
-    argos.cpp
+    config.cpp
 )
 target_link_libraries(argoslib
     pthread GL dl
 
     utillib
+    jsonextlib
 )
-target_include_directories(argoslib PRIVATE
+target_include_directories(argoslib PUBLIC
     ${cppzmq_INCLUDE_DIRS}
     ${ZeroMQ_INCLUDE_DIR}
+    ${spdlog_INCLUDE_DIRS}
 )
 target_compile_definitions(argoslib PRIVATE
-    CMAKE_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+    CMAKE_SOURCE_DIR="${CMAKE_SOURCE_DIR}/"
 )
 
+################################################################################
 add_executable(argos
     main.cpp
 )

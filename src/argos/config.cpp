@@ -18,13 +18,35 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ARGOS_ARGOS_ARGOS_HEADER
-#define ARGOS_ARGOS_ARGOS_HEADER
+#include "util/nixutil.h"
+#include "util/file.h"
 
-#define ARGOS_MAJOR_VERSION 0
-#define ARGOS_MINOR_VERSION 1
-#define ARGOS_PATCH_VERSION 0
+#include "argos/config.h"
 
-#include "config.h"
+using namespace argos;
+using namespace argos::util;
 
+std::string argos::RuntimeConfig::RuntimeConfigPath(const RuntimeConfig* config)
+{
+    return fs::path(config->ArgosDirectory) / fs::path("config.json");
+}
+
+RuntimeConfig RuntimeConfig::Defaults()
+{
+    RuntimeConfig cfg;
+    InitDefaultRuntimeConfig(&cfg);
+    return cfg;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void argos::InitDefaultRuntimeConfig(RuntimeConfig* config)
+{
+    config->ArgosDirectory = fs::path(argos::util::GetHomeDirectory()) / fs::path(".argos/");
+#ifdef CMAKE_SOURCE_DIR
+    config->SourceDirectory = CMAKE_SOURCE_DIR;
+#else
+    config->SourceDirectory = "";
 #endif
+}
+

@@ -40,17 +40,18 @@ struct Command
 {
     std::string name;
     std::string usage;
+    std::string oneline;
     CommandFunc func;
 };
 std::vector<Command>& GetRegisteredCommands();
-int RegisterCommand(const char* name, const char* usage, CommandFunc func);
+int RegisterCommand(const char* name, const char* oneline, const char* usage, CommandFunc func);
 
 #define COMMAND_FUNC_NAME_(command_name) command_func_ ## command_name
 #define COMMAND_INT_NAME_(command_name) g_command_int_ ## command_name
 
-#define REGISTER_COMMAND(command_name, usage) \
+#define REGISTER_COMMAND(command_name, oneline, usage) \
 int COMMAND_FUNC_NAME_(command_name)(COMMAND_ARGS); \
-static int COMMAND_INT_NAME_(command_name) = RegisterCommand(#command_name, usage, COMMAND_FUNC_NAME_(command_name)); \
+static int COMMAND_INT_NAME_(command_name) = RegisterCommand(#command_name, oneline, usage, COMMAND_FUNC_NAME_(command_name)); \
 int COMMAND_FUNC_NAME_(command_name)(COMMAND_ARGS)
 
 }

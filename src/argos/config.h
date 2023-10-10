@@ -18,18 +18,32 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "argos/argos.h"
-#include "util/nixutil.h"
+#ifndef ARGOS_ARGOS_CONFIG_HEADER
+#define ARGOS_ARGOS_CONFIG_HEADER
 
-using namespace argos;
+#include <string>
 
-void argos::InitDefaultRuntimeConfig(RuntimeConfig* config)
+#include "nlohmann/json.hpp"
+
+namespace argos
 {
-    config->ArgosDirectory = argos::util::GetHomeDirectory() + ".argos/";
-#ifdef CMAKE_SOURCE_DIR
-    config->SourceDirectory = CMAKE_SOURCE_DIR;
-#else
-    config->SourceDirectory = "";
-#endif
+
+struct RuntimeConfig
+{
+    std::string ArgosDirectory;
+    std::string SourceDirectory;
+
+    static RuntimeConfig Defaults();
+    static std::string RuntimeConfigPath(const RuntimeConfig* config);
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RuntimeConfig,
+    ArgosDirectory,
+    SourceDirectory
+);
+
+
+void InitDefaultRuntimeConfig(RuntimeConfig* config);
+
 }
 
+#endif
