@@ -18,22 +18,31 @@
 ##
 ################################################################################
 cmake_minimum_required(VERSION 3.6)
-project(src)
+project(rgmnes)
 
-include_directories(.)
+add_library(neslib
+    nes.cpp 
+    nestopiaimpl.cpp
+    #    nesdb.cpp
+    #    ppux.cpp
+)
+target_include_directories(neslib PUBLIC
+    ${nestopia_INCLUDE_DIRS}
+)
+target_link_libraries(neslib
+    utillib
+    #    3rdnestopia
+)
 
-################################################################################
-# General purpose libraries
-add_subdirectory(ext)   # extensions to third party things
-add_subdirectory(util)  # annoying utilities required for c++
-#add_subdirectory(ui)    # the ui (based on imgui)
-#add_subdirectory(video) # working with video files and streams
-
-################################################################################
-add_subdirectory(nes)
-#add_subdirectory(game)
-
-################################################################################
-# And the main library / exe that uses all that stuff
-add_subdirectory(argos)
-
+#add_library(rgmnesuilib
+#    nesui.cpp
+#)
+#target_include_directories(rgmnesuilib PUBLIC
+#    ${nlohmann_json_INCLUDE_DIRS}
+#)
+#target_link_libraries(rgmnesuilib
+#    rgmuilib
+#    rgmneslib
+#    rgmgameuilib
+#    nfdextlib
+#)

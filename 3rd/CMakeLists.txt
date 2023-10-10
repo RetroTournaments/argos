@@ -68,3 +68,11 @@ set(json_INCLUDE_DIRS
 )
 
 
+################################################################################
+# nestopia is an accurate and performant NES emulator.
+add_subdirectory(nestopia)
+set(nestopia_INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/nestopia/source/core/"
+    "${CMAKE_CURRENT_SOURCE_DIR}/nestopia/source/core/api"
+    PARENT_SCOPE
+)
