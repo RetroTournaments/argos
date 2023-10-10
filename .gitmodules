@@ -7,3 +7,6 @@
 [submodule "3rd/cppzmq"]
 	path = 3rd/cppzmq
 	url = https://github.com/zeromq/cppzmq.git
+[submodule "3rd/nestopia"]
+	path = 3rd/nestopia
+	url = git@github.com:RetroTournaments/nestopia.git
