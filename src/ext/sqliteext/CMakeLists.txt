@@ -18,15 +18,18 @@
 ##
 ################################################################################
 cmake_minimum_required(VERSION 3.6)
-project(ext)
+project(sqliteext)
 
-add_subdirectory(jsonext)
-add_subdirectory(sqliteext)
+add_library(sqliteextlib STATIC
+    sqliteext.cpp
+)
+target_link_libraries(sqliteextlib
+    sqlite3
+)
 
-#add_subdirectory(opencvext)
-#add_subdirectory(pulseaudioext)
-#    SDL3::SDL3 
-#    spdlog::spdlog
-#    ${ZeroMQ_LIBRARY}
-#    3rdimgui
-
+#add_library(sqliteextuilib
+#    sqliteextui.cpp
+#)
+#target_link_libraries(sqliteextuilib
+#    rgmuilib
+#)
