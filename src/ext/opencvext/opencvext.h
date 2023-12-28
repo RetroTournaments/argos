@@ -22,15 +22,12 @@
 #define ARGOS_EXT_OPENCVEXT_HEADER
 
 #include "opencv2/opencv.hpp"
-#include "util/util.h"
 
 namespace rgms::opencvext {
 
 bool CVMatsEqual(const cv::Mat im1, const cv::Mat im2);
 
 cv::Mat CropWithZeroPadding(cv::Mat img, cv::Rect r);
-cv::Mat CropWithZeroPaddingAndResize(cv::Mat img, rgms::util::Rect2F crop, 
-        int width, int height);
 cv::Mat ResizePrefNearest(cv::Mat img, float scale);
 cv::Mat ResizeTo(cv::Mat img, int width, int height, 
         cv::InterpolationFlags smaller = cv::INTER_AREA,
