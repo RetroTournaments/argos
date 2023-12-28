@@ -18,15 +18,17 @@
 ##
 ################################################################################
 cmake_minimum_required(VERSION 3.6)
-project(ext)
+project(opencvext)
 
-add_subdirectory(jsonext)
-add_subdirectory(sqliteext)
-add_subdirectory(opencvext)
+find_package(OpenCV CONFIG REQUIRED)
 
-#add_subdirectory(pulseaudioext)
-#    SDL3::SDL3 
-#    spdlog::spdlog
-#    ${ZeroMQ_LIBRARY}
-#    3rdimgui
+add_library(opencvextlib STATIC
+    opencvext.cpp
+)
+target_include_directories(opencvextlib PUBLIC
+    ${OpenCV_INCLUDE_DIRS}
+)
+target_link_libraries(opencvextlib PRIVATE
+    ${OpenCV_LIBS}
+)
 
