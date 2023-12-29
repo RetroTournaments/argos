@@ -41,6 +41,8 @@ target_compile_definitions(argoslib PRIVATE
 ################################################################################
 add_executable(argos
     main.cpp
+    config_cmd.cpp
+    help_cmd.cpp
 )
 target_link_libraries(argos
     argoslib

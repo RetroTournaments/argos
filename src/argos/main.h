@@ -24,6 +24,8 @@
 #include <iostream>
 #include <vector>
 
+#include "fmt/fmt.h"
+
 #include "argos/argos.h"
 
 namespace argos::main
@@ -32,6 +34,13 @@ namespace argos::main
 void PrintProgramUsage(std::ostream& os);
 void PrintProgramVersion(std::ostream& os);
 
+template <typename... T>
+void Error(fmt::format_string<T...> fmt, T&&... args) {
+    std::cerr << "error: " << fmt::vformat(fmt, fmt::make_format_args(args...));
+    std::cerr << "\n";
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 #define COMMAND_ARGS argos::RuntimeConfig* config, int argc, char** argv
 typedef int (*CommandFunc)(COMMAND_ARGS);
