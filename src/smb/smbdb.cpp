@@ -18,33 +18,16 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ARGOS_ARGOS_CONFIG_HEADER
-#define ARGOS_ARGOS_CONFIG_HEADER
+#include "smb/smbdb.h"
 
-#include <string>
+using namespace argos::smb;
 
-#include "nlohmann/json.hpp"
-
-namespace argos
+SMBDatabase::SMBDatabase(const std::string& path)
+    : nes::NESDatabase(path)
 {
-
-struct RuntimeConfig
-{
-    std::string ArgosDirectory;
-    std::string SourceDirectory;
-
-    static RuntimeConfig Defaults();
-    static std::string RuntimeConfigPath(const RuntimeConfig* config);
-    static std::string SMBDatabasePath(const RuntimeConfig* config);
-};
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RuntimeConfig,
-    ArgosDirectory,
-    SourceDirectory
-);
-
-
-void InitDefaultRuntimeConfig(RuntimeConfig* config);
-
 }
 
-#endif
+SMBDatabase::~SMBDatabase()
+{
+}
+

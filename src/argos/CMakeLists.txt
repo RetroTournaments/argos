@@ -43,9 +43,11 @@ add_executable(argos
     main.cpp
     config_cmd.cpp
     help_cmd.cpp
+    smb_cmd.cpp
 )
 target_link_libraries(argos
     argoslib
+    smblib
 )
 target_compile_options(argos PUBLIC -Wno-string-plus-int)
 

@@ -30,7 +30,8 @@
 #include <sstream>
 #include <functional>
 
-namespace argos::nes {
+namespace argos::nes
+{
 
 inline constexpr int FRAME_WIDTH  = 256;
 inline constexpr int FRAME_HEIGHT = 240;

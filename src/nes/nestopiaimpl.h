@@ -30,7 +30,8 @@
 
 #include "nes/nes.h"
 
-namespace argos::nes {
+namespace argos::nes
+{
 
 std::string ResultToString(Nes::Result r);
 

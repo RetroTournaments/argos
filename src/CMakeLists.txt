@@ -30,8 +30,11 @@ add_subdirectory(util)  # annoying utilities required for c++
 #add_subdirectory(video) # working with video files and streams
 
 ################################################################################
+add_subdirectory(game)
 add_subdirectory(nes)
-#add_subdirectory(game)
+
+################################################################################
+add_subdirectory(smb)
 
 ################################################################################
 # And the main library / exe that uses all that stuff

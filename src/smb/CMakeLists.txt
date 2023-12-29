@@ -18,32 +18,14 @@
 ##
 ################################################################################
 cmake_minimum_required(VERSION 3.6)
-project(nes)
+project(smb)
 
-add_library(neslib
-    nes.cpp 
-    nestopiaimpl.cpp
-    nesdb.cpp
-    #    ppux.cpp
+add_library(smblib
+    smb.cpp 
+    smbdb.cpp
 )
-target_include_directories(neslib PUBLIC
-    ${nestopia_INCLUDE_DIRS}
-)
-target_link_libraries(neslib
+target_link_libraries(smblib
+    neslib
     utillib
-    gamelib
-    #    3rdnestopia
 )
 
-#add_library(rgmnesuilib
-#    nesui.cpp
-#)
-#target_include_directories(rgmnesuilib PUBLIC
-#    ${nlohmann_json_INCLUDE_DIRS}
-#)
-#target_link_libraries(rgmnesuilib
-#    rgmuilib
-#    rgmneslib
-#    rgmgameuilib
-#    nfdextlib
-#)

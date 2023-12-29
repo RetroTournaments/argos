@@ -28,7 +28,7 @@ add_library(opencvextlib STATIC
 target_include_directories(opencvextlib PUBLIC
     ${OpenCV_INCLUDE_DIRS}
 )
-target_link_libraries(opencvextlib PRIVATE
+target_link_libraries(opencvextlib PUBLIC
     ${OpenCV_LIBS}
 )
 

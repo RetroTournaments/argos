@@ -18,33 +18,4 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ARGOS_ARGOS_CONFIG_HEADER
-#define ARGOS_ARGOS_CONFIG_HEADER
-
-#include <string>
-
-#include "nlohmann/json.hpp"
-
-namespace argos
-{
-
-struct RuntimeConfig
-{
-    std::string ArgosDirectory;
-    std::string SourceDirectory;
-
-    static RuntimeConfig Defaults();
-    static std::string RuntimeConfigPath(const RuntimeConfig* config);
-    static std::string SMBDatabasePath(const RuntimeConfig* config);
-};
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RuntimeConfig,
-    ArgosDirectory,
-    SourceDirectory
-);
-
-
-void InitDefaultRuntimeConfig(RuntimeConfig* config);
-
-}
-
-#endif
+#include "game/game.h"

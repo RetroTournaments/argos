@@ -31,6 +31,11 @@ std::string argos::RuntimeConfig::RuntimeConfigPath(const RuntimeConfig* config)
     return fs::path(config->ArgosDirectory) / fs::path("config.json");
 }
 
+std::string argos::RuntimeConfig::SMBDatabasePath(const RuntimeConfig* config)
+{
+    return fs::path(config->ArgosDirectory) / fs::path("smb.db");
+}
+
 RuntimeConfig RuntimeConfig::Defaults()
 {
     RuntimeConfig cfg;
