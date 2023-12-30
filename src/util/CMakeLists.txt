@@ -24,6 +24,8 @@ add_library(utillib
     arg.cpp
     file.cpp
     string.cpp
+    serial.cpp
+    clock.cpp
     nixutil.cpp
 )
 target_include_directories(utillib PUBLIC
