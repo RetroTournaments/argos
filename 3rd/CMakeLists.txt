@@ -37,7 +37,7 @@ add_library(3rdimgui STATIC
     "imgui/backends/imgui_impl_opengl3.cpp"
 )
 set_target_properties(3rdimgui PROPERTIES COMPILE_FLAGS "-fPIC")
-target_include_directories(3rdimgui PRIVATE
+target_include_directories(3rdimgui PUBLIC
     "imgui/"
 )
 target_link_libraries(3rdimgui SDL3::SDL3 SDL3_mixer::SDL3_mixer)
