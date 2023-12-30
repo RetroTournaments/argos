@@ -1,4 +1,22 @@
 ////////////////////////////////////////////////////////////////////////////////
+//
+// Copyright (C) 2023 Matthew Deutsch
+//
+// Argos is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 3 of the License, or
+// (at your option) any later version.
+//
+// Argos is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Argos; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
+////////////////////////////////////////////////////////////////////////////////
 
 #include <cmath>
 #include <array>
@@ -6,18 +24,18 @@
 #include <algorithm>
 #include <iostream>
 
-#include "rgm/util/plotting.h"
+#include "util/plotting.h"
 
-using namespace rgms::util;
+using namespace argos::util;
 
-void rgms::util::HorizontalLine(int x0, int y, int x1, PlotFunc plot)
+void argos::util::HorizontalLine(int x0, int y, int x1, PlotFunc plot)
 {
     if (x1 < x0) std::swap(x0, x1);
     for (int x = x0; x <= x1; x++) {
         plot(x, y);
     }
 }
-void rgms::util::VerticalLine(int x, int y0, int y1, PlotFunc plot)
+void argos::util::VerticalLine(int x, int y0, int y1, PlotFunc plot)
 {
     if (y1 < y0) std::swap(y0, y1);
     for (int y = y0; y <= y1; y++) {
@@ -94,7 +112,7 @@ static void BresenhamLine0(int x0, int y0, int x1, int y1, PlotFunc plot)
     }
 }
 
-void rgms::util::BresenhamLine(int x0, int y0, int x1, int y1, PlotFunc plot)
+void argos::util::BresenhamLine(int x0, int y0, int x1, int y1, PlotFunc plot)
 {
     int dx = x1 - x0;
     int dy = y1 - y0;
@@ -127,7 +145,7 @@ void rgms::util::BresenhamLine(int x0, int y0, int x1, int y1, PlotFunc plot)
     });
 }
 
-void rgms::util::BresenhamCircle(int x, int y, int rad, PlotFunc plot)
+void argos::util::BresenhamCircle(int x, int y, int rad, PlotFunc plot)
 {
     int xi = rad;
     int yi = 0;
@@ -157,7 +175,7 @@ void rgms::util::BresenhamCircle(int x, int y, int rad, PlotFunc plot)
     }
 }
 
-void rgms::util::BresenhamCircleFill(int x, int y, int rad, PlotFunc plot)
+void argos::util::BresenhamCircleFill(int x, int y, int rad, PlotFunc plot)
 {
     int xi = rad;
     int yi = 0;
@@ -187,7 +205,7 @@ void rgms::util::BresenhamCircleFill(int x, int y, int rad, PlotFunc plot)
     }
 }
 
-void rgms::util::BresenhamEllipse(int x, int y, int width, int height, PlotFunc plot)
+void argos::util::BresenhamEllipse(int x, int y, int width, int height, PlotFunc plot)
 {
     int a2 = width * width;
     int b2 = height * height;
@@ -222,7 +240,7 @@ void rgms::util::BresenhamEllipse(int x, int y, int width, int height, PlotFunc 
     }
 }
 
-void rgms::util::BresenhamEllipseFill(int x, int y, int width, int height, PlotFunc plot)
+void argos::util::BresenhamEllipseFill(int x, int y, int width, int height, PlotFunc plot)
 {
     int a2 = width * width;
     int b2 = height * height;
@@ -271,7 +289,7 @@ static bool ClipT(double num, double denom, double* tE, double* tL)
     }
     return true;
 }
-bool rgms::util::LiangBarsky(double xmin, double ymin, double xmax, double ymax,
+bool argos::util::LiangBarsky(double xmin, double ymin, double xmax, double ymax,
                  double* x0, double* y0, double* x1, double* y1)
 {
     double dx = *x1 - *x0;
@@ -303,7 +321,7 @@ bool rgms::util::LiangBarsky(double xmin, double ymin, double xmax, double ymax,
 #define  ROUND(x) (static_cast<int>(x + 0.5))
 #define  FPART(x) ((x < 0) ? 1 - IPART(x) : x - IPART(x))
 #define RFPART(x) (1 - FPART(x))
-void rgms::util::WuLine(double x0, double y0, double x1, double y1, AAPlotFunc plot)
+void argos::util::WuLine(double x0, double y0, double x1, double y1, AAPlotFunc plot)
 {
     bool steep = std::abs(y1 - y0) > std::abs(x1 - x0);
     if (steep) {

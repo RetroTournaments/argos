@@ -28,9 +28,9 @@
 #include <sstream>
 #include <iostream>
 
-#include "rgm/util/serial.h"
+#include "util/serial.h"
 
-using namespace rgms::util;
+using namespace argos::util;
 
 SimpleSerialPort::SimpleSerialPort()
     : m_SerialPort(-1)

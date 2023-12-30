@@ -18,6 +18,13 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <cmath>
+#include <cassert>
+#include <iomanip>
+
+#include "fmt/fmt.h"
+#include "fmt/chrono.h"
+
 #include "util/clock.h"
 
 using namespace argos::util;
