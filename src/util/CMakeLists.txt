@@ -25,6 +25,7 @@ add_library(utillib
     file.cpp
     string.cpp
     serial.cpp
+    plotting.cpp
     clock.cpp
     nixutil.cpp
 )
