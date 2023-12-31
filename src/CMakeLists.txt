@@ -26,7 +26,7 @@ include_directories(.)
 # General purpose libraries
 add_subdirectory(ext)   # extensions to third party things
 add_subdirectory(util)  # annoying utilities required for c++
-#add_subdirectory(ui)    # the ui (based on imgui)
+add_subdirectory(rgmui) # the ui (extending imgui)
 #add_subdirectory(video) # working with video files and streams
 
 ################################################################################

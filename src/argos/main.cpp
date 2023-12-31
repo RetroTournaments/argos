@@ -103,6 +103,7 @@ void argos::main::PrintProgramVersion(std::ostream& os)
     os << "argos version " << ARGOS_MAJOR_VERSION << "." << ARGOS_MINOR_VERSION << "." << ARGOS_PATCH_VERSION << "\n";
 }
 
+
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
 {

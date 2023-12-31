@@ -74,18 +74,6 @@ const char* GameDatabase::KVBlobSchema()
 );)";
 }
 
-int GameDatabase::SystemLaunchSQLite3WithExamples()
-{
-    std::string cmd = "sqlite3 " + m_DatabasePath;
-    std::cout << cmd << "\n";
-    std::cout << R"(examples:
-    SELECT name FROM sqlite_schema WHERE type='table' ORDER BY name;
-    .exit
-    .schema TABLENAME
-)";
-    return system(cmd.c_str());
-}
-
 template<typename T> 
 static bool DoMySelect(GameDatabase* db, const char* table, const char* key, std::function<T(sqlite3_stmt*, int)> func, T* value)
 {

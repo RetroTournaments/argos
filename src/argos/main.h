@@ -27,6 +27,7 @@
 #include "fmt/fmt.h"
 
 #include "argos/argos.h"
+#include "rgmui/rgmui.h"
 
 namespace argos::main
 {
@@ -39,6 +40,12 @@ void Error(fmt::format_string<T...> fmt, T&&... args) {
     std::cerr << "error: " << fmt::vformat(fmt, fmt::make_format_args(args...));
     std::cerr << "\n";
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+//int RunIApplication(const char* identifier, rgmui::IApplication* app, bool load_previous,
+//        ArgosDB* db = nullptr,
+
 
 ////////////////////////////////////////////////////////////////////////////////
 

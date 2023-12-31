@@ -22,12 +22,14 @@ project(argos)
 
 add_library(argoslib
     config.cpp
+    argosdb.cpp
 )
 target_link_libraries(argoslib
     pthread GL dl
 
     utillib
     jsonextlib
+    sqliteextlib
 )
 target_include_directories(argoslib PUBLIC
     ${cppzmq_INCLUDE_DIRS}
@@ -42,11 +44,13 @@ target_compile_definitions(argoslib PRIVATE
 add_executable(argos
     main.cpp
     config_cmd.cpp
+    db_cmd.cpp
     help_cmd.cpp
     smb_cmd.cpp
 )
 target_link_libraries(argos
     argoslib
+    rgmuilib
     smblib
 )
 target_compile_options(argos PUBLIC -Wno-string-plus-int)

@@ -214,5 +214,17 @@ int SQLiteExtDB::ExecOrThrow(const std::string& query,
 }
 
 
+int SQLiteExtDB::SystemLaunchSQLite3WithExamples()
+{
+    std::string cmd = "sqlite3 " + m_DatabasePath;
+    std::cout << cmd << "\n";
+    std::cout << R"(examples:
+    .tables
+    .schema TABLENAME
+    .exit
+)";
+    return system(cmd.c_str());
+}
+
 
 

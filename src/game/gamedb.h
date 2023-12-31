@@ -37,9 +37,6 @@ public:
     GameDatabase(const std::string& path);
     ~GameDatabase();
 
-    // calls 'system', so not suitable for most situations.
-    int SystemLaunchSQLite3WithExamples();
-
     // Basic persistent key value storage for the simple data types 
     // (throws on unknown key), stored in kv_int
     int GetInt(const char* key);

@@ -18,45 +18,51 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "util/nixutil.h"
-#include "util/file.h"
+#include <fstream>
 
-#include "argos/config.h"
+#include "argos/argosdb.h"
+#include "argos/main.h"
+#include "util/file.h"
 
 using namespace argos;
 using namespace argos::util;
-
-std::string argos::RuntimeConfig::RuntimeConfigPath(const RuntimeConfig* config)
-{
-    return fs::path(config->ArgosDirectory) / fs::path("config.json");
-}
-
-std::string argos::RuntimeConfig::ArgosDatabasePath(const RuntimeConfig* config)
-{
-    return fs::path(config->ArgosDirectory) / fs::path("argos.db");
-}
-
-std::string argos::RuntimeConfig::SMBDatabasePath(const RuntimeConfig* config)
-{
-    return fs::path(config->ArgosDirectory) / fs::path("smb.db");
-}
-
-RuntimeConfig RuntimeConfig::Defaults()
-{
-    RuntimeConfig cfg;
-    InitDefaultRuntimeConfig(&cfg);
-    return cfg;
-}
+using namespace argos::main;
 
 ////////////////////////////////////////////////////////////////////////////////
+// The 'db' command is to 
+REGISTER_COMMAND(db, "edit / manage application data stored in argos.db",
+R"(
+EXAMPLES
+    argos db
+    argos db --reset
 
-void argos::InitDefaultRuntimeConfig(RuntimeConfig* config)
+USAGE:
+    argos db [--reset ]
+
+DESCRIPTION:
+    The 'db' command allows the operator to edit / manage the application data
+    stored in argos.db
+
+    If no options are given then sqlite3 is opened to manage the database.
+
+OPTIONS:
+    --reset
+        Wipe the database
+)")
 {
-    config->ArgosDirectory = fs::path(argos::util::GetHomeDirectory()) / fs::path(".argos/");
-#ifdef CMAKE_SOURCE_DIR
-    config->SourceDirectory = CMAKE_SOURCE_DIR;
-#else
-    config->SourceDirectory = "";
-#endif
-}
+    if (argc == 0) {
+        ArgosDB db(RuntimeConfig::ArgosDatabasePath(config));
+        return db.SystemLaunchSQLite3WithExamples();
+    } else {
+        std::string arg(argv[0]);
+        if (arg == "--reset") {
+            fs::remove(RuntimeConfig::ArgosDatabasePath(config));
+            ArgosDB db(RuntimeConfig::ArgosDatabasePath(config));
+        } else {
+            Error("unrecognized argument. '{}'", arg);
+            return 1;
+        }
+    }
 
+    return 1;
+}

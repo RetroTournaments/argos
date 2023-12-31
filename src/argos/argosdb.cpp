@@ -17,20 +17,28 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
-//
-// Argos is the tech stack for open-source 'simultaneous time attack'
-// speedrunning. Neat.
-//
-////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ARGOS_ARGOS_ARGOS_HEADER
-#define ARGOS_ARGOS_ARGOS_HEADER
+#include "argos/argosdb.h"
 
-#define ARGOS_MAJOR_VERSION 0
-#define ARGOS_MINOR_VERSION 1
-#define ARGOS_PATCH_VERSION 0
+using namespace argos;
 
-#include "config.h"
-#include "argosdb.h"
+ArgosDB::ArgosDB(const std::string& path)
+    : sqliteext::SQLiteExtDB(path)
+{
+    ExecOrThrow(AppCacheSchema());
+}
 
-#endif
+ArgosDB::~ArgosDB()
+{
+}
+
+const char* ArgosDB::AppCacheSchema()
+{
+    return R"(CREATE TABLE IF NOT EXISTS app_cache (
+    name            TEXT PRIMARY KEY,
+    width           INTEGER NOT NULL,
+    height          INTEGER NOT NULL,
+    display         INTEGER NOT NULL,
+    ini_data        TEXT NOT NULL
+);)";
+}

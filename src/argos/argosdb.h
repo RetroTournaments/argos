@@ -17,42 +17,37 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
-// 
-// The config file should contain mostly static information that is controlled
-// by the user. Paths, Global defaults, that sort of thing.
 //
-// Purposefully stored in a human readable / editable json file.
+// The argosdb contains information that is not generally meant to be human
+// editable, but still should persist between runs. Such as window sizes /
+// locations.
+//
+// Stored in a SQLite database which is great for structured data!
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ARGOS_ARGOS_CONFIG_HEADER
-#define ARGOS_ARGOS_CONFIG_HEADER
+#ifndef ARGOS_ARGOS_ARGOSDB_HEADER
+#define ARGOS_ARGOS_ARGOSDB_HEADER
 
 #include <string>
 
-#include "nlohmann/json.hpp"
+#include "ext/sqliteext/sqliteext.h"
 
 namespace argos
 {
 
-struct RuntimeConfig
+namespace db
 {
-    std::string ArgosDirectory;
-    std::string SourceDirectory;
+}
 
-    static RuntimeConfig Defaults();
+class ArgosDB : public sqliteext::SQLiteExtDB
+{
+public:
+    ArgosDB(const std::string& path);
+    ~ArgosDB();
 
-    static std::string RuntimeConfigPath(const RuntimeConfig* config);
-    static std::string ArgosDatabasePath(const RuntimeConfig* config);
-    static std::string SMBDatabasePath(const RuntimeConfig* config);
+    static const char* AppCacheSchema();
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RuntimeConfig,
-    ArgosDirectory,
-    SourceDirectory
-);
-
-
-void InitDefaultRuntimeConfig(RuntimeConfig* config);
 
 }
 

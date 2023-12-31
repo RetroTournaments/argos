@@ -32,6 +32,8 @@
 namespace argos::util {
 namespace fs = std::experimental::filesystem;
 
+// recall fs::remove(fs::path p);
+
 void ForFileInDirectory(const std::string& directory,
         std::function<bool(fs::path p)> cback);
 // Include "." so: ".png"
