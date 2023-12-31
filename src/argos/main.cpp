@@ -22,6 +22,7 @@
 
 #include "util/arg.h"
 #include "util/file.h"
+#include "rgmui/rgmuimain.h"
 
 #include "argos/main.h"
 
@@ -103,6 +104,19 @@ void argos::main::PrintProgramVersion(std::ostream& os)
     os << "argos version " << ARGOS_MAJOR_VERSION << "." << ARGOS_MINOR_VERSION << "." << ARGOS_PATCH_VERSION << "\n";
 }
 
+////////////////////////////////////////////////////////////////////////////////
+int argos::main::RunIApplication(const char* identifier,
+        rgmui::IApplication* app, bool load_previous, ArgosDB* db)
+{
+    int width = 1920;
+    int height = 1080;
+    int display = 0;
+
+    rgmui::Window window(width, height, std::string(identifier), display, nullptr, nullptr);
+    rgmui::WindowAppMainLoop(&window, app, std::chrono::microseconds(15000));
+
+    return 0;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)

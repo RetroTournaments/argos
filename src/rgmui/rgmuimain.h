@@ -1,0 +1,46 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+// Copyright (C) 2023 Matthew Deutsch
+//
+// Argos is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 3 of the License, or
+// (at your option) any later version.
+//
+// Argos is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Argos; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
+////////////////////////////////////////////////////////////////////////////////
+
+#ifndef ARGOS_RGMUI_RGMUIMAIN_HEADER
+#define ARGOS_RGMUI_RGMUIMAIN_HEADER
+
+#include <iostream>
+
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/sinks/basic_file_sink.h"
+
+#include "util/clock.h"
+#include "rgmui/rgmui.h"
+
+namespace argos::rgmui
+{
+
+void InitializeDefaultLogger(const std::string& name);
+void LogAndDisplayException(const std::string& s);
+void LogAndDisplayException(const std::exception& e);
+void WindowAppMainLoop(
+    Window* window, IApplication* application,
+    util::mclock::duration minimumFrameDuration = util::mclock::duration(0));
+
+}
+
+#endif
+

@@ -43,8 +43,11 @@ void Error(fmt::format_string<T...> fmt, T&&... args) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-//int RunIApplication(const char* identifier, rgmui::IApplication* app, bool load_previous,
-//        ArgosDB* db = nullptr,
+int RunIApplication(
+    const char* identifier, 
+    rgmui::IApplication* app, 
+    bool load_previous, 
+    ArgosDB* db = nullptr);
 
 
 ////////////////////////////////////////////////////////////////////////////////
