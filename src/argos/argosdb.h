@@ -32,12 +32,33 @@
 #include <string>
 
 #include "ext/sqliteext/sqliteext.h"
+#include "util/rect.h"
 
 namespace argos
 {
 
 namespace db
 {
+
+struct AppCache
+{
+    std::string Name;
+
+    int WindowX;
+    int WindowY;
+    int Width;
+    int Height;
+
+    int Display;
+
+    std::string IniData;
+
+    //
+    util::Rect2I GetWinRect() const;
+    void SetWinRect(const util::Rect2I& rect);
+    static AppCache Defaults(const char* name = nullptr, int display = 0);
+};
+
 }
 
 class ArgosDB : public sqliteext::SQLiteExtDB
@@ -45,6 +66,9 @@ class ArgosDB : public sqliteext::SQLiteExtDB
 public:
     ArgosDB(const std::string& path);
     ~ArgosDB();
+
+    bool LoadAppCache(db::AppCache* cache);
+    void SaveAppCache(const db::AppCache& cache);
 
     static const char* AppCacheSchema();
 };

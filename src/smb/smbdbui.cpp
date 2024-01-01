@@ -18,18 +18,18 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ARGOS_UTIL_STRING_HEADER
-#define ARGOS_UTIL_STRING_HEADER
+#include "smb/smbdbui.h"
+#include "game/gamedbui.h"
 
-#include <string>
+using namespace argos::smbui;
+using namespace argos::smb;
 
-namespace argos::util {
-
-bool StringEndsWith(const std::string& str, const std::string& ending);
-bool StringStartsWith(const std::string& str, const std::string& start);
-
-std::string BytesFmt(size_t bytes); // Where to put this?
-
+SMBDatabaseApplication::SMBDatabaseApplication(SMBDatabase* db)
+{
+    RegisterComponent(std::make_shared<game::ui::GameDBComponent>(db));
 }
 
-#endif
+SMBDatabaseApplication::~SMBDatabaseApplication()
+{
+}
+

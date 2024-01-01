@@ -18,18 +18,23 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ARGOS_UTIL_STRING_HEADER
-#define ARGOS_UTIL_STRING_HEADER
+#ifndef ARGOS_SMB_SMBDBUI_HEADER
+#define ARGOS_SMB_SMBDBUI_HEADER
 
-#include <string>
+#include "rgmui/rgmui.h"
+#include "smb/smbdb.h"
 
-namespace argos::util {
+namespace argos::smbui
+{
 
-bool StringEndsWith(const std::string& str, const std::string& ending);
-bool StringStartsWith(const std::string& str, const std::string& start);
+class SMBDatabaseApplication : public rgmui::IApplication
+{
+public:
+    SMBDatabaseApplication(smb::SMBDatabase* db);
+    ~SMBDatabaseApplication();
+};
 
-std::string BytesFmt(size_t bytes); // Where to put this?
-
-}
+};
 
 #endif
+

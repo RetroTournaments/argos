@@ -1,10 +1,29 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+// Copyright (C) 2023 Matthew Deutsch
+//
+// Argos is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 3 of the License, or
+// (at your option) any later version.
+//
+// Argos is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Argos; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
+////////////////////////////////////////////////////////////////////////////////
 
-#include "rgm/ext/sqliteext/sqliteextui.h"
+#include "ext/sqliteext/sqliteextui.h"
 
-using namespace rgms::sqliteext;
-using namespace rgms::sqliteext::ui;
+using namespace argos::sqliteext;
+using namespace argos::sqliteext::ui;
 
-void rgms::sqliteext::ui::DoSchemaDisplay(const char* label, const char* schema)
+void argos::sqliteext::ui::DoSchemaDisplay(const char* label, const char* schema)
 {
     std::string title = fmt::format("{}::schema", label);
     if (ImGui::CollapsingHeader(title.c_str())) {
@@ -17,7 +36,7 @@ void rgms::sqliteext::ui::DoSchemaDisplay(const char* label, const char* schema)
     }
 }
 
-void rgms::sqliteext::ui::CheckScrollExt(int* scroll)
+void argos::sqliteext::ui::CheckScrollExt(int* scroll)
 {
     if (!ImGui::IsItemHovered()) {
         return;
@@ -30,7 +49,7 @@ void rgms::sqliteext::ui::CheckScrollExt(int* scroll)
     }
 }
 
-void rgms::sqliteext::ui::IntColumn(int column, int* v, bool* selected, BasicColumnType type, bool* changed, int* scroll)
+void argos::sqliteext::ui::IntColumn(int column, int* v, bool* selected, BasicColumnType type, bool* changed, int* scroll)
 {
     ImGui::PushID(column);
     ImGui::TableNextColumn();
@@ -56,7 +75,7 @@ void rgms::sqliteext::ui::IntColumn(int column, int* v, bool* selected, BasicCol
     ImGui::PopID();
 }
 
-void rgms::sqliteext::ui::DoubleColumn(int column, double* v, bool* selected, BasicColumnType type, bool* changed, int* scroll)
+void argos::sqliteext::ui::DoubleColumn(int column, double* v, bool* selected, BasicColumnType type, bool* changed, int* scroll)
 {
     ImGui::PushID(column);
     ImGui::TableNextColumn();
@@ -82,7 +101,7 @@ void rgms::sqliteext::ui::DoubleColumn(int column, double* v, bool* selected, Ba
     ImGui::PopID();
 }
 
-void rgms::sqliteext::ui::TextColumn(int column, std::string* v, bool* selected, BasicColumnType type, bool* changed, int* scroll)
+void argos::sqliteext::ui::TextColumn(int column, std::string* v, bool* selected, BasicColumnType type, bool* changed, int* scroll)
 {
     ImGui::PushID(column);
     ImGui::TableNextColumn();
@@ -108,7 +127,7 @@ void rgms::sqliteext::ui::TextColumn(int column, std::string* v, bool* selected,
     ImGui::PopID();
 }
 
-bool rgms::sqliteext::ui::ButtonColumn(int column, const char* label, int* scroll)
+bool argos::sqliteext::ui::ButtonColumn(int column, const char* label, int* scroll)
 {
     ImGui::PushID(column);
     ImGui::TableNextColumn();
@@ -129,22 +148,24 @@ DBSchemaComponent::DBSchemaComponent(sqliteext::SQLiteExtDB* db, std::string tit
     , m_Title(title)
 {
     if (m_Title.empty()) m_Title = "DBSchema";
-    if (db) {
-        try {
-            db->ExecOrThrow("SELECT name, sql FROM sqlite_master WHERE type='table' ORDER BY name;", 
-                    [&](int argc, char** data, char**){
-                        assert(argc == 2);
-                        m_TableSchemas.emplace_back(std::string(data[0]), std::string(data[1]));
-                        return true;
-                    });
-            if (m_TableSchemas.empty()) {
-                m_Message = "no tables";
-            }
-        } catch (const std::runtime_error& except) {
-            m_Message = except.what();
-        }
-    } else {
+
+    if (!db) {
         m_Message = "null database";
+        return;
+    }
+
+    try {
+        db->ExecOrThrow("SELECT name, sql FROM sqlite_master WHERE type='table' ORDER BY name;", 
+                [&](int argc, char** data, char**){
+                    assert(argc == 2);
+                    m_TableSchemas.emplace_back(std::string(data[0]), std::string(data[1]));
+                    return true;
+                });
+        if (m_TableSchemas.empty()) {
+            m_Message = "no tables";
+        }
+    } catch (const std::runtime_error& except) {
+        m_Message = except.what();
     }
 }
 

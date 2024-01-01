@@ -18,6 +18,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "fmt/fmt.h"
+
 #include "util/string.h"
 
 using namespace argos::util;
@@ -38,3 +40,19 @@ bool argos::util::StringStartsWith(const std::string& str, const std::string& st
     return false;
 }
 
+std::string argos::util::BytesFmt(size_t bytes)
+{
+    if (bytes < 1000) {
+        return fmt::format("{} B", bytes);
+    }
+    size_t exp = 0;
+    size_t div = 1;
+    for (size_t n = bytes; n >= 1000; n /= 1000) {
+        div *= 1000;
+        exp++;
+    }
+
+    double v = static_cast<double>(bytes) / static_cast<double>(div);
+    std::array<char, 7> prefixes = {' ', 'k', 'M', 'G', 'T', 'P', 'E'};
+    return fmt::format("{:.1f} {}B", v, prefixes.at(exp));
+}

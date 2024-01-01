@@ -52,6 +52,7 @@ target_link_libraries(argos
     argoslib
     rgmuilib
     smblib
+    smbuilib
 )
 target_compile_options(argos PUBLIC -Wno-string-plus-int)
 

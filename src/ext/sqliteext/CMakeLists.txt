@@ -27,9 +27,10 @@ target_link_libraries(sqliteextlib
     sqlite3
 )
 
-#add_library(sqliteextuilib
-#    sqliteextui.cpp
-#)
-#target_link_libraries(sqliteextuilib
-#    rgmuilib
-#)
+add_library(sqliteextuilib
+    sqliteextui.cpp
+)
+target_link_libraries(sqliteextuilib
+    sqliteextlib
+    rgmuilib
+)

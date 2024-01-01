@@ -27,5 +27,15 @@ add_library(smblib
 target_link_libraries(smblib
     neslib
     utillib
+    sqliteextlib
+)
+
+add_library(smbuilib
+    smbdbui.cpp
+)
+target_link_libraries(smbuilib
+    smblib
+    rgmuilib
+    gameuilib
 )
 

@@ -22,27 +22,11 @@
 #include "util/arg.h"
 
 #include "smb/smbdb.h"
+#include "smb/smbdbui.h"
 
 using namespace argos;
 using namespace argos::util;
 using namespace argos::main;
-
-class TempApp : public rgmui::IApplication
-{
-public:
-    TempApp() {};
-    ~TempApp() {};
-
-    bool OnFrame() override {
-        if (ImGui::Begin("temp")) {
-            if (ImGui::Button("hello")) {
-                std::cout << "hello" << std::endl;
-            }
-        }
-        ImGui::End();
-        return true;
-    }
-};
 
 // 'argos smb db'
 int DoSMBDB(const argos::RuntimeConfig* config, int argc, char** argv)
@@ -57,8 +41,8 @@ int DoSMBDB(const argos::RuntimeConfig* config, int argc, char** argv)
     if (arg == "edit") {
         return smbdb.SystemLaunchSQLite3WithExamples();
     } else if (arg == "ui") {
-        TempApp app;
-        return RunIApplication("smb db ui", &app, true);
+        smbui::SMBDatabaseApplication app(&smbdb);
+        return RunIApplication(config, "argos smb db", &app);
     } else {
         Error("unrecognized argument. '{}'", arg);
         return 1;

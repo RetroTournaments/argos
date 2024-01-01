@@ -58,6 +58,12 @@ typedef RectBase<float> Rect2F;
 
 typedef std::array<Vector2F, 4> Quadrilateral2F;
 
+template <typename T>
+inline std::ostream& operator<<(std::ostream& os, const RectBase<T>& rect) {
+    os << "{" << rect.X << " " << rect.Y << " " << rect.Width << " " << rect.Height << "}";
+    return os;
+}
+
 }
 
 #endif

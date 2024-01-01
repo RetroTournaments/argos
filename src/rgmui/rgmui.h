@@ -30,14 +30,13 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ARGOS_RGMUI_HEADER
-#define ARGOS_RGMUI_HEADER
+#ifndef ARGOS_RGMUI_RGMUI_HEADER
+#define ARGOS_RGMUI_RGMUI_HEADER
 
 #include <thread>
 #include <vector>
 #include <memory>
 #include <functional>
-
 
 #include "SDL.h" 
 #include "imgui.h"
@@ -46,39 +45,13 @@
 #include "GL/gl.h"
 
 #include "util/vector.h"
-#include "util/rect.h"
-
+#include "rgmui/window.h"
 
 namespace argos::rgmui
 {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class Window
-{
-public:
-    Window(int winsizex, int winsizey, const std::string& name, int display = 0, 
-            std::string* inipath = nullptr, std::string* iniData = nullptr);
-    ~Window();
-
-    int ScreenWidth() const;
-    int ScreenHeight() const;
-    int GetDisplay() const;
-
-    void SaveIniToString(std::string* str);
-
-    bool OnSDLEvent(const SDL_Event& e);
-
-    void NewFrame();
-    void EndFrame();
-
-private:
-    SDL_Window* m_Window;
-    SDL_GLContext m_Context;
-    std::string m_IniPath;
-};
-
-////////////////////////////////////////////////////////////////////////////////
 
 class IApplicationComponent;
 

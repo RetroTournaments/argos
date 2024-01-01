@@ -22,6 +22,8 @@
 #define ARGOS_UTIL_VECTOR_HEADER
 
 #include <array>
+#include <cmath>
+#include <iostream>
 #include <cstdint>
 
 namespace argos::util

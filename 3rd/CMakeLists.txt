@@ -38,7 +38,6 @@ add_library(3rdimgui STATIC
 )
 set_target_properties(3rdimgui PROPERTIES COMPILE_FLAGS "-fPIC")
 target_include_directories(3rdimgui PUBLIC
-    ${SDL3_INCLUDE_DIRS}
     "imgui/"
 )
 target_link_libraries(3rdimgui SDL3::SDL3 SDL3_mixer::SDL3_mixer)

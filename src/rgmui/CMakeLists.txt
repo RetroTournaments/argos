@@ -23,6 +23,7 @@ project(rgmui)
 ################################################################################
 add_library(rgmuilib
     rgmui.cpp
+    window.cpp
     rgmuimain.cpp
 )
 target_link_libraries(rgmuilib

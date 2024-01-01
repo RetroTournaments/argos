@@ -30,10 +30,11 @@ target_link_libraries(gamelib
     opencvextlib
 )
 
-#add_library(gameuilib
-#    gamedbui.cpp
-#)
-#target_link_libraries(gameuilib
-#    uilib
-#    sqliteextuilib
-#)
+add_library(gameuilib
+    gamedbui.cpp
+)
+target_link_libraries(gameuilib
+    rgmuilib
+    gamelib
+    sqliteextuilib
+)

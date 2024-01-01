@@ -105,15 +105,25 @@ void argos::main::PrintProgramVersion(std::ostream& os)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-int argos::main::RunIApplication(const char* identifier,
-        rgmui::IApplication* app, bool load_previous, ArgosDB* db)
+int argos::main::RunIApplication(const argos::RuntimeConfig* config, const char* name, rgmui::IApplication* app, ArgosDB* db)
 {
-    int width = 1920;
-    int height = 1080;
-    int display = 0;
+    db::AppCache cache = db::AppCache::Defaults(name);
 
-    rgmui::Window window(width, height, std::string(identifier), display, nullptr, nullptr);
+    std::shared_ptr<ArgosDB> adb;
+    if (!db) {
+        adb = std::make_shared<ArgosDB>(RuntimeConfig::ArgosDatabasePath(config));
+        db = adb.get();
+    }
+
+    db->LoadAppCache(&cache);
+
+    rgmui::Window window(cache.Name, cache.GetWinRect(), cache.Display, nullptr, &cache.IniData);
     rgmui::WindowAppMainLoop(&window, app, std::chrono::microseconds(15000));
+
+    cache.SetWinRect(window.GetScreenRect());
+    cache.Display = window.GetDisplay();
+    window.SaveIniToString(&cache.IniData);
+    db->SaveAppCache(cache);
 
     return 0;
 }

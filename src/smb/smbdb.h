@@ -21,6 +21,7 @@
 #ifndef ARGOS_SMB_SMBDB_HEADER
 #define ARGOS_SMB_SMBDB_HEADER
 
+#include "smb/smb.h"
 #include "nes/nesdb.h"
 
 namespace argos::smb
@@ -32,8 +33,6 @@ public:
     SMBDatabase(const std::string& path);
     ~SMBDatabase();
 };
-
-
 
 }
 
