@@ -18,36 +18,17 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ARGOS_EXT_OPENCVEXT_HEADER
-#define ARGOS_EXT_OPENCVEXT_HEADER
+#ifndef ARGOS_UTIL_BITMANIP_HEADER
+#define ARGOS_UTIL_BITMANIP_HEADER
 
-#include "opencv2/opencv.hpp"
+#include <cstdint>
 
-namespace argos::opencvext
+namespace argos::util
 {
 
-bool CVMatsEqual(const cv::Mat im1, const cv::Mat im2);
-
-cv::Mat CropWithZeroPadding(cv::Mat img, cv::Rect r);
-cv::Mat ResizePrefNearest(cv::Mat img, float scale);
-cv::Mat ResizeTo(cv::Mat img, int width, int height, 
-        cv::InterpolationFlags smaller = cv::INTER_AREA,
-        cv::InterpolationFlags larger = cv::INTER_LINEAR);
-
-enum class PaletteDataOrder {
-    RGB,
-    BGR
-};
-cv::Mat ConstructPaletteImage(
-    const uint8_t* imgData,
-    int width, int height, 
-    const uint8_t* paletteData,
-    PaletteDataOrder paletteDataOrder = PaletteDataOrder::RGB
-);
-
-cv::Mat RGB565ToCVMat(const uint16_t* data, unsigned width, unsigned height, size_t pitch);
+uint8_t Reverse(uint8_t b);
+uint8_t BitCount(uint8_t b);
 
 }
 
 #endif
-

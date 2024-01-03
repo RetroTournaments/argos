@@ -18,36 +18,40 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ARGOS_EXT_OPENCVEXT_HEADER
-#define ARGOS_EXT_OPENCVEXT_HEADER
+#include <array>
 
-#include "opencv2/opencv.hpp"
+#include "util/bitmanip.h"
 
-namespace argos::opencvext
+using namespace argos::util;
+
+uint8_t argos::util::Reverse(uint8_t b)
 {
-
-bool CVMatsEqual(const cv::Mat im1, const cv::Mat im2);
-
-cv::Mat CropWithZeroPadding(cv::Mat img, cv::Rect r);
-cv::Mat ResizePrefNearest(cv::Mat img, float scale);
-cv::Mat ResizeTo(cv::Mat img, int width, int height, 
-        cv::InterpolationFlags smaller = cv::INTER_AREA,
-        cv::InterpolationFlags larger = cv::INTER_LINEAR);
-
-enum class PaletteDataOrder {
-    RGB,
-    BGR
-};
-cv::Mat ConstructPaletteImage(
-    const uint8_t* imgData,
-    int width, int height, 
-    const uint8_t* paletteData,
-    PaletteDataOrder paletteDataOrder = PaletteDataOrder::RGB
-);
-
-cv::Mat RGB565ToCVMat(const uint16_t* data, unsigned width, unsigned height, size_t pitch);
-
+    // https://stackoverflow.com/a/2602885
+    b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
+    b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
+    b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
+    return b;
 }
 
-#endif
-
+uint8_t argos::util::BitCount(uint8_t b)
+{
+    static std::array<uint8_t, 16> LOOKUP = {
+        0x00,  // 0000
+        0x01,  // 0001
+        0x01,  // 0010
+        0x02,  // 0011
+        0x01,  // 0100
+        0x02,  // 0101
+        0x02,  // 0110
+        0x03,  // 0111
+        0x01,  // 1000
+        0x02,  // 1001
+        0x02,  // 1010
+        0x03,  // 1011
+        0x02,  // 1100
+        0x03,  // 1101
+        0x03,  // 1110
+        0x04,  // 1111
+    };
+    return LOOKUP[b >> 4] + LOOKUP[b & 0x0f];
+}

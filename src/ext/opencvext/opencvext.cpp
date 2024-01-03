@@ -20,9 +20,9 @@
 
 #include "ext/opencvext/opencvext.h"
 
-using namespace rgms::opencvext;
+using namespace argos::opencvext;
 
-bool rgms::opencvext::CVMatsEqual(const cv::Mat Mat1, const cv::Mat Mat2)
+bool argos::opencvext::CVMatsEqual(const cv::Mat Mat1, const cv::Mat Mat2)
 {
     if (Mat1.dims != Mat2.dims ||
         Mat1.size != Mat2.size || 
@@ -47,7 +47,7 @@ bool rgms::opencvext::CVMatsEqual(const cv::Mat Mat1, const cv::Mat Mat2)
     return false;
 }
 
-cv::Mat rgms::opencvext::CropWithZeroPadding(cv::Mat img, cv::Rect cropRect)
+cv::Mat argos::opencvext::CropWithZeroPadding(cv::Mat img, cv::Rect cropRect)
 {
     if (cropRect.width < 0) {
         cropRect.x += cropRect.width;
@@ -76,7 +76,7 @@ cv::Mat rgms::opencvext::CropWithZeroPadding(cv::Mat img, cv::Rect cropRect)
     return m;
 }
 
-cv::Mat rgms::opencvext::ResizePrefNearest(cv::Mat in, float scale)
+cv::Mat argos::opencvext::ResizePrefNearest(cv::Mat in, float scale)
 {
     cv::Mat out = in;
     if (scale && scale != 1.0f) {
@@ -97,13 +97,13 @@ cv::Mat rgms::opencvext::ResizePrefNearest(cv::Mat in, float scale)
     return out;
 }
 
-cv::Mat rgms::opencvext::ConstructPaletteImage(
+cv::Mat argos::opencvext::ConstructPaletteImage(
     const uint8_t* imgData,
     int width, int height, 
     const uint8_t* paletteData,
     PaletteDataOrder paletteDataOrder
-) {
-
+)
+{
     cv::Mat m(height, width, CV_8UC3);
 
     uint8_t* o = reinterpret_cast<uint8_t*>(m.data);
@@ -129,7 +129,7 @@ cv::Mat rgms::opencvext::ConstructPaletteImage(
     return m;
 }
 
-cv::Mat rgms::opencvext::RGB565ToCVMat(const uint16_t* data, unsigned width, unsigned height, size_t pitch)
+cv::Mat argos::opencvext::RGB565ToCVMat(const uint16_t* data, unsigned width, unsigned height, size_t pitch)
 {
     static std::array<uint8_t, 0b00100000> RB_LOOKUP;
     static std::array<uint8_t, 0b01000000> G_LOOKUP;
@@ -171,7 +171,7 @@ cv::Mat rgms::opencvext::RGB565ToCVMat(const uint16_t* data, unsigned width, uns
     return out;
 }
 
-cv::Mat rgms::opencvext::ResizeTo(cv::Mat img, int width, int height, cv::InterpolationFlags smaller, cv::InterpolationFlags larger)
+cv::Mat argos::opencvext::ResizeTo(cv::Mat img, int width, int height, cv::InterpolationFlags smaller, cv::InterpolationFlags larger)
 {
     if (img.empty()) {
         return cv::Mat::zeros(height, width, CV_8UC3);

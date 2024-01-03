@@ -18,36 +18,25 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ARGOS_EXT_OPENCVEXT_HEADER
-#define ARGOS_EXT_OPENCVEXT_HEADER
+#include "nfd.h"
 
-#include "opencv2/opencv.hpp"
+#include "rgmui/rgmui.h"
+#include "ext/nfdext/nfdext.h"
 
-namespace argos::opencvext
+bool argos::nfdext::FileOpenDialog(const char* label, std::string* path)
 {
-
-bool CVMatsEqual(const cv::Mat im1, const cv::Mat im2);
-
-cv::Mat CropWithZeroPadding(cv::Mat img, cv::Rect r);
-cv::Mat ResizePrefNearest(cv::Mat img, float scale);
-cv::Mat ResizeTo(cv::Mat img, int width, int height, 
-        cv::InterpolationFlags smaller = cv::INTER_AREA,
-        cv::InterpolationFlags larger = cv::INTER_LINEAR);
-
-enum class PaletteDataOrder {
-    RGB,
-    BGR
-};
-cv::Mat ConstructPaletteImage(
-    const uint8_t* imgData,
-    int width, int height, 
-    const uint8_t* paletteData,
-    PaletteDataOrder paletteDataOrder = PaletteDataOrder::RGB
-);
-
-cv::Mat RGB565ToCVMat(const uint16_t* data, unsigned width, unsigned height, size_t pitch);
-
+    if (ImGui::Button(label)) {
+        nfdchar_t* outPath = nullptr;
+        nfdresult_t result = NFD_OpenDialog(NULL, NULL, &outPath);
+        if (result == NFD_OKAY) {
+            if (path) {
+                *path = std::string(outPath);
+            }
+            free(outPath);
+            return true;
+        }
+    }
+    return false;
 }
 
-#endif
 

@@ -23,10 +23,5 @@ project(ext)
 add_subdirectory(jsonext)
 add_subdirectory(sqliteext)
 add_subdirectory(opencvext)
-
-#add_subdirectory(pulseaudioext)
-#    SDL3::SDL3 
-#    spdlog::spdlog
-#    ${ZeroMQ_LIBRARY}
-#    3rdimgui
+add_subdirectory(nfdext)
 

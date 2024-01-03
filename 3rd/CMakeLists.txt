@@ -76,3 +76,21 @@ set(nestopia_INCLUDE_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/nestopia/source/core/api"
     PARENT_SCOPE
 )
+
+#################################################################################
+# nativefiledialog is a nice file dialog library
+set(nativefiledialog_INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/nativefiledialog/src/include/"
+    PARENT_SCOPE
+)
+set(3rdnativefiledialoglib 
+    "${CMAKE_CURRENT_SOURCE_DIR}/nativefiledialog/build/lib/Release/x64/libnfd.a"
+    PARENT_SCOPE)
+set(3rdnativefiledialoglib 
+    "${CMAKE_CURRENT_SOURCE_DIR}/nativefiledialog/build/lib/Release/x64/libnfd.a")
+add_custom_command(OUTPUT ${3rdnativefiledialoglib}
+                   COMMAND make CFLAGS=-fPIC
+                   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/nativefiledialog/build/gmake_linux"
+                   VERBATIM)
+add_custom_target(3rdlibnfd DEPENDS ${3rdnativefiledialoglib})
+

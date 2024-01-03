@@ -19,14 +19,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "smb/smbdbui.h"
-#include "game/gamedbui.h"
+#include "nes/nesdbui.h"
 
 using namespace argos::smbui;
 using namespace argos::smb;
 
 SMBDatabaseApplication::SMBDatabaseApplication(SMBDatabase* db)
 {
-    RegisterComponent(std::make_shared<game::ui::GameDBComponent>(db));
+    RegisterComponent(std::make_shared<nesui::NESDBComponent>(db));
 }
 
 SMBDatabaseApplication::~SMBDatabaseApplication()

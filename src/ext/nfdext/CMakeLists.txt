@@ -4,7 +4,7 @@
 ##
 ## Argos is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation; either version 3 of the License, or
+## the Free Software Foundation; either version 2 of the License, or
 ## (at your option) any later version.
 ##
 ## Argos is distributed in the hope that it will be useful,
@@ -18,20 +18,21 @@
 ##
 ################################################################################
 cmake_minimum_required(VERSION 3.6)
-cmake_policy(SET CMP0012 NEW)
-cmake_policy(SET CMP0077 NEW)
+project(nfdext)
 
-project(argos)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -O3")
-
-find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3-shared)
-find_package(SDL3_mixer REQUIRED)
-find_package(ZeroMQ REQUIRED)
-
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
-
-add_subdirectory(3rd)
-add_subdirectory(src)
+add_library(nfdextlib STATIC
+    nfdext.cpp
+)
+target_include_directories(nfdextlib PUBLIC
+    ${nativefiledialog_INCLUDE_DIRS}
+)
+add_dependencies(nfdextlib
+    3rdlibnfd
+)
+target_link_libraries(nfdextlib
+    rgmuilib
+    ${3rdnativefiledialoglib}
+    ${GTK3_LIBRARIES}
+)
 

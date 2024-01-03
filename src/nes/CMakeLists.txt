@@ -24,7 +24,7 @@ add_library(neslib
     nes.cpp 
     nestopiaimpl.cpp
     nesdb.cpp
-    #    ppux.cpp
+    ppux.cpp
 )
 target_include_directories(neslib PUBLIC
     ${nestopia_INCLUDE_DIRS}
@@ -35,15 +35,13 @@ target_link_libraries(neslib
     #    3rdnestopia
 )
 
-#add_library(rgmnesuilib
-#    nesui.cpp
-#)
-#target_include_directories(rgmnesuilib PUBLIC
-#    ${nlohmann_json_INCLUDE_DIRS}
-#)
-#target_link_libraries(rgmnesuilib
-#    rgmuilib
-#    rgmneslib
-#    rgmgameuilib
-#    nfdextlib
-#)
+add_library(nesuilib
+    nesui.cpp
+    nesdbui.cpp
+)
+target_link_libraries(nesuilib
+    rgmuilib
+    neslib
+    gameuilib
+    nfdextlib
+)

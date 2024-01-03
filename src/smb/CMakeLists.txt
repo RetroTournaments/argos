@@ -36,6 +36,7 @@ add_library(smbuilib
 target_link_libraries(smbuilib
     smblib
     rgmuilib
+    nesuilib
     gameuilib
 )
 

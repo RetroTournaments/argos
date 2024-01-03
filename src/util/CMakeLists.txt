@@ -22,11 +22,12 @@ project(util)
 
 add_library(utillib
     arg.cpp
+    bitmanip.cpp
+    clock.cpp
     file.cpp
+    plotting.cpp
     string.cpp
     serial.cpp
-    plotting.cpp
-    clock.cpp
     nixutil.cpp
 )
 target_include_directories(utillib PUBLIC
