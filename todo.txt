@@ -1,0 +1,2 @@
+Identify multiplier for fast music in SMB.
+Support fast music in SMB.

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2023 Matthew Deutsch
+// Copyright (C) 2024 Matthew Deutsch
 //
 // Argos is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,49 +18,48 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ARGOS_SMB_SMBDB_HEADER
-#define ARGOS_SMB_SMBDB_HEADER
+#ifndef ARGOS_EXT_SDLEXT_HEADER
+#define ARGOS_EXT_SDLEXT_HEADER
 
-#include "smb/smb.h"
-#include "nes/nesdb.h"
+#include <vector>
+#include <cstdint>
 
-namespace argos::smb
+#include "SDL.h" 
+#include "SDL3_mixer/SDL_mixer.h"
+
+namespace argos::sdlext
 {
 
-namespace db
-{
-
-struct sound_effect
-{
-    SoundEffect effect;
-    std::vector<uint8_t> wav_data;
-};
-
-struct music_track
-{
-    MusicTrack track;
-    std::vector<uint8_t> wav_data;
-};
-
-}
-
-class SMBDatabase : public nes::NESDatabase
+class SDLExtMixInit
 {
 public:
-    SMBDatabase(const std::string& path);
-    ~SMBDatabase();
-
-    bool GetSoundEffectWav(SoundEffect effect, std::vector<uint8_t>* data);
-    bool GetMusicTrackWav(MusicTrack track, std::vector<uint8_t>* data);
-
-    static const char* SoundEffectSchema();
-    static const char* MusicTrackSchema();
+    SDLExtMixInit();
+    ~SDLExtMixInit();
 };
 
+class SDLExtMixChunk
+{
+public:
+    SDLExtMixChunk(const std::vector<uint8_t>& wav_data);
+    ~SDLExtMixChunk();
 
-//
-bool InsertSoundEffect(SMBDatabase* database, SoundEffect effect, const std::string& wavpath);
-bool InsertMusicTrack(SMBDatabase* database, MusicTrack track, const std::string& wavpath);
+    SDLExtMixChunk(const SDLExtMixChunk&) = delete;
+
+    Mix_Chunk* Chunk;
+};
+
+class SDLExtMixMusic
+{
+public:
+    SDLExtMixMusic(const std::vector<uint8_t>& wav_data);
+    ~SDLExtMixMusic();
+
+    SDLExtMixMusic(const SDLExtMixMusic&) = delete;
+
+    Mix_Music* Music;
+private:
+    std::vector<uint8_t> m_WavData;
+};
 
 }
 

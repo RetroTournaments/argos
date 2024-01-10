@@ -21,8 +21,9 @@
 #ifndef ARGOS_SMB_SMBDBUI_HEADER
 #define ARGOS_SMB_SMBDBUI_HEADER
 
-#include "rgmui/rgmui.h"
 #include "smb/smbdb.h"
+#include "rgmui/rgmui.h"
+#include "ext/sdlext/sdlext.h"
 
 namespace argos::smbui
 {
@@ -32,6 +33,40 @@ class SMBDatabaseApplication : public rgmui::IApplication
 public:
     SMBDatabaseApplication(smb::SMBDatabase* db);
     ~SMBDatabaseApplication();
+};
+
+class SMBDBSoundComponent : public rgmui::IApplicationComponent
+{
+public:
+    SMBDBSoundComponent(smb::SMBDatabase* db);
+    ~SMBDBSoundComponent();
+
+    void OnFrame();
+
+private:
+    void DoSoundEffectControls();
+    std::shared_ptr<sdlext::SDLExtMixChunk> GetChunk(smb::SoundEffect effect);
+
+private:
+    smb::SMBDatabase* m_Database;
+    std::unordered_map<smb::SoundEffect, std::shared_ptr<sdlext::SDLExtMixChunk>> m_Chunks;
+};
+
+class SMBDBMusicComponent : public rgmui::IApplicationComponent
+{
+public:
+    SMBDBMusicComponent(smb::SMBDatabase* db);
+    ~SMBDBMusicComponent();
+
+    void OnFrame();
+
+private:
+    void DoMusicControls();
+    std::shared_ptr<sdlext::SDLExtMixMusic> GetMusic(smb::MusicTrack track);
+
+private:
+    smb::SMBDatabase* m_Database;
+    std::unordered_map<smb::MusicTrack, std::shared_ptr<sdlext::SDLExtMixMusic>> m_Musics;
 };
 
 };

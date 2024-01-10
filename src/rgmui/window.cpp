@@ -18,6 +18,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "SDL3_mixer/SDL_mixer.h"
+
 #include "backends/imgui_impl_sdl3.h"
 #include "backends/imgui_impl_opengl3.h"
 
@@ -135,6 +137,7 @@ Window::~Window()
     ImGui::DestroyContext();
     if (m_Context) SDL_GL_DeleteContext(m_Context);
     if (m_Window) SDL_DestroyWindow(m_Window);
+
     SDL_Quit();
 }
 

@@ -1,10 +1,10 @@
 ################################################################################
 ##
-## Copyright (C) 2023 Matthew Deutsch
+## Copyright (C) 2024 Matthew Deutsch
 ##
 ## Argos is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
-## the Free Software Foundation; either version 3 of the License, or
+## the Free Software Foundation; either version 2 of the License, or
 ## (at your option) any later version.
 ##
 ## Argos is distributed in the hope that it will be useful,
@@ -18,21 +18,21 @@
 ##
 ################################################################################
 cmake_minimum_required(VERSION 3.6)
-project(rgmui)
+project(sdlext)
 
-################################################################################
-add_library(rgmuilib
-    rgmui.cpp
-    window.cpp
-    rgmuimain.cpp
+add_library(sdlextlib STATIC
+    sdlext.cpp
 )
-target_link_libraries(rgmuilib
-    utillib 
-    opencvextlib
-    sdlextlib
+target_link_libraries(sdlextlib PUBLIC
+    SDL3::SDL3 
+    SDL3_mixer::SDL3_mixer
+)
 
-    3rdimgui 
-    spdlog::spdlog
-    pthread GL dl
+add_library(sdlextuilib
+    sdlextui.cpp
+)
+target_link_libraries(sdlextuilib
+    sdlextlib
+    rgmuilib
 )
 

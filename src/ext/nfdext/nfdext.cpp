@@ -23,18 +23,24 @@
 #include "rgmui/rgmui.h"
 #include "ext/nfdext/nfdext.h"
 
-bool argos::nfdext::FileOpenDialog(const char* label, std::string* path)
+bool argos::nfdext::FileOpenDialog(std::string* path)
+{
+    nfdchar_t* outPath = nullptr;
+    nfdresult_t result = NFD_OpenDialog(NULL, NULL, &outPath);
+    if (result == NFD_OKAY) {
+        if (path) {
+            *path = std::string(outPath);
+        }
+        free(outPath);
+        return true;
+    }
+    return false;
+}
+
+bool argos::nfdext::FileOpenButton(const char* label, std::string* path)
 {
     if (ImGui::Button(label)) {
-        nfdchar_t* outPath = nullptr;
-        nfdresult_t result = NFD_OpenDialog(NULL, NULL, &outPath);
-        if (result == NFD_OKAY) {
-            if (path) {
-                *path = std::string(outPath);
-            }
-            free(outPath);
-            return true;
-        }
+        return FileOpenDialog(path);
     }
     return false;
 }

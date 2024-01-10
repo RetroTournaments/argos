@@ -24,4 +24,5 @@ add_subdirectory(jsonext)
 add_subdirectory(sqliteext)
 add_subdirectory(opencvext)
 add_subdirectory(nfdext)
+add_subdirectory(sdlext)
 

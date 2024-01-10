@@ -26,7 +26,8 @@
 namespace argos::nfdext
 {
 
-bool FileOpenDialog(const char* label, std::string* path);
+bool FileOpenDialog(std::string* path);
+bool FileOpenButton(const char* label, std::string* path);
 
 }
 

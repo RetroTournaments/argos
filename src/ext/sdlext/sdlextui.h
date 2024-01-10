@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2023 Matthew Deutsch
+// Copyright (C) 2024 Matthew Deutsch
 //
 // Argos is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,49 +18,26 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ARGOS_SMB_SMBDB_HEADER
-#define ARGOS_SMB_SMBDB_HEADER
+#ifndef ARGOS_EXT_SDLEXTUI_HEADER
+#define ARGOS_EXT_SDLEXTUI_HEADER
 
-#include "smb/smb.h"
-#include "nes/nesdb.h"
+#include "rgmui/rgmui.h"
+#include "ext/sdlext/sdlext.h"
 
-namespace argos::smb
+namespace argos::sdlextui
 {
 
-namespace db
-{
-
-struct sound_effect
-{
-    SoundEffect effect;
-    std::vector<uint8_t> wav_data;
-};
-
-struct music_track
-{
-    MusicTrack track;
-    std::vector<uint8_t> wav_data;
-};
-
-}
-
-class SMBDatabase : public nes::NESDatabase
+class SDLExtMixComponent : public rgmui::IApplicationComponent
 {
 public:
-    SMBDatabase(const std::string& path);
-    ~SMBDatabase();
+    SDLExtMixComponent();
+    ~SDLExtMixComponent();
 
-    bool GetSoundEffectWav(SoundEffect effect, std::vector<uint8_t>* data);
-    bool GetMusicTrackWav(MusicTrack track, std::vector<uint8_t>* data);
+    void OnFrame();
 
-    static const char* SoundEffectSchema();
-    static const char* MusicTrackSchema();
+private:
+    void DoMixControls();
 };
-
-
-//
-bool InsertSoundEffect(SMBDatabase* database, SoundEffect effect, const std::string& wavpath);
-bool InsertMusicTrack(SMBDatabase* database, MusicTrack track, const std::string& wavpath);
 
 }
 

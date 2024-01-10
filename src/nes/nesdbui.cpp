@@ -119,7 +119,7 @@ void NESDBRomComponent::DoInsertControls()
 {
     rgmui::InputText("pending name", &m_PendingName);
     if (m_RomPath.empty()) {
-        if (nfdext::FileOpenDialog("select rom path", &m_RomPath)) {
+        if (nfdext::FileOpenButton("select rom path", &m_RomPath)) {
             try {
                 util::ReadFileToVector(m_RomPath, &m_LoadedRom);
                 if (m_LoadedRom.size() < 32) {

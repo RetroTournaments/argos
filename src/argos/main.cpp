@@ -23,6 +23,7 @@
 #include "util/arg.h"
 #include "util/file.h"
 #include "rgmui/rgmuimain.h"
+#include "ext/sdlext/sdlext.h"
 
 #include "argos/main.h"
 
@@ -138,6 +139,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    sdlext::SDLExtMixInit mix; // TODO.. order is important so it shouldn't be ad hoc
     argos::RuntimeConfig config;
     argos::InitDefaultRuntimeConfig(&config);
 

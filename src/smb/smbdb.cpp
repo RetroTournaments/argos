@@ -18,16 +18,108 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "smb/smbdb.h"
+#include "fmt/fmt.h"
 
+#include "smb/smbdb.h"
+#include "util/file.h"
+#include "ext/sqliteext/sqliteext.h"
+
+using namespace argos;
 using namespace argos::smb;
 
 SMBDatabase::SMBDatabase(const std::string& path)
     : nes::NESDatabase(path)
 {
+    ExecOrThrow(SMBDatabase::SoundEffectSchema());
+    ExecOrThrow(SMBDatabase::MusicTrackSchema());
 }
 
 SMBDatabase::~SMBDatabase()
 {
 }
 
+const char* SMBDatabase::SoundEffectSchema()
+{
+    return R"(CREATE TABLE IF NOT EXISTS sound_effect (
+    effect          INTEGER PRIMARY KEY,
+    wav_data        BLOB NOT NULL
+);)";
+}
+
+const char* SMBDatabase::MusicTrackSchema()
+{
+    return R"(CREATE TABLE IF NOT EXISTS music_track (
+    track           INTEGER PRIMARY KEY,
+    wav_data        BLOB NOT NULL
+);)";
+}
+
+static bool GetWav(SMBDatabase* db, const char* table, const char* nm, uint32_t v, std::vector<uint8_t>* data)
+{
+    sqlite3_stmt* stmt;
+    sqliteext::PrepareOrThrow(db->m_Database, fmt::format(R"(
+        SELECT wav_data FROM {} WHERE {} = ?;
+    )", table, nm), &stmt);
+    sqliteext::BindIntOrThrow(stmt, 1, v);
+
+    bool ret = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int sz = sqlite3_column_bytes(stmt, 0);
+        const uint8_t* dat = reinterpret_cast<const uint8_t*>(sqlite3_column_blob(stmt, 0));
+
+        if (data) {
+            data->assign(dat, dat + sz);
+        }
+        ret = true;
+    }
+
+    return ret;
+}
+
+
+bool SMBDatabase::GetSoundEffectWav(SoundEffect effect, std::vector<uint8_t>* data)
+{
+    return GetWav(this, "sound_effect", "effect", static_cast<uint32_t>(effect), data);
+}
+
+bool SMBDatabase::GetMusicTrackWav(MusicTrack track, std::vector<uint8_t>* data)
+{
+    return GetWav(this, "music_track", "track", static_cast<uint32_t>(track), data);
+}
+
+static bool InsertWav(SMBDatabase* db, const char* table, const char* nm, uint32_t v, const std::string& wavpath)
+{
+    std::vector<uint8_t> wav_data;
+    if (!util::ReadFileToVector(wavpath, &wav_data)) {
+        return false;
+    }
+
+
+    sqlite3_stmt* stmt;
+    sqliteext::PrepareOrThrow(db->m_Database, fmt::format(R"(
+        DELETE FROM {} WHERE {} = ?;
+    )", table, nm), &stmt);
+    sqliteext::BindIntOrThrow(stmt, 1, v);
+    sqliteext::StepAndFinalizeOrThrow(stmt);
+
+    sqliteext::PrepareOrThrow(db->m_Database, fmt::format(R"(
+        INSERT INTO {} ({}, wav_data) VALUES (?, ?);
+    )", table, nm), &stmt);
+
+    sqliteext::BindIntOrThrow(stmt, 1, v);
+    sqliteext::BindBlbOrThrow(stmt, 2, wav_data.data(), wav_data.size());
+    sqliteext::StepAndFinalizeOrThrow(stmt);
+
+    return true;
+}
+
+
+bool smb::InsertSoundEffect(SMBDatabase* database, SoundEffect effect, const std::string& wavpath)
+{
+    return InsertWav(database, "sound_effect", "effect", static_cast<uint32_t>(effect), wavpath);
+}
+
+bool smb::InsertMusicTrack(SMBDatabase* database, MusicTrack track, const std::string& wavpath)
+{
+    return InsertWav(database, "music_track", "track", static_cast<uint32_t>(track), wavpath);
+}

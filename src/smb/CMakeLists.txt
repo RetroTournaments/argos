@@ -38,5 +38,6 @@ target_link_libraries(smbuilib
     rgmuilib
     nesuilib
     gameuilib
+    sdlextuilib
 )
 
