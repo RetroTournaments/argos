@@ -9,7 +9,7 @@
 	url = https://github.com/zeromq/cppzmq.git
 [submodule "3rd/nestopia"]
 	path = 3rd/nestopia
-	url = git@github.com:RetroTournaments/nestopia.git
+	url = https://github.com/RetroTournaments/nestopia.git
 [submodule "3rd/nativefiledialog"]
 	path = 3rd/nativefiledialog
 	url = https://github.com/mlabbe/nativefiledialog.git
