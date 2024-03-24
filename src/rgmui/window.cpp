@@ -74,13 +74,14 @@ Window::Window(const std::string& name, int width, int height, int winx, int win
         y = winy;
     }
 
-    m_Window = SDL_CreateWindowWithPosition(
-        name.c_str(), 
-        x, y,
-        width, 
-        height, 
-        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
-    );
+    m_Window = SDL_CreateWindow(name.c_str(), width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    //m_Window = SDL_CreateWindowWithProperties(
+    //    name.c_str(), 
+    //    x, y,
+    //    width, 
+    //    height, 
+    //    SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
+    //);
     if (m_Window == nullptr) {
         throw std::runtime_error(SDL_GetError());
     }
