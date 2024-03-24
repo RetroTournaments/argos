@@ -67,7 +67,7 @@ void SMPTEApplication::OnFirstFrame()
 
             double angle = 0.0;
             for (int i = 0; i < frequency; i++) {
-                *p++ = static_cast<int16_t>(std::sin(angle) * 32767);
+                *p++ = static_cast<int16_t>(std::sin(angle) * static_cast<float>(std::numeric_limits<int16_t>::max() - 1));
                 angle += 1000 * M_PI / static_cast<double>(frequency);
             }
         } else if (format == SDL_AUDIO_S32) {
@@ -76,7 +76,7 @@ void SMPTEApplication::OnFirstFrame()
 
             double angle = 0.0;
             for (int i = 0; i < frequency; i++) {
-                *p++ = static_cast<int32_t>(std::sin(angle) * 4294967290);
+                *p++ = static_cast<int32_t>(std::sin(angle) * static_cast<float>(std::numeric_limits<int32_t>::max() - 1));
                 angle += 1000 * M_PI / static_cast<double>(frequency);
             }
 
