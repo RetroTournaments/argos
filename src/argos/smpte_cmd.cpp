@@ -36,7 +36,7 @@ public:
 
 private:
     std::unique_ptr<sdlext::SDLExtMixInit> m_MixInit;
-    std::vector<int16_t> m_AudioData;
+    std::vector<uint8_t> m_AudioData;
     Mix_Chunk* m_Chunk;
     bool m_HideCursor;
     bool m_Mute;
@@ -45,7 +45,7 @@ private:
 SMPTEApplication::SMPTEApplication()
     : m_MixInit(std::make_unique<sdlext::SDLExtMixInit>())
     , m_Chunk(nullptr)
-    , m_HideCursor(false)
+    , m_HideCursor(true)
     , m_Mute(false)
 {
 }
@@ -61,22 +61,33 @@ void SMPTEApplication::OnFirstFrame()
     int channels;
 
     if (Mix_QuerySpec(&frequency, &format, &channels)) {
-        if (format != SDL_AUDIO_S16) {
-            std::cerr << "currently only supports SDL_AUDIO_S16 format.." << std::endl;
-            std::cout << format << std::endl;
+        if (format == SDL_AUDIO_S16) {
+            m_AudioData.resize(frequency * 2);
+            int16_t* p = reinterpret_cast<int16_t*>(m_AudioData.data());
+
+            double angle = 0.0;
+            for (int i = 0; i < frequency; i++) {
+                *p++ = static_cast<int16_t>(std::sin(angle) * 32767);
+                angle += 1000 * M_PI / static_cast<double>(frequency);
+            }
+        } else if (format == SDL_AUDIO_S32) {
+            m_AudioData.resize(frequency * 4);
+            int32_t* p = reinterpret_cast<int32_t*>(m_AudioData.data());
+
+            double angle = 0.0;
+            for (int i = 0; i < frequency; i++) {
+                *p++ = static_cast<int32_t>(std::sin(angle) * 4294967290);
+                angle += 1000 * M_PI / static_cast<double>(frequency);
+            }
+
+        } else {
+            std::cerr << "unsupported audio format: " << format << std::endl;
+            return;
         }
 
-        m_AudioData.resize(frequency);
-        double angle = 0.0;
-        for (int i = 0; i < frequency; i++) {
-            m_AudioData[i] = static_cast<int16_t>(std::sin(angle) * 32767);
-            angle += 1000 * M_PI / static_cast<double>(frequency);
-        }
-
-        m_Chunk = Mix_QuickLoad_RAW(reinterpret_cast<uint8_t*>(m_AudioData.data()), m_AudioData.size() * 2);
+        m_Chunk = Mix_QuickLoad_RAW(m_AudioData.data(), m_AudioData.size());
         Mix_PlayChannel(-1, m_Chunk, -1);
     }
-
 }
 
 bool SMPTEApplication::OnFrame()
