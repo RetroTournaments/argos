@@ -45,9 +45,9 @@ SDLExtMixInit::~SDLExtMixInit()
 
 SDLExtMixChunk::SDLExtMixChunk(const std::vector<uint8_t>& wav_data)
 {
-    SDL_RWops* rwops = SDL_RWFromConstMem(wav_data.data(), wav_data.size());
+    SDL_IOStream* rwops = SDL_IOFromConstMem(wav_data.data(), wav_data.size());
     if (!rwops) throw std::runtime_error(SDL_GetError());
-    Chunk = Mix_LoadWAV_RW(rwops, SDL_TRUE);
+    Chunk = Mix_LoadWAV_IO(rwops, SDL_TRUE);
     if (!Chunk) throw std::runtime_error(Mix_GetError());
 }
 
@@ -59,15 +59,15 @@ SDLExtMixChunk::~SDLExtMixChunk()
 SDLExtMixMusic::SDLExtMixMusic(const std::vector<uint8_t>& wav_data)
     : m_WavData(wav_data)
 {
-    SDL_RWops* rwops = SDL_RWFromConstMem(m_WavData.data(), m_WavData.size());
+    SDL_IOStream* rwops = SDL_IOFromConstMem(m_WavData.data(), m_WavData.size());
     if (!rwops) throw std::runtime_error(SDL_GetError());
-    Music = Mix_LoadMUS_RW(rwops, SDL_TRUE);
+    Music = Mix_LoadMUS_IO(rwops, SDL_TRUE);
     if (!Music) throw std::runtime_error(Mix_GetError());
 }
 
 SDLExtMixMusic::~SDLExtMixMusic()
 {
-    // Because of SDL_TRUE in Mix_LoadMUS_RW I think this is unnecessary?
+    // Because of SDL_TRUE in Mix_LoadMUS_IO I think this is unnecessary?
     // There is issues here
     //Mix_FreeMusic(Music);
 }
