@@ -47,6 +47,7 @@ add_executable(argos
     db_cmd.cpp
     help_cmd.cpp
     smb_cmd.cpp
+    smpte_cmd.cpp
 )
 target_link_libraries(argos
     argoslib

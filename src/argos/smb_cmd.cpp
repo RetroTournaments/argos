@@ -56,7 +56,7 @@ int DoSMBDB(const argos::RuntimeConfig* config, int argc, char** argv)
 // The 'smb' command is for the 1985 nes super mario bros
 REGISTER_COMMAND(smb, "Nintendo Entertainment System, Super Mario Bros., 1985",
 R"(
-EXAMPLES
+EXAMPLES:
     argos smb db
 
     <todo?> argos smb host --port 5555
