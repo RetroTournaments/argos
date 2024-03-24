@@ -38,11 +38,15 @@ private:
     std::unique_ptr<sdlext::SDLExtMixInit> m_MixInit;
     std::vector<int16_t> m_AudioData;
     Mix_Chunk* m_Chunk;
+    bool m_HideCursor;
+    bool m_Mute;
 };
 
 SMPTEApplication::SMPTEApplication()
     : m_MixInit(std::make_unique<sdlext::SDLExtMixInit>())
     , m_Chunk(nullptr)
+    , m_HideCursor(false)
+    , m_Mute(false)
 {
 }
 
@@ -59,6 +63,7 @@ void SMPTEApplication::OnFirstFrame()
     if (Mix_QuerySpec(&frequency, &format, &channels)) {
         if (format != SDL_AUDIO_S16) {
             std::cerr << "currently only supports SDL_AUDIO_S16 format.." << std::endl;
+            std::cout << format << std::endl;
         }
 
         m_AudioData.resize(frequency);
@@ -98,6 +103,22 @@ bool SMPTEApplication::OnFrame()
     float sx = static_cast<float>(width) / 21.0f * 4;
     float ex = static_cast<float>(width) / 21.0f * 8;
     list->AddRectFilled({sx, height-h4}, {ex, height}, IM_COL32_WHITE);
+
+
+    if (ImGui::IsKeyReleased(ImGuiKey_C)) {
+        m_HideCursor = !m_HideCursor;
+    }
+    if (m_HideCursor) {
+        SDL_HideCursor();
+    }
+    if (ImGui::IsKeyReleased(ImGuiKey_M)) {
+        m_Mute = !m_Mute;
+        if (m_Mute) {
+            Mix_Pause(-1);
+        } else {
+            Mix_Resume(-1);
+        }
+    }
 
     return true;
 }
