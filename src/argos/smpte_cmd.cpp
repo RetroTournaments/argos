@@ -34,6 +34,8 @@ public:
     void OnFirstFrame() override;
     bool OnFrame() override;
 
+    void SetMute(bool muted);
+
 private:
     std::unique_ptr<sdlext::SDLExtMixInit> m_MixInit;
     std::vector<uint8_t> m_AudioData;
@@ -86,7 +88,9 @@ void SMPTEApplication::OnFirstFrame()
         }
 
         m_Chunk = Mix_QuickLoad_RAW(m_AudioData.data(), m_AudioData.size());
-        Mix_PlayChannel(-1, m_Chunk, -1);
+        if (!m_Mute) {
+            Mix_PlayChannel(-1, m_Chunk, -1);
+        }
     }
 }
 
@@ -123,15 +127,19 @@ bool SMPTEApplication::OnFrame()
         SDL_HideCursor();
     }
     if (ImGui::IsKeyReleased(ImGuiKey_M)) {
-        m_Mute = !m_Mute;
-        if (m_Mute) {
-            Mix_Pause(-1);
-        } else {
-            Mix_Resume(-1);
-        }
+        SetMute(!m_Mute);
     }
 
     return true;
+}
+
+void SMPTEApplication::SetMute(bool mute) {
+    m_Mute = mute;
+    if (m_Mute) {
+        Mix_HaltChannel(-1);
+    } else if (m_Chunk) {
+        Mix_PlayChannel(-1, m_Chunk, -1);
+    }
 }
 
 
@@ -147,9 +155,24 @@ USAGE:
 DESCRIPTION:
     The 'smpte' command is to open a window with minimal other considerations
     to confirm that the main 'window' args and volume are set properly. TODO
+
+OPTIONS:
+    --mute
+        Don't play the 1khz sine wave
 )")
 {
+    bool muted = false;
+    std::string arg;
+    while (util::ArgReadString(&argc, &argv, &arg)) {
+        if (arg == "--mute") {
+            muted = true;
+        } else {
+            std::cerr << "error: unknown arg '" << arg << "'\n";
+        }
+    }
+
     SMPTEApplication app;
+    app.SetMute(muted);
     return RunIApplication(config, "argos smpte", &app);
 }
 
