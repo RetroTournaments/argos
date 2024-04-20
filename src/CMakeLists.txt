@@ -21,6 +21,7 @@ cmake_minimum_required(VERSION 3.6)
 project(src)
 
 include_directories(.)
+include_directories(../include)
 
 ################################################################################
 # General purpose libraries
