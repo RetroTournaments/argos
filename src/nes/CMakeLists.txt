@@ -45,3 +45,11 @@ target_link_libraries(nesuilib
     gameuilib
     nfdextlib
 )
+
+add_library(nesceptorlib
+    nesceptor.cpp
+)
+target_link_libraries(nesceptorlib
+    neslib
+    jsonextlib
+)
