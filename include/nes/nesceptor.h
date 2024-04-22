@@ -27,6 +27,8 @@
 namespace argos::nesceptor
 {
 
+inline constexpr int NESCEPTOR_BAUD = 4000000;
+
 enum class MessageParseState
 {
     WAITING_FOR_TYPE_BYTE,
