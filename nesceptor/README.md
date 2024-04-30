@@ -84,11 +84,16 @@ Some considerations
 - There are 25 channels to translate which is annoyingly _one more_ than 24 (a nice multiple of both 6 and 8), but it is what it is.
 - The level translators must act as high impedence when unpowered, so that the console operates when the mod is not plugged in.
 - The level translators must not be used to change or interact with the console whatsoever.
-  This is imperitive to maintain the legitimacy of the speedrunning, and must be clearly verifiable by third parties.
+  Preferably unidirectional.
+  This is imperative to maintain the legitimacy of the speedrunning and should be easily verified by third parties.
 
-*TODO @Ryan to help design / choose components and justify that choice :)* 
+### Why the SN74LXC8T245, TXU0101, and TXU0104?
 
-- Maybe the [TXU0104](https://www.ti.com/product/TXU0104)
+These level shifters were chosen because of their availability, cost, and adherence to the requirements above.
+Also due to familiarity with their characteristics.
+
+Additionally, they will be powered (`VCCA`) by the Nintendo entertainment system itself.
+This is to ensure threshold levels since the USB 5V could be anywhere between 4.8 ~ 5.2V.
 
 ### Why the RP2040?
 
@@ -108,5 +113,5 @@ Apparently there are exactly 26 programmable GPIOs which is just enough.
 ### Why USB
 
 USB is simple and well supported.
-Ethernet is not necessary because the nesbox mini pc will handle that.
+Ethernet is not necessary in this application because the nesbox mini pc will handle that.
 
