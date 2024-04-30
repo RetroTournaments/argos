@@ -20,7 +20,14 @@
 cmake_minimum_required(VERSION 3.13)
 
 include(../../3rd/pico-sdk/pico_sdk_init.cmake)
-project(nesceptor)
+project(nesceptor_firmware)
 
 pico_sdk_init()
 
+add_executable(nesceptor_firmware
+    main.c
+)
+target_link_libraries(nesceptor_firmware
+    pico_stdlib
+)
+pico_add_extra_outputs(nesceptor_firmware)

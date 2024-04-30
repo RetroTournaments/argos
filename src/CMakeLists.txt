@@ -42,4 +42,13 @@ add_subdirectory(smb)
 add_subdirectory(argos)
 
 ################################################################################
-add_subdirectory(nesceptor)
+# Is there a way to simplify that install command? Probably...
+include(ExternalProject)
+ExternalProject_Add(
+    nesceptor_firmware
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/nesceptor_firmware/
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/nesceptor_firmware/
+    BUILD_COMMAND make
+    INSTALL_COMMAND cmake -E copy ${CMAKE_CURRENT_BINARY_DIR}/nesceptor_firmware/src/nesceptor_firmware-build/nesceptor_firmware.uf2 ${CMAKE_CURRENT_BINARY_DIR}/nesceptor_firmware/
+    BUILD_ALWAYS 1
+)
