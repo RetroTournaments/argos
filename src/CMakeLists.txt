@@ -41,3 +41,5 @@ add_subdirectory(smb)
 # And the main library / exe that uses all that stuff
 add_subdirectory(argos)
 
+################################################################################
+add_subdirectory(nesceptor)
