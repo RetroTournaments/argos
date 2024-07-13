@@ -27,6 +27,8 @@ pico_sdk_init()
 add_executable(nesceptor_firmware
     main.c
 )
+pico_enable_stdio_usb(nesceptor_firmware 1)
+pico_enable_stdio_uart(nesceptor_firmware 0)
 target_link_libraries(nesceptor_firmware
     pico_stdlib
 )

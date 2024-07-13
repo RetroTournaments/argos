@@ -1,4 +1,6 @@
 
+The sdk documentation: https://datasheets.raspberrypi.com/pico/raspberry-pi-pico-c-sdk.pdf
+
 
 To get picotool, normally into ~/3rd/
 ```
