@@ -23,14 +23,23 @@ project(3rd)
 ################################################################################
 # SDL is used for making the window and for certain rendering tasks
 add_subdirectory(SDL)
+set(SDL_INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/SDL/include/"
+    PARENT_SCOPE
+)
+
+################################################################################
+# SDL_mixer is used for all of the audio stuff
 set(SDL2MIXER_OPUS OFF)
 set(SDL2MIXER_MOD OFF)
 set(SDL2MIXER_MIDI_FLUIDSYNTH OFF)
 set(SDL2MIXER_WAVPACK OFF)
-
-################################################################################
-# SDL_mixer is used for all of the audio stuff
 add_subdirectory(SDL_mixer)
+set(SDL_mixer_INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/SDL_mixer/include/"
+    PARENT_SCOPE
+)
+
 
 ################################################################################
 # imgui is just a very nice paradigm for developer friendly user interfaces

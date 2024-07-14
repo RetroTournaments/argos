@@ -18,9 +18,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "SDL3_mixer/SDL_mixer.h"
-
-#include "backends/imgui_impl_sdl3.h"
+#include "backends/imgui_impl_sdl2.h"
 #include "backends/imgui_impl_opengl3.h"
 
 #include "rgmui/window.h"
@@ -53,9 +51,7 @@ Window::Window(const std::string& name, int width, int height, int winx, int win
     int y = SDL_WINDOWPOS_UNDEFINED;
 
     if (display && winx == -1) {
-        int nd;
-        SDL_GetDisplays(&nd);
-        //= SDL_GetNumVideoDisplays();
+        int nd = SDL_GetNumVideoDisplays();
         if (display <= nd) {
             SDL_Rect r;
             SDL_GetDisplayBounds(display, &r);
@@ -74,7 +70,8 @@ Window::Window(const std::string& name, int width, int height, int winx, int win
         y = winy;
     }
 
-    m_Window = SDL_CreateWindow(name.c_str(), width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    m_Window = SDL_CreateWindow(name.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
+            width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     //m_Window = SDL_CreateWindowWithProperties(
     //    name.c_str(), 
     //    x, y,
@@ -107,7 +104,7 @@ Window::Window(const std::string& name, int width, int height, int winx, int win
 
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
-    if (!ImGui_ImplSDL3_InitForOpenGL(m_Window, m_Context)) {
+    if (!ImGui_ImplSDL2_InitForOpenGL(m_Window, m_Context)) {
         throw std::runtime_error("Failure initializing sdl for opengl, maybe update your graphics driver?");
     }
     if (!ImGui_ImplOpenGL3_Init("#version 330")) {
@@ -134,7 +131,7 @@ Window::Window(const std::string& name, int width, int height, int winx, int win
 Window::~Window()
 {
     ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplSDL3_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
     if (m_Context) SDL_GL_DeleteContext(m_Context);
     if (m_Window) SDL_DestroyWindow(m_Window);
@@ -144,8 +141,8 @@ Window::~Window()
 
 bool Window::OnSDLEvent(const SDL_Event& e)
 {
-    ImGui_ImplSDL3_ProcessEvent(&e);
-    if (e.type == SDL_EVENT_QUIT) {
+    ImGui_ImplSDL2_ProcessEvent(&e);
+    if (e.type == SDL_QUIT) {
         return false;
     }
     return true;
@@ -182,13 +179,15 @@ Rect2I Window::GetScreenRect() const
 
 int Window::GetDisplay() const
 {
-    return SDL_GetDisplayForWindow(m_Window);
+    // TODO
+    return 0;
+    //return SDL_GetDisplayForWindow(m_Window);
 }
 
 void Window::NewFrame() {
     ImGui_ImplOpenGL3_NewFrame();
     //ImGui_ImplSDL3_NewFrame(m_Window);
-    ImGui_ImplSDL3_NewFrame();
+    ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
     rgmui::NewFrame();
 

@@ -24,8 +24,12 @@ add_library(sdlextlib STATIC
     sdlext.cpp
 )
 target_link_libraries(sdlextlib PUBLIC
-    SDL3::SDL3 
-    SDL3_mixer::SDL3_mixer
+    SDL2
+    SDL2_mixer
+)
+target_include_directories(sdlextlib PUBLIC
+    ${SDL_mixer_INCLUDE_DIRS}
+    ${SDL_INCLUDE_DIRS}
 )
 
 add_library(sdlextuilib

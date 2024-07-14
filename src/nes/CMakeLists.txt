@@ -32,7 +32,7 @@ target_include_directories(neslib PUBLIC
 target_link_libraries(neslib
     utillib
     gamelib
-    #    3rdnestopia
+    3rdnestopia
 )
 
 add_library(nesuilib

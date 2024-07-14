@@ -63,7 +63,7 @@ void SMPTEApplication::OnFirstFrame()
     int channels;
 
     if (Mix_QuerySpec(&frequency, &format, &channels)) {
-        if (format == SDL_AUDIO_S16) {
+        if (format == AUDIO_S16SYS) {
             m_AudioData.resize(frequency * 2);
             int16_t* p = reinterpret_cast<int16_t*>(m_AudioData.data());
 
@@ -72,7 +72,7 @@ void SMPTEApplication::OnFirstFrame()
                 *p++ = static_cast<int16_t>(std::sin(angle) * static_cast<float>(std::numeric_limits<int16_t>::max() - 1));
                 angle += 1000 * M_PI / static_cast<double>(frequency);
             }
-        } else if (format == SDL_AUDIO_S32) {
+        } else if (format == AUDIO_S32SYS) {
             m_AudioData.resize(frequency * 4);
             int32_t* p = reinterpret_cast<int32_t*>(m_AudioData.data());
 
@@ -124,7 +124,7 @@ bool SMPTEApplication::OnFrame()
         m_HideCursor = !m_HideCursor;
     }
     if (m_HideCursor) {
-        SDL_HideCursor();
+        SDL_ShowCursor(SDL_DISABLE);
     }
     if (ImGui::IsKeyReleased(ImGuiKey_M)) {
         SetMute(!m_Mute);

@@ -25,7 +25,7 @@
 #include <cstdint>
 
 #include "SDL.h" 
-#include "SDL3_mixer/SDL_mixer.h"
+#include "SDL_mixer.h"
 
 namespace argos::sdlext
 {

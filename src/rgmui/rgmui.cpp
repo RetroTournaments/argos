@@ -159,7 +159,7 @@ void IApplication::RegisterComponent(std::shared_ptr<IApplicationComponent> comp
 ////////////////////////////////////////////////////////////////////////////////
 
 bool argos::rgmui::KeyUp(const SDL_Event& e, SDL_Keycode k) {
-    return e.type == SDL_EVENT_KEY_UP && e.key.keysym.sym == k;
+    return e.type == SDL_KEYUP && e.key.keysym.sym == k;
 }
 
 bool argos::rgmui::KeyUpWithCtrl(const SDL_Event& e, SDL_Keycode k) {
@@ -173,7 +173,7 @@ bool argos::rgmui::KeyUpWithCtrl(const SDL_Event& e, SDL_Keycode k) {
 }
 
 bool argos::rgmui::KeyDown(const SDL_Event& e, SDL_Keycode k) {
-    return e.type == SDL_EVENT_KEY_DOWN && e.key.keysym.sym == k;
+    return e.type == SDL_KEYDOWN && e.key.keysym.sym == k;
 }
 
 bool argos::rgmui::KeyDownWithCtrl(const SDL_Event& e, SDL_Keycode k) {
@@ -206,7 +206,7 @@ bool argos::rgmui::AltIsDown()
 
 bool argos::rgmui::ArrowKeyHelper(const SDL_Event& e, std::function<void(int dx, int dy)> cback,
         int shiftMultiplier) {
-    if (e.type == SDL_EVENT_KEY_DOWN) {
+    if (e.type == SDL_KEYDOWN) {
         int dx = 0;
         int dy = 0;
         switch (e.key.keysym.sym) {

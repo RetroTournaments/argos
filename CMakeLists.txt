@@ -25,8 +25,6 @@ project(argos)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -O3")
 
-find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3-shared)
-find_package(SDL3_mixer REQUIRED)
 find_package(ZeroMQ REQUIRED)
 
 find_package(PkgConfig REQUIRED)
