@@ -21,6 +21,18 @@ cmake_minimum_required(VERSION 3.6)
 project(3rd)
 
 ################################################################################
+# SDL is used for making the window and for certain rendering tasks
+add_subdirectory(SDL)
+set(SDL2MIXER_OPUS OFF)
+set(SDL2MIXER_MOD OFF)
+set(SDL2MIXER_MIDI_FLUIDSYNTH OFF)
+set(SDL2MIXER_WAVPACK OFF)
+
+################################################################################
+# SDL_mixer is used for all of the audio stuff
+add_subdirectory(SDL_mixer)
+
+################################################################################
 # imgui is just a very nice paradigm for developer friendly user interfaces
 set(imgui_INCLUDE_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/imgui/"
@@ -32,15 +44,15 @@ add_library(3rdimgui STATIC
     "imgui/imgui_demo.cpp"
     "imgui/imgui_widgets.cpp"
     "imgui/imgui_tables.cpp"
-    "imgui/backends/imgui_impl_sdl3.cpp"
-    "imgui/backends/imgui_impl_sdlrenderer3.cpp"
+    "imgui/backends/imgui_impl_sdl2.cpp"
+    "imgui/backends/imgui_impl_sdlrenderer2.cpp"
     "imgui/backends/imgui_impl_opengl3.cpp"
 )
 set_target_properties(3rdimgui PROPERTIES COMPILE_FLAGS "-fPIC")
 target_include_directories(3rdimgui PUBLIC
     "imgui/"
 )
-target_link_libraries(3rdimgui SDL3::SDL3 SDL3_mixer::SDL3_mixer)
+target_link_libraries(3rdimgui SDL2 SDL2_mixer)
 target_compile_options(3rdimgui PUBLIC -Wno-unknown-warning-option)
 
 ################################################################################
