@@ -38,9 +38,10 @@ DESCRIPTION:
     List something relevant to argos line by line.
 
 SETS:
-    v4l2   : Input devices for video capture, uses `v4l2-ctl --list-devices`
-    pactl  : The pulse audio sources, uses `pactl list short sources`
-    serial : The serial sources, uses `journalctl`
+    v4l2     : Input devices for video capture, uses `v4l2-ctl --list-devices`
+    pactl    : The pulse audio sources, uses `pactl list short sources`
+    serial   : The serial sources, uses `journalctl`
+    commands : The commands that argos supports
 )")
 {
     std::string set;
@@ -55,9 +56,14 @@ SETS:
         return system("pactl list short sources");
     } else if (set == "serial") {
         return system("journalctl --dmesg -o short-monotonic --no-hostname --no-pager | grep tty");
+    } else if (set == "command" || set == "commands") {
+        for (auto & cmd : argos::main::GetRegisteredCommands()) {
+            std::cout << cmd.name << std::endl;
+        }
+    } else {
+        std::cout << "unknown set: " << set << std::endl;
+        return 1;
     }
-
-    std::cout << "unknown set: " << set << std::endl;
-    return 1;
+    return 0;
 }
 
