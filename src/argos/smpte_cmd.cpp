@@ -63,14 +63,17 @@ void SMPTEApplication::OnFirstFrame()
     int channels;
 
     if (Mix_QuerySpec(&frequency, &format, &channels)) {
+        double ANGLE_INCREMENT = 1000 * M_PI / static_cast<double>(frequency);
+        float DIM = 0.01;
+
         if (format == AUDIO_S16SYS) {
             m_AudioData.resize(frequency * 2);
             int16_t* p = reinterpret_cast<int16_t*>(m_AudioData.data());
 
             double angle = 0.0;
             for (int i = 0; i < frequency; i++) {
-                *p++ = static_cast<int16_t>(std::sin(angle) * static_cast<float>(std::numeric_limits<int16_t>::max() - 1));
-                angle += 1000 * M_PI / static_cast<double>(frequency);
+                *p++ = static_cast<int16_t>(std::sin(angle) * static_cast<float>(std::numeric_limits<int16_t>::max() - 1) * DIM);
+                angle += ANGLE_INCREMENT;
             }
         } else if (format == AUDIO_S32SYS) {
             m_AudioData.resize(frequency * 4);
@@ -78,8 +81,8 @@ void SMPTEApplication::OnFirstFrame()
 
             double angle = 0.0;
             for (int i = 0; i < frequency; i++) {
-                *p++ = static_cast<int32_t>(std::sin(angle) * static_cast<float>(std::numeric_limits<int32_t>::max() - 1));
-                angle += 1000 * M_PI / static_cast<double>(frequency);
+                *p++ = static_cast<int32_t>(std::sin(angle) * static_cast<float>(std::numeric_limits<int32_t>::max() - 1) * DIM);
+                angle += ANGLE_INCREMENT;
             }
 
         } else {
@@ -147,7 +150,7 @@ REGISTER_COMMAND(smpte, "SMPTE color bars and tone",
 R"(
 EXAMPLES:
     argos smpte
-    argos smpte --quiet
+    argos smpte --mute
 
 USAGE:
     argos smpte [<args>...]
