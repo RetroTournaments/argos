@@ -61,7 +61,7 @@ void argos::sqliteext::BindBlbOrThrow(sqlite3_stmt* stmt, int pos, const void* d
 
 void argos::sqliteext::BindStrOrThrow(sqlite3_stmt* stmt, int pos, const std::string& str)
 {
-    if (sqlite3_bind_text(stmt, pos, str.c_str(), str.size(), SQLITE_STATIC)) {
+    if (sqlite3_bind_text(stmt, pos, str.c_str(), str.size(), SQLITE_TRANSIENT)) {
         throw std::runtime_error("bind failed? TODO get error info from sqlite");
     }
 }
