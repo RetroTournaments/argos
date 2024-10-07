@@ -44,20 +44,18 @@ int DoSMBDB(const argos::RuntimeConfig* config, int argc, char** argv)
         smbui::SMBDatabaseApplication app(&smbdb);
         return RunIApplication(config, "argos smb db", &app);
     } else {
-        Error("unrecognized argument. '{}'", arg);
+        Error("unrecognized argument. '{}', expected 'edit' or 'ui'", arg);
         return 1;
     }
     return 0;
 }
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // The 'smb' command is for the 1985 nes super mario bros
 REGISTER_COMMAND(smb, "Nintendo Entertainment System, Super Mario Bros., 1985",
 R"(
 EXAMPLES:
-    argos smb db
+    argos smb db ui
 
     <todo?> argos smb host --port 5555
     <todo?> argos smb join --nestopia --connect "udp://127.0.0.1:5555"
@@ -71,6 +69,11 @@ DESCRIPTION:
     Mario Bros.' This was the first game supported.
 
 OPTIONS:
+    db edit
+        Edit the smb database in sqlite.
+
+    db ui
+        Edit/view the smb database with the imgui user interface.
 )")
 {
     std::string action;
@@ -82,7 +85,7 @@ OPTIONS:
     if (action == "db") {
         return DoSMBDB(config, argc, argv);
     } else {
-        Error("unrecognized action. '{}'", action);
+        Error("unrecognized action. '{}', expected 'db'", action);
         return 1;
     }
 

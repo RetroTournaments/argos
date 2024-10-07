@@ -65,7 +65,7 @@ OPTIONS:
         Save the current config, and create the defaults config.
 
     --restore-last
-        Swap the current config with the previous saved config
+        Swap the current config with the previous saved config.
 )")
 {
     if (argc > 1) {
