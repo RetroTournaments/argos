@@ -31,6 +31,7 @@ using namespace argos::main;
 
 ////////////////////////////////////////////////////////////////////////////////
 // The 'nesceptor' command is for the nes mod
+/*
 REGISTER_COMMAND(nesceptor, "NESceptor mod",
 R"(
 EXAMPLES:
@@ -86,3 +87,4 @@ OPTIONS:
 
     return 0;
 }
+*/
