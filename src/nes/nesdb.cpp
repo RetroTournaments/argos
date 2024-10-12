@@ -181,7 +181,7 @@ int NESDatabase::InsertNewTAS(int rom_id, const std::string& name)
 {
     sqlite3_stmt* stmt;
     sqliteext::PrepareOrThrow(m_Database, R"(
-        INSERT INTO nes_tas (rom_id, name) VALUES (?, ?);
+        INSERT INTO nes_tas (rom_id, name, inputs) VALUES (?, ?, "");
     )", &stmt);
     sqliteext::BindIntOrThrow(stmt, 1, rom_id);
     sqliteext::BindStrOrThrow(stmt, 2, name);

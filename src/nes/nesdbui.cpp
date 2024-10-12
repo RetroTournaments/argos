@@ -164,6 +164,7 @@ NESDBTASComponent::NESDBTASComponent(nes::NESDatabase* db)
     , m_SelectedTASID(-1)
     , m_TasToDelete(-1)
     , m_PendingROMID(1)
+    , m_Locked(true)
 {
     Refresh();
     //m_NESTasComponent = std::make_shared<NESTASComponent>("selected_nes_tas");
@@ -192,6 +193,9 @@ void NESDBTASComponent::ChangeName(int id, const std::string& name)
 void NESDBTASComponent::OnFrame()
 {
     if (ImGui::Begin("nes_tas")) {
+        if (ImGui::Button("Refresh")) Refresh();
+        ImGui::SameLine();
+        ImGui::Checkbox("Locked", &m_Locked);
         m_TasToDelete = -1;
         sqliteext::ui::DoDBViewTable<nes::db::nes_tas>("db::nes_tas", &m_NESTasInfo, &m_SelectedTASID,
             4, 
@@ -201,7 +205,7 @@ void NESDBTASComponent::OnFrame()
                 ImGui::TableSetupColumn("name         ", ImGuiTableColumnFlags_WidthFixed);
                 ImGui::TableSetupColumn("         ", ImGuiTableColumnFlags_WidthFixed);
             }, 
-            [](nes::db::nes_tas* tas,
+            [=](nes::db::nes_tas* tas,
                 bool* selected,
                 int* scroll,
                 void* nesdbtascomp)
@@ -210,11 +214,13 @@ void NESDBTASComponent::OnFrame()
                 bool changed = false;
                 IntColumn(0, &tas->id, selected, BasicColumnType::READONLY, &changed, scroll);
                 IntColumn(1, &tas->rom_id, selected, BasicColumnType::READONLY, &changed, scroll);
+                ImGui::BeginDisabled(m_Locked);
                 TextColumn(2, &tas->name, selected, BasicColumnType::EDITABLE, &changed, scroll);
                 if (ButtonColumn(3, "delete", scroll)) {
                     NESDBTASComponent* comp = reinterpret_cast<NESDBTASComponent*>(nesdbtascomp);
                     comp->SetIDToDelete(tas->id);
                 }
+                ImGui::EndDisabled();
                 if (changed) {
                     NESDBTASComponent* comp = reinterpret_cast<NESDBTASComponent*>(nesdbtascomp);
                     comp->ChangeName(tas->id, tas->name);

@@ -86,6 +86,7 @@ private:
 
     int m_PendingROMID;
     std::string m_PendingName;
+    bool m_Locked;
 };
 
 }
