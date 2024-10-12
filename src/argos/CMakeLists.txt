@@ -49,14 +49,12 @@ add_executable(argos
     smb_cmd.cpp
     smpte_cmd.cpp
     list_cmd.cpp
-    nesceptor_cmd.cpp
 )
 target_link_libraries(argos
     argoslib
     rgmuilib
     smblib
     smbuilib
-    nesceptorlib
 )
 target_compile_options(argos PUBLIC -Wno-string-plus-int)
 
