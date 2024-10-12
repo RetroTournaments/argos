@@ -47,7 +47,10 @@ DESCRIPTION:
 
 OPTIONS:
     --reset
-        Wipe the database
+        Wipe the database.
+
+    --path
+        Print the path to database.
 )")
 {
     if (argc == 0) {
@@ -58,6 +61,10 @@ OPTIONS:
         if (arg == "--reset") {
             fs::remove(RuntimeConfig::ArgosDatabasePath(config));
             ArgosDB db(RuntimeConfig::ArgosDatabasePath(config));
+            return 0;
+        } else if (arg == "path" || arg == "--path") {
+            std::cout << RuntimeConfig::ArgosDatabasePath(config) << std::endl;
+            return 0;
         } else {
             Error("unrecognized argument. '{}'", arg);
             return 1;

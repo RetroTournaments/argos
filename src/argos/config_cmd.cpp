@@ -37,6 +37,7 @@ public:
     int EditConfig();
     int SetDefaults();
     int RestoreLast();
+    int Path();
 
 private:
     const RuntimeConfig* m_RuntimeConfig;
@@ -66,6 +67,9 @@ OPTIONS:
 
     --restore-last
         Swap the current config with the previous saved config.
+
+    --path
+        Print the config file path and exit
 )")
 {
     if (argc > 1) {
@@ -83,6 +87,8 @@ OPTIONS:
             return cmd.SetDefaults();
         } else if (arg == "--restore-last") {
             return cmd.RestoreLast();
+        } else if (arg == "path" || arg == "--path") {
+            return cmd.Path();
         } else {
             Error("unrecognized argument. '{}'", arg);
             return 1;
@@ -168,3 +174,8 @@ int ConfigCommand::RestoreLast()
     return 0;
 }
 
+int ConfigCommand::Path()
+{
+    std::cout << RuntimeConfig::RuntimeConfigPath(m_RuntimeConfig) << std::endl;
+    return 0;
+}

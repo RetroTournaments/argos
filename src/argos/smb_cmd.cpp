@@ -43,8 +43,11 @@ int DoSMBDB(const argos::RuntimeConfig* config, int argc, char** argv)
     } else if (arg == "ui") {
         smbui::SMBDatabaseApplication app(&smbdb);
         return RunIApplication(config, "argos smb db", &app);
+    } else if (arg ==  "path") {
+        std::cout << RuntimeConfig::SMBDatabasePath(config) << std::endl;;
+        return 0;
     } else {
-        Error("unrecognized argument. '{}', expected 'edit' or 'ui'", arg);
+        Error("unrecognized argument. '{}', expected 'edit', 'ui', or 'path'", arg);
         return 1;
     }
     return 0;
@@ -74,6 +77,9 @@ OPTIONS:
 
     db ui
         Edit/view the smb database with the imgui user interface.
+
+    db path
+        Print the path to the smb database.
 )")
 {
     std::string action;
