@@ -48,21 +48,24 @@ void argos::sqliteext::PrepareOrThrow(sqlite3* db, const std::string& query, sql
 void argos::sqliteext::BindIntOrThrow(sqlite3_stmt* stmt, int pos, int value)
 {
     if (sqlite3_bind_int(stmt, pos, value)) {
-        throw std::runtime_error("bind failed? TODO get error info from sqlite");
+        sqlite3* db = sqlite3_db_handle(stmt);
+        throw std::runtime_error("bind failed: " + std::string(sqlite3_errmsg(db)));
     }
 }
 
 void argos::sqliteext::BindBlbOrThrow(sqlite3_stmt* stmt, int pos, const void* data, size_t size)
 {
     if (sqlite3_bind_blob(stmt, pos, data, size, SQLITE_STATIC)) {
-        throw std::runtime_error("bind failed? TODO get error info from sqlite");
+        sqlite3* db = sqlite3_db_handle(stmt);
+        throw std::runtime_error("bind failed: " + std::string(sqlite3_errmsg(db)));
     }
 }
 
 void argos::sqliteext::BindStrOrThrow(sqlite3_stmt* stmt, int pos, const std::string& str)
 {
     if (sqlite3_bind_text(stmt, pos, str.c_str(), str.size(), SQLITE_TRANSIENT)) {
-        throw std::runtime_error("bind failed? TODO get error info from sqlite");
+        sqlite3* db = sqlite3_db_handle(stmt);
+        throw std::runtime_error("bind failed: " + std::string(sqlite3_errmsg(db)));
     }
 }
 
@@ -178,7 +181,8 @@ bool argos::sqliteext::ExecForSingleNullableInt(sqlite3* db, const std::string& 
 void argos::sqliteext::StepAndFinalizeOrThrow(sqlite3_stmt* stmt)
 {
     if (sqlite3_step(stmt) != SQLITE_DONE) {
-        throw std::runtime_error("step failed? TODO get error from sqlite");
+        sqlite3* db = sqlite3_db_handle(stmt);
+        throw std::runtime_error("step failed: " + std::string(sqlite3_errmsg(db)));
     }
     sqlite3_finalize(stmt);
 }
