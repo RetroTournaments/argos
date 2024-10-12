@@ -118,9 +118,9 @@ int ConfigCommand::EditConfig()
 
     if (newContents != originalContents) {
         WriteVectorToFile(configPath + "~", originalContents);
-        std::cout << "no change " << configPath << std::endl;
-    } else {
         std::cout << "edited " << configPath << std::endl;
+    } else {
+        std::cout << "no change " << configPath << std::endl;
     }
     return 0;
 }
