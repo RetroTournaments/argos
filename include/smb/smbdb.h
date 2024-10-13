@@ -42,6 +42,21 @@ struct music_track
     std::vector<uint8_t> wav_data;
 };
 
+struct nametable_page
+{
+    AreaID area_id;
+    uint8_t page;
+    nes::FramePalette frame_palette;
+    nes::NameTable data;
+};
+
+struct minimap_page
+{
+    AreaID area_id;
+    uint8_t page;
+    MinimapImage data;
+};
+
 }
 
 class SMBDatabase : public nes::NESDatabase
@@ -52,9 +67,13 @@ public:
 
     bool GetSoundEffectWav(SoundEffect effect, std::vector<uint8_t>* data);
     bool GetMusicTrackWav(MusicTrack track, std::vector<uint8_t>* data);
+    bool GetNametablePage(AreaID area_id, uint8_t page, db::nametable_page* nt_page);
+    bool GetMinimapPage(AreaID area_id, uint8_t page, db::minimap_page* mini_page);
 
     static const char* SoundEffectSchema();
     static const char* MusicTrackSchema();
+    static const char* NametablePageSchema();
+    static const char* MinimapPageSchema();
 };
 
 

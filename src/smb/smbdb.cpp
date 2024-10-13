@@ -32,6 +32,8 @@ SMBDatabase::SMBDatabase(const std::string& path)
 {
     ExecOrThrow(SMBDatabase::SoundEffectSchema());
     ExecOrThrow(SMBDatabase::MusicTrackSchema());
+    ExecOrThrow(SMBDatabase::NametablePageSchema());
+    ExecOrThrow(SMBDatabase::MinimapPageSchema());
 }
 
 SMBDatabase::~SMBDatabase()
@@ -51,6 +53,25 @@ const char* SMBDatabase::MusicTrackSchema()
     return R"(CREATE TABLE IF NOT EXISTS music_track (
     track           INTEGER PRIMARY KEY,
     wav_data        BLOB NOT NULL
+);)";
+}
+
+const char* SMBDatabase::NametablePageSchema()
+{
+    return R"(CREATE TABLE IF NOT EXISTS nametable_page (
+    area_id         INTEGER PRIMARY KEY,
+    page            INTEGER NOT NULL,
+    frame_palette   BLOB NOT NULL,
+    data            BLOB NOT NULL
+);)";
+}
+
+const char* SMBDatabase::MinimapPageSchema()
+{
+    return R"(CREATE TABLE IF NOT EXISTS minimap_page (
+    area_id         INTEGER PRIMARY KEY,
+    page            INTEGER NOT NULL,
+    data            BLOB NOT NULL
 );)";
 }
 
@@ -94,7 +115,6 @@ static bool InsertWav(SMBDatabase* db, const char* table, const char* nm, uint32
         return false;
     }
 
-
     sqlite3_stmt* stmt;
     sqliteext::PrepareOrThrow(db->m_Database, fmt::format(R"(
         DELETE FROM {} WHERE {} = ?;
@@ -113,7 +133,6 @@ static bool InsertWav(SMBDatabase* db, const char* table, const char* nm, uint32
     return true;
 }
 
-
 bool smb::InsertSoundEffect(SMBDatabase* database, SoundEffect effect, const std::string& wavpath)
 {
     return InsertWav(database, "sound_effect", "effect", static_cast<uint32_t>(effect), wavpath);
@@ -122,4 +141,14 @@ bool smb::InsertSoundEffect(SMBDatabase* database, SoundEffect effect, const std
 bool smb::InsertMusicTrack(SMBDatabase* database, MusicTrack track, const std::string& wavpath)
 {
     return InsertWav(database, "music_track", "track", static_cast<uint32_t>(track), wavpath);
+}
+
+bool SMBDatabase::GetNametablePage(AreaID area_id, uint8_t page, db::nametable_page* nt_page)
+{
+    return false;
+}
+
+bool SMBDatabase::GetMinimapPage(AreaID area_id, uint8_t page, db::minimap_page* mini_page)
+{
+    return false;
 }

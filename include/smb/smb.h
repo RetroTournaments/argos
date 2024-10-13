@@ -54,10 +54,59 @@ enum RamAddress : uint16_t
     ENEMY_FLAG              = 0x000f,
     MARIO_BOUNDING_BOX      = 0x04ac, // ulx, uly, drx, dry
     ENEMY_BOUNDING_BOX      = 0x04b0,
+
+    PAUSE_SOUND_QUEUE       = 0x00fa,
+    AREA_MUSIC_QUEUE        = 0x00fb,
+    EVENT_MUSIC_QUEUE       = 0x00fc,
+    NOISE_SOUND_QUEUE       = 0x00fd,
+    SQUARE2_SOUND_QUEUE     = 0x00fe,
+    SQUARE1_SOUND_QUEUE     = 0x00ff,
 };
 
+// Area IDs 
+//  (AREA_DATA_HIGH << 8) + AREA_DATA_LOW
+// Define what is typically considered a 'level' like 1-1 is GROUD_AREA_1 for example.
+// But also they are often re-used / shared.
+enum class AreaID : uint16_t
+{
+    WATER_AREA_1        = 0xAE08,
+    WATER_AREA_2        = 0xAE47,
+    WATER_AREA_3        = 0xAEC2,
+    GROUND_AREA_1       = 0xA46D,
+    GROUND_AREA_2       = 0xA4D0,
+    GROUND_AREA_3       = 0xA539,
+    GROUND_AREA_4       = 0xA58C,
+    GROUND_AREA_5       = 0xA61B,
+    GROUND_AREA_6       = 0xA690,
+    GROUND_AREA_7       = 0xA6F5,
+    GROUND_AREA_8       = 0xA74A,
+    GROUND_AREA_9       = 0xA7CF,
+    GROUND_AREA_10      = 0xA834,
+    GROUND_AREA_11      = 0xA83D,
+    GROUND_AREA_12      = 0xA87C,
+    GROUND_AREA_13      = 0xA891,
+    GROUND_AREA_14      = 0xA8F8,
+    GROUND_AREA_15      = 0xA95D,
+    GROUND_AREA_16      = 0xA9D0,
+    GROUND_AREA_17      = 0xAA01,
+    GROUND_AREA_18      = 0xAA94,
+    GROUND_AREA_19      = 0xAB07,
+    GROUND_AREA_20      = 0xAB80,
+    GROUND_AREA_21      = 0xABD9,
+    GROUND_AREA_22      = 0xAC04,
+    UNDERGROUND_AREA_1  = 0xAC37,
+    UNDERGROUND_AREA_2  = 0xACDA,
+    UNDERGROUND_AREA_3  = 0xAD7B,
+    CASTLE_AREA_1       = 0xA1B1,
+    CASTLE_AREA_2       = 0xA212,
+    CASTLE_AREA_3       = 0xA291,
+    CASTLE_AREA_4       = 0xA304,
+    CASTLE_AREA_5       = 0xA371,
+    CASTLE_AREA_6       = 0xA3FC,
+};
 
-// see smb.asm:     ;sound effects constants
+// Sound effects
+//  From queues (SQUARE1_SOUND_QUEUE, SQUARE2_SOUND_QUEUE, NOISE_SOUND_QUEUE, PAUSE_SOUND_QUEUE)
 enum class SoundEffect : uint32_t
 {
     SILENCE             = 0b00000000000000000000000000000000,
@@ -86,7 +135,8 @@ enum class SoundEffect : uint32_t
 const std::vector<SoundEffect>& AudibleSoundEffects();
 std::string ToString(SoundEffect effect);
     
-// music
+// Music tracks
+//  From queues (AREA_MUSIC_QUEUE, EVENT_MUSIC_QUEUE)
 enum class MusicTrack : uint32_t
 {
     SILENCE             = 0b00000000000000000000000000000000,
@@ -114,6 +164,17 @@ std::string ToString(MusicTrack track);
 
 // Game end state
 //  OPER_MODE == 2, OPER_MODE_TASK == 0x00, PLAYER_X_SPEED == 0x18
+
+// Minimap is just a 2bpp image of the same size as a normal nes frame
+inline constexpr int MINIMAP_NUM_BYTES = nes::FRAME_SIZE / 4;
+inline constexpr int MINIMAP_RGB_PALETTE_SIZE = 4 * nes::BYTES_PER_PALETTE_ENTRY;
+typedef std::array<uint8_t, 4> MinimapPalette; // palette entries into a nes palette
+typedef std::array<uint8_t, MINIMAP_RGB_PALETTE_SIZE> MinimapPaletteBGR;
+
+const MinimapPalette& DefaultMinimapPalette(); // indices
+const MinimapPaletteBGR& DefaultMinimapPaletteBGR(); // bgr
+
+typedef std::array<uint8_t, MINIMAP_NUM_BYTES> MinimapImage;
 
 }
 

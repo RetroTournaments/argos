@@ -122,3 +122,22 @@ std::string argos::smb::ToString(MusicTrack track)
 
     return "MusicTrack::UNKNOWN";
 }
+
+const MinimapPalette& argos::smb::DefaultMinimapPalette()
+{
+    static MinimapPalette p = {
+        0x00, 0x3d, 0x2d, 0x1d
+    };
+    return p;
+}
+
+const MinimapPaletteBGR& argos::smb::DefaultMinimapPaletteBGR()
+{
+    static MinimapPaletteBGR b = {
+        0xff, 0xff, 0xff,
+        0xa9, 0xa9, 0xa9,
+        0x3c, 0x3c, 0x3c,
+        0x00, 0x00, 0x00
+    };
+    return b;
+}
