@@ -176,21 +176,44 @@ void NESDatabase::UpdateTASName(int id, const std::string& name)
     sqliteext::StepAndFinalizeOrThrow(stmt);
 }
 
-int NESDatabase::InsertNewTAS(int rom_id, const std::string& name)
+int NESDatabase::InsertNewTAS(int rom_id, const std::string& name, const std::vector<nes::ControllerState>& inputs)
 {
     sqlite3_stmt* stmt;
     sqliteext::PrepareOrThrow(m_Database, R"(
-        INSERT INTO nes_tas (rom_id, name, inputs) VALUES (?, ?, "");
+        INSERT INTO nes_tas (rom_id, name, inputs) VALUES (?, ?, ?);
     )", &stmt);
     sqliteext::BindIntOrThrow(stmt, 1, rom_id);
     sqliteext::BindStrOrThrow(stmt, 2, name);
-    try {
-        sqliteext::StepAndFinalizeOrThrow(stmt);
-    } catch (std::runtime_error& err) {
-        std::cout << err.what() << std::endl;
-        return -1;
-    }
+    sqliteext::BindBlbOrThrow(stmt, 3, inputs.data(), inputs.size());
+    sqliteext::StepAndFinalizeOrThrow(stmt);
     return sqlite3_last_insert_rowid(m_Database);
+}
+
+int NESDatabase::InsertNewTAS(int rom_id, const std::string& name)
+{
+    std::vector<nes::ControllerState> inputs;
+    return InsertNewTAS(rom_id, name, inputs);
+}
+
+bool NESDatabase::SelectTASInputs(int tas_id, std::vector<nes::ControllerState>* inputs)
+{
+    sqlite3_stmt* stmt;
+    sqliteext::PrepareOrThrow(m_Database, R"(
+        SELECT inputs FROM nes_tas WHERE id = ?;
+    )", &stmt);
+    sqliteext::BindIntOrThrow(stmt, 1, tas_id);
+
+    bool ret = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        if (inputs) {
+            int sz = sqlite3_column_bytes(stmt, 0);
+            const uint8_t* dat = reinterpret_cast<const uint8_t*>(sqlite3_column_blob(stmt, 0));
+            inputs->assign(dat, dat + sz);
+        }
+        ret = true;
+    }
+    sqlite3_finalize(stmt);
+    return ret;
 }
 
 bool NESDatabase::GetRomByName(const std::string& name, std::vector<uint8_t>* rom)
@@ -209,5 +232,6 @@ bool NESDatabase::GetRomByName(const std::string& name, std::vector<uint8_t>* ro
         rom->assign(dat, dat + sz);
         ret = true;
     }
+    sqlite3_finalize(stmt);
     return ret;
 }

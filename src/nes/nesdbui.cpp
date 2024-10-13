@@ -18,6 +18,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <fstream>
+
 #include "nes/nesdbui.h"
 #include "ext/nfdext/nfdext.h"
 #include "game/gamedbui.h"
@@ -256,6 +258,22 @@ void NESDBTASComponent::OnFrame()
                 m_SelectedTASID = m_Database->InsertNewTAS(m_PendingROMID, m_PendingName);
                 Refresh();
             }
+            ImGui::SameLine();
+            if (ImGui::Button("import fm2")) {
+                std::string path;
+                if (nfdext::FileOpenDialog(&path)) {
+                    std::ifstream ifs(path);
+                    std::vector<nes::ControllerState> inputs;
+                    nes::ReadFM2File(ifs, &inputs, nullptr);
+                    if (inputs.empty()) {
+                        std::cerr << "empty fm2? or error?" << std::endl;
+                    } else {
+                        m_SelectedTASID = m_Database->InsertNewTAS(
+                                m_PendingROMID, path, inputs);
+                        Refresh();
+                    }
+                }
+            }
         }
     }
     ImGui::End();
@@ -290,10 +308,17 @@ void NESDBTASComponent::SetSubComponentTAS()
 
 bool NESDBTASComponent::SetSubComponentTAS(const nes::db::nes_tas& tas) {
     auto rom = m_Database->GetRomCached(tas.rom_id);
-    if (!rom) return false;
+    if (!rom) {
+        return false;
+    }
+
+    std::vector<nes::ControllerState> inputs;
+    if (!m_Database->SelectTASInputs(tas.id, &inputs)) {
+        return false;
+    }
 
     m_NESTasComponent->SetTAS(this, rom->data(), rom->size(),
-            tas.start_string, tas.inputs);
+            tas.start_string, inputs);
     return true;
 }
 

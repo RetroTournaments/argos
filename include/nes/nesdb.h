@@ -72,6 +72,8 @@ public:
     void DeleteTAS(int id);
     void UpdateTASName(int id, const std::string& name);
     int InsertNewTAS(int rom_id, const std::string& name);
+    int InsertNewTAS(int rom_id, const std::string& name, const std::vector<nes::ControllerState>& inputs);
+    bool SelectTASInputs(int tas_id, std::vector<nes::ControllerState>* inputs);
 
 
     static const char* ROMSchema();
