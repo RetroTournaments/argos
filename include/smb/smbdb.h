@@ -76,7 +76,6 @@ public:
     static const char* MinimapPageSchema();
 };
 
-
 //
 bool InsertSoundEffect(SMBDatabase* database, SoundEffect effect, const std::string& wavpath);
 bool InsertMusicTrack(SMBDatabase* database, MusicTrack track, const std::string& wavpath);

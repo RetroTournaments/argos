@@ -163,12 +163,13 @@ NESDBTASComponent::NESDBTASComponent(nes::NESDatabase* db)
     : m_Database(db)
     , m_SelectedTASID(-1)
     , m_TasToDelete(-1)
+    , m_IDForComponent(-1)
     , m_PendingROMID(1)
     , m_Locked(true)
 {
     Refresh();
-    //m_NESTasComponent = std::make_shared<NESTASComponent>("selected_nes_tas");
-    //RegisterSubComponent(m_NESTasComponent);
+    m_NESTasComponent = std::make_shared<NESTASComponent>("selected_nes_tas");
+    RegisterSubComponent(m_NESTasComponent);
 }
 
 NESDBTASComponent::~NESDBTASComponent()
@@ -178,6 +179,16 @@ NESDBTASComponent::~NESDBTASComponent()
 void NESDBTASComponent::Refresh()
 {
     m_Database->SelectAllTasesLight(&m_NESTasInfo);
+    bool fnd = false;
+    for (auto & v : m_NESTasInfo) {
+        if (v.id == m_SelectedTASID) {
+            fnd = true;
+            break;
+        }
+    }
+    if (!fnd) {
+        m_SelectedTASID = -1;
+    }
 }
 
 void NESDBTASComponent::SetIDToDelete(int id)
@@ -188,6 +199,11 @@ void NESDBTASComponent::SetIDToDelete(int id)
 void NESDBTASComponent::ChangeName(int id, const std::string& name)
 {
     m_Database->UpdateTASName(id, name);
+}
+
+bool NESDBTASComponent::Locked()
+{
+    return m_Locked;
 }
 
 void NESDBTASComponent::OnFrame()
@@ -205,24 +221,24 @@ void NESDBTASComponent::OnFrame()
                 ImGui::TableSetupColumn("name         ", ImGuiTableColumnFlags_WidthFixed);
                 ImGui::TableSetupColumn("         ", ImGuiTableColumnFlags_WidthFixed);
             }, 
-            [=](nes::db::nes_tas* tas,
+            [](nes::db::nes_tas* tas,
                 bool* selected,
                 int* scroll,
                 void* nesdbtascomp)
             {
                 using namespace sqliteext::ui;
+                NESDBTASComponent* comp = reinterpret_cast<NESDBTASComponent*>(nesdbtascomp);
+
                 bool changed = false;
                 IntColumn(0, &tas->id, selected, BasicColumnType::READONLY, &changed, scroll);
                 IntColumn(1, &tas->rom_id, selected, BasicColumnType::READONLY, &changed, scroll);
-                ImGui::BeginDisabled(m_Locked);
+                ImGui::BeginDisabled(comp->Locked());
                 TextColumn(2, &tas->name, selected, BasicColumnType::EDITABLE, &changed, scroll);
                 if (ButtonColumn(3, "delete", scroll)) {
-                    NESDBTASComponent* comp = reinterpret_cast<NESDBTASComponent*>(nesdbtascomp);
                     comp->SetIDToDelete(tas->id);
                 }
                 ImGui::EndDisabled();
                 if (changed) {
-                    NESDBTASComponent* comp = reinterpret_cast<NESDBTASComponent*>(nesdbtascomp);
                     comp->ChangeName(tas->id, tas->name);
                 }
                 return changed;
@@ -244,7 +260,41 @@ void NESDBTASComponent::OnFrame()
     }
     ImGui::End();
 
+    if (m_SelectedTASID != m_IDForComponent) {
+        m_IDForComponent = m_SelectedTASID;
+        SetSubComponentTAS();
+    }
+
     OnSubComponentFrames();
+}
+
+void NESDBTASComponent::SetSubComponentTAS()
+{
+    if (m_IDForComponent == -1) {
+        m_NESTasComponent->ClearTAS();
+    } else {
+        for (auto & tas : m_NESTasInfo) {
+            if (tas.id == m_IDForComponent) {
+                if (SetSubComponentTAS(tas)) {
+                    return;
+                }
+                break;
+            }
+        }
+
+        // didn't find it...
+        std::cout << "Error setting tas?" << std::endl;
+        m_NESTasComponent->ClearTAS();
+    }
+}
+
+bool NESDBTASComponent::SetSubComponentTAS(const nes::db::nes_tas& tas) {
+    auto rom = m_Database->GetRomCached(tas.rom_id);
+    if (!rom) return false;
+
+    m_NESTasComponent->SetTAS(this, rom->data(), rom->size(),
+            tas.start_string, tas.inputs);
+    return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

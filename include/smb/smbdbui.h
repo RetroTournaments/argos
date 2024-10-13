@@ -69,6 +69,18 @@ private:
     std::unordered_map<smb::MusicTrack, std::shared_ptr<sdlext::SDLExtMixMusic>> m_Musics;
 };
 
+class SMBDBNametableMiniComponent : public rgmui::IApplicationComponent
+{
+public:
+    SMBDBNametableMiniComponent(smb::SMBDatabase* db);
+    ~SMBDBNametableMiniComponent();
+
+    void OnFrame();
+
+private:
+    smb::SMBDatabase* m_Database;
+};
+
 };
 
 #endif

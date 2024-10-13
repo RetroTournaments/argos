@@ -307,7 +307,7 @@ struct NESInputsComponentOptions
     int FrameTextNumDigits;
 
     bool DisallowLROrUD;
-    bool StickyAutoScroll;
+    //bool StickyAutoScroll;
     uint8_t VisibleButtons;
 
     bool AllowTargetChange;
@@ -387,6 +387,7 @@ struct NESInputsComponentState
 
     bool IsDraggingTarget;
     bool MouseWasHoveringChevron;
+    bool Locked;
 
     NESInputsComponentScrollState Scroll;
 
@@ -498,11 +499,25 @@ public:
 
     virtual void OnFrame() override;
 
+    void ClearTAS();
+    void SetTAS(void* user_data,
+                const uint8_t* rom, size_t rom_size,
+                std::string start_string,
+                const std::vector<nes::ControllerState>& init_states);
+
 private:
     std::string m_Name;
+    std::vector<nes::ControllerState> m_Inputs;
 
     std::unique_ptr<nes::StateSequenceThread> m_StateThread;
+
     nes::NestopiaNESEmulator m_Emulator;
+    NESEmuFrameComponentOptions m_FrameOptions;
+    nes::Frame m_Frame;
+    NESInputsComponentOptions m_InputsOptions;
+    NESInputsComponentState m_InputsState;
+
+    void* m_UserData;
 };
 
 }

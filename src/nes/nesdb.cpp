@@ -124,9 +124,8 @@ NESDatabase::RomSPtr NESDatabase::GetRomCached(int rom_id)
     sqliteext::BindIntOrThrow(stmt, 1, rom_id);
 
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-
-        int sz = sqlite3_column_bytes(stmt, 1);
-        const uint8_t* dat = reinterpret_cast<const uint8_t*>(sqlite3_column_blob(stmt, 1));
+        int sz = sqlite3_column_bytes(stmt, 0);
+        const uint8_t* dat = reinterpret_cast<const uint8_t*>(sqlite3_column_blob(stmt, 0));
 
         std::vector<uint8_t> rom(dat, dat + sz);
         RomSPtr ptr = std::make_shared<const std::vector<uint8_t>>(std::move(rom));

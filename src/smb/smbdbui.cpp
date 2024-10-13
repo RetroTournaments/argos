@@ -34,6 +34,7 @@ SMBDatabaseApplication::SMBDatabaseApplication(SMBDatabase* db)
     RegisterComponent(std::make_shared<sdlextui::SDLExtMixComponent>());
     RegisterComponent(std::make_shared<smbui::SMBDBSoundComponent>(db));
     RegisterComponent(std::make_shared<smbui::SMBDBMusicComponent>(db));
+    RegisterComponent(std::make_shared<smbui::SMBDBNametableMiniComponent>(db));
 }
 
 SMBDatabaseApplication::~SMBDatabaseApplication()
@@ -188,4 +189,21 @@ void SMBDBMusicComponent::DoMusicControls()
             ImGui::PopID();
         }
     }
+}
+
+
+SMBDBNametableMiniComponent::SMBDBNametableMiniComponent(smb::SMBDatabase* db)
+    : m_Database(db)
+{
+}
+
+SMBDBNametableMiniComponent::~SMBDBNametableMiniComponent()
+{
+}
+
+void SMBDBNametableMiniComponent::OnFrame()
+{
+    if (ImGui::Begin("smb_nametable_mini")) {
+    }
+    ImGui::End();
 }

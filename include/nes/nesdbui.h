@@ -75,10 +75,15 @@ private:
     void Refresh();
     void SetIDToDelete(int id);
     void ChangeName(int id, const std::string& name);
+    bool Locked();
+
+    void SetSubComponentTAS();
+    bool SetSubComponentTAS(const nes::db::nes_tas& tas); 
 
 private:
     nes::NESDatabase* m_Database;
     std::shared_ptr<NESTASComponent> m_NESTasComponent;
+    int m_IDForComponent;
 
     int m_TasToDelete;
     int m_SelectedTASID;

@@ -145,10 +145,14 @@ bool smb::InsertMusicTrack(SMBDatabase* database, MusicTrack track, const std::s
 
 bool SMBDatabase::GetNametablePage(AreaID area_id, uint8_t page, db::nametable_page* nt_page)
 {
+    if (!nt_page) return false;
+
     return false;
 }
 
 bool SMBDatabase::GetMinimapPage(AreaID area_id, uint8_t page, db::minimap_page* mini_page)
 {
+    if (!mini_page) return false;
+
     return false;
 }

@@ -980,7 +980,7 @@ NESInputsComponentOptions NESInputsComponentOptions::Defaults()
     options.ButtonColor = ImVec4(215.0f / 255.0f,  25.0f / 255.0f,  25.0f / 255.0f, 1.0f);
     options.MarkerColor = ImVec4( 25.0f / 255.0f,  25.0f / 255.0f, 215.0f / 255.0f, 1.0f);
     options.DisallowLROrUD = false;
-    options.StickyAutoScroll = true;
+    //options.StickyAutoScroll = true;
     options.VisibleButtons = 0b11111111;
     options.AllowTargetChange = true;
     options.KeepTargetVisible = true;
@@ -1396,7 +1396,7 @@ bool NESInputsComponentState::DragTo(int inputIndex, std::vector<nes::Controller
 bool NESInputsComponentState::SetState(int inputIndex, std::vector<nes::ControllerState>* inputs,
         nes::ControllerState newState)
 {
-    if (inputs->at(inputIndex) != newState) {
+    if (!Locked && inputs->at(inputIndex) != newState) {
         // TODO undo/redo
         inputs->at(inputIndex) = newState;
 
@@ -1751,7 +1751,18 @@ bool nesui::smb::DoAction(nesui::smb::InputAction action,
 
 NESTASComponent::NESTASComponent(const char* name)
     : m_Name(name)
+    , m_UserData(nullptr)
 {
+    m_InputsState.Locked = true;
+    m_InputsState.Reset();
+    m_InputsState.OnInputChangeCallback = [&](int frame_index, nes::ControllerState new_state){
+        if (m_StateThread) {
+            m_StateThread->InputChange(frame_index, new_state);
+        }
+    };
+    m_FrameOptions = NESEmuFrameComponentOptions::Defaults();
+    m_FrameOptions.Scale = 1.0;
+    m_InputsOptions = NESInputsComponentOptions::Defaults();
 }
 
 NESTASComponent::~NESTASComponent()
@@ -1764,8 +1775,42 @@ void NESTASComponent::OnFrame()
         if (!m_StateThread) {
             ImGui::TextUnformatted("no thread initialized");
         } else {
-            // TODO
+            std::string new_state;
+            m_StateThread->TargetChange(m_InputsState.TargetIndex);
+            if (m_StateThread->HasNewState(nullptr, &new_state)) {
+                if (!new_state.empty()) {
+                    m_Emulator.LoadStateString(new_state);
+                    m_Emulator.ScreenPeekFrame(&m_Frame);
+                }
+            }
+            NESEmuFrameComponent::Controls(m_Frame, &m_FrameOptions, &m_InputsState.TargetIndex);
+            ImGui::Checkbox("Locked", &m_InputsState.Locked);
+            ImGui::SameLine();
+            NESInputsComponent::Controls(&m_Inputs, &m_InputsOptions, &m_InputsState);
         }
     }
     ImGui::End();
+}
+
+void NESTASComponent::ClearTAS() {
+    m_InputsState.Reset();
+    m_StateThread = nullptr;
+}
+
+void NESTASComponent::SetTAS(void* user_data,
+                const uint8_t* rom, size_t rom_size,
+                std::string start_string,
+                const std::vector<nes::ControllerState>& init_states)
+{
+    m_Inputs = init_states;
+    m_InputsState.Reset();
+    m_Emulator.LoadINESData(rom, rom_size);
+    auto p = std::make_unique<nes::NestopiaNESEmulator>();
+    p->LoadINESData(rom, rom_size);
+    if (!start_string.empty()) {
+        p->LoadStateString(start_string);
+    }
+    m_StateThread = std::make_unique<nes::StateSequenceThread>(
+            nes::StateSequenceThreadConfig::Defaults(),
+            std::move(p), init_states);
 }
