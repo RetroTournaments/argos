@@ -57,6 +57,27 @@ struct minimap_page
     MinimapImage data;
 };
 
+struct nt_extract_inputs
+{
+    int id;
+    std::string name;
+    std::vector<nes::ControllerState> inputs;
+};
+
+struct nt_extract_record
+{
+    int id;
+    int nt_extract_id;
+    int frame;
+    int nt_index;
+    uint8_t area_data_low;
+    uint8_t area_data_high;
+    uint8_t screenedge_pageloc;
+    uint8_t screenedge_x_pos;
+    uint8_t block_buffer_84_disc;
+    nes::FramePalette frame_palette;
+};
+
 }
 
 class SMBDatabase : public nes::NESDatabase
@@ -69,11 +90,15 @@ public:
     bool GetMusicTrackWav(MusicTrack track, std::vector<uint8_t>* data);
     bool GetNametablePage(AreaID area_id, uint8_t page, db::nametable_page* nt_page);
     bool GetMinimapPage(AreaID area_id, uint8_t page, db::minimap_page* mini_page);
+    bool GetAllNTExtractInputs(std::vector<db::nt_extract_inputs>* inputs);
+    bool GetAllNTExtractRecords(int input_id, std::vector<db::nt_extract_record>* records);
 
     static const char* SoundEffectSchema();
     static const char* MusicTrackSchema();
     static const char* NametablePageSchema();
     static const char* MinimapPageSchema();
+    static const char* NTExtractInputsSchema();
+    static const char* NTExtractRecordSchema();
 };
 
 //

@@ -306,7 +306,8 @@ void NESDBTASComponent::SetSubComponentTAS()
     }
 }
 
-bool NESDBTASComponent::SetSubComponentTAS(const nes::db::nes_tas& tas) {
+bool NESDBTASComponent::SetSubComponentTAS(const nes::db::nes_tas& tas)
+{
     auto rom = m_Database->GetRomCached(tas.rom_id);
     if (!rom) {
         return false;

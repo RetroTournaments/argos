@@ -81,6 +81,30 @@ private:
     smb::SMBDatabase* m_Database;
 };
 
+class SMBDBNTExtractInputsComponent : public rgmui::IApplicationComponent
+{
+public:
+    SMBDBNTExtractInputsComponent(smb::SMBDatabase* db);
+    ~SMBDBNTExtractInputsComponent();
+
+    void OnFrame();
+
+private:
+    smb::SMBDatabase* m_Database;
+};
+
+class SMBDBNTExtractRecordsComponent : public rgmui::IApplicationComponent
+{
+public:
+    SMBDBNTExtractRecordsComponent(smb::SMBDatabase* db);
+    ~SMBDBNTExtractRecordsComponent();
+
+    void OnFrame();
+
+private:
+    smb::SMBDatabase* m_Database;
+};
+
 };
 
 #endif

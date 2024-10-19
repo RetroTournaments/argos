@@ -34,6 +34,8 @@ SMBDatabase::SMBDatabase(const std::string& path)
     ExecOrThrow(SMBDatabase::MusicTrackSchema());
     ExecOrThrow(SMBDatabase::NametablePageSchema());
     ExecOrThrow(SMBDatabase::MinimapPageSchema());
+    ExecOrThrow(SMBDatabase::NTExtractInputsSchema());
+    ExecOrThrow(SMBDatabase::NTExtractRecordSchema());
 }
 
 SMBDatabase::~SMBDatabase()
@@ -72,6 +74,31 @@ const char* SMBDatabase::MinimapPageSchema()
     area_id         INTEGER PRIMARY KEY,
     page            INTEGER NOT NULL,
     data            BLOB NOT NULL
+);)";
+}
+
+const char* SMBDatabase::NTExtractInputsSchema()
+{
+    return R"(CREATE TABLE IF NOT EXISTS nt_extract_inputs (
+    id              INTEGER PRIMARY KEY,
+    name            STRING,
+    inputs          BLOB
+);)";
+}
+
+const char* SMBDatabase::NTExtractRecordSchema()
+{
+    return R"(CREATE TABLE IF NOT EXISTS nt_extract_record (
+    id                      INTEGER PRIMARY KEY,
+    nt_extract_id           INTEGER REFERENCES nt_extract_inputs(id) ON DELETE RESTRICT NOT NULL,
+    frame                   INTEGER NOT NULL,
+    nt_index                INTEGER NOT NULL,
+    area_data_low           INTEGER,
+    area_data_high          INTEGER,
+    screenedge_pageloc      INTEGER,
+    screenedge_x_pos        INTEGER,
+    block_buffer_84_disc    INTEGER,
+    frame_palette           BLOB
 );)";
 }
 
@@ -129,7 +156,6 @@ static bool InsertWav(SMBDatabase* db, const char* table, const char* nm, uint32
     sqliteext::BindIntOrThrow(stmt, 1, v);
     sqliteext::BindBlbOrThrow(stmt, 2, wav_data.data(), wav_data.size());
     sqliteext::StepAndFinalizeOrThrow(stmt);
-
     return true;
 }
 
@@ -146,13 +172,64 @@ bool smb::InsertMusicTrack(SMBDatabase* database, MusicTrack track, const std::s
 bool SMBDatabase::GetNametablePage(AreaID area_id, uint8_t page, db::nametable_page* nt_page)
 {
     if (!nt_page) return false;
-
+    throw std::runtime_error("not implemented");
     return false;
 }
 
 bool SMBDatabase::GetMinimapPage(AreaID area_id, uint8_t page, db::minimap_page* mini_page)
 {
     if (!mini_page) return false;
-
+    throw std::runtime_error("not implemented");
     return false;
+}
+
+bool SMBDatabase::GetAllNTExtractInputs(std::vector<db::nt_extract_inputs>* inputs)
+{
+    if (!inputs) {
+        return false;
+    }
+    sqlite3_stmt* stmt;
+    sqliteext::PrepareOrThrow(m_Database, R"(
+        SELECT id, name, inputs FROM nt_extract_inputs ORDER BY id ASC;
+    )", &stmt);
+
+    inputs->clear();
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        inputs->emplace_back();
+        inputs->back().id = sqlite3_column_int(stmt, 0);
+        inputs->back().name = sqliteext::column_str(stmt, 1);
+
+        int sz = sqlite3_column_bytes(stmt, 2);
+        const uint8_t* dat = reinterpret_cast<const uint8_t*>(sqlite3_column_blob(stmt, 2));
+        inputs->back().inputs.assign(dat, dat + sz);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+bool SMBDatabase::GetAllNTExtractRecords(int input_id, std::vector<db::nt_extract_record>* records)
+{
+    if (!records) {
+        return false;
+    }
+    sqlite3_stmt* stmt;
+    sqliteext::PrepareOrThrow(m_Database, R"(
+        SELECT * FROM nt_extract_record WHERE nt_extract_id = ? ORDER BY frame ASC;
+    )", &stmt);
+    sqliteext::BindIntOrThrow(stmt, 1, input_id);
+
+    records->clear();
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        records->emplace_back();
+        records->back().id = sqlite3_column_int(stmt, 0);
+        records->back().nt_extract_id = sqlite3_column_int(stmt, 1);
+        records->back().area_data_low = sqlite3_column_int(stmt, 2);
+        records->back().area_data_high = sqlite3_column_int(stmt, 3);
+        records->back().screenedge_pageloc = sqlite3_column_int(stmt, 4);
+        records->back().screenedge_x_pos = sqlite3_column_int(stmt, 5);
+        records->back().block_buffer_84_disc = sqlite3_column_int(stmt, 6);
+        nes::column_frame_palette(stmt, 7, &records->back().frame_palette);
+    }
+    sqlite3_finalize(stmt);
+    return true;
 }

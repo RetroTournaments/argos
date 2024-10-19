@@ -35,6 +35,8 @@ SMBDatabaseApplication::SMBDatabaseApplication(SMBDatabase* db)
     RegisterComponent(std::make_shared<smbui::SMBDBSoundComponent>(db));
     RegisterComponent(std::make_shared<smbui::SMBDBMusicComponent>(db));
     RegisterComponent(std::make_shared<smbui::SMBDBNametableMiniComponent>(db));
+    RegisterComponent(std::make_shared<smbui::SMBDBNTExtractInputsComponent>(db));
+    RegisterComponent(std::make_shared<smbui::SMBDBNTExtractRecordsComponent>(db));
 }
 
 SMBDatabaseApplication::~SMBDatabaseApplication()
@@ -191,7 +193,6 @@ void SMBDBMusicComponent::DoMusicControls()
     }
 }
 
-
 SMBDBNametableMiniComponent::SMBDBNametableMiniComponent(smb::SMBDatabase* db)
     : m_Database(db)
 {
@@ -204,6 +205,40 @@ SMBDBNametableMiniComponent::~SMBDBNametableMiniComponent()
 void SMBDBNametableMiniComponent::OnFrame()
 {
     if (ImGui::Begin("smb_nametable_mini")) {
+    }
+    ImGui::End();
+}
+
+SMBDBNTExtractInputsComponent::SMBDBNTExtractInputsComponent(smb::SMBDatabase* db)
+    : m_Database(db)
+{
+}
+
+SMBDBNTExtractInputsComponent::~SMBDBNTExtractInputsComponent()
+{
+}
+
+void SMBDBNTExtractInputsComponent::OnFrame()
+{
+    if (ImGui::Begin("smb_ntextract_inputs")) {
+        ImGui::Text("use 'argos smb ntextract'");
+    }
+    ImGui::End();
+}
+
+SMBDBNTExtractRecordsComponent::SMBDBNTExtractRecordsComponent(smb::SMBDatabase* db)
+    : m_Database(db)
+{
+}
+
+SMBDBNTExtractRecordsComponent::~SMBDBNTExtractRecordsComponent()
+{
+}
+
+void SMBDBNTExtractRecordsComponent::OnFrame()
+{
+    if (ImGui::Begin("smb_ntextract_records")) {
+        ImGui::Text("use 'argos smb ntextract'");
     }
     ImGui::End();
 }

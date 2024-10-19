@@ -32,6 +32,7 @@ target_link_libraries(smblib
 
 add_library(smbuilib
     smbdbui.cpp
+    ntextract.cpp
 )
 target_link_libraries(smbuilib
     smblib

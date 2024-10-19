@@ -49,6 +49,8 @@ struct nes_tas
 
 }
 
+void column_frame_palette(sqlite3_stmt* stmt, int column, nes::FramePalette* palette);
+
 class NESDatabase : public game::GameDatabase
 {
 public:
