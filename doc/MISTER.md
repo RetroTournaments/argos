@@ -7,7 +7,7 @@ Trying the Mister FPGA following suggestions from Anthony Jacoway and ItsMaximum
 - Downloaded Mr Fusion v2.9 img, unzipped and used BalenaEtcher to flash to card.
 - Connect to cheap hdmi monitor, power, find stupid cheap usb nintendo controller
 - Purchased [Micro usb hub](https://www.amazon.com/MakerSpot-Accessories-Charging-Extension-Raspberry/dp/B01JL837X8/)
-- Purchased a wifi dongle thing
+- Purchased a [wifi dongle thing](https://www.amazon.com/gp/product/B07P5PRK7J/)
 - Connected a keyboard and nes controller through retro usb thing
 
 Going to use [update-all](https://github.com/theypsilon/Update_All_MiSTer/releases/tag/latest) at least initially.
@@ -18,3 +18,29 @@ Ran the wifi script to connect, and then update all. Then I waited.
 
 Ok needed a ram module (else just gray screen!)
 Eventually got io board too. Usb power useful. Power button useful. Needed their cable to connect to PVM. Works!
+
+-----
+
+Some important commands:
+
+`echo "load_core /media/fat/bum.mgl" > /dev/MiSTer_cmd` where
+
+```
+<mistergamedescription>
+    <rbf>_console/NES_20240912</rbf>
+    <file delay="2" type="f" index="0" path="TETRIS.nes"/>
+</mistergamedescription>
+```
+
+Also the config was stored in `/media/fat/config/NES.CFG`
+Needed to set snac to controllers and save the config.
+
+
+Other tabs:
+- https://github.com/wizzomafizzo/mrext/blob/main/docs/remote-api.md
+- https://misterfpga.org/viewtopic.php?t=6475
+- https://github.com/RGarciaLago/MGL_Core_Setnames/tree/main?tab=readme-ov-file
+- https://mister-devel.github.io/MkDocs_MiSTer/developer/conf_str/#status-bit-map
+- https://misterfpga.org/viewtopic.php?t=524
+- https://github.com/MiSTer-devel/Scripts_MiSTer
+- https://github.com/mrchrisster/mister-nes-attract/blob/master/NES-AttractMode_on.sh
