@@ -47,7 +47,7 @@ DESCRIPTION:
 OPTIONS:
     --help
         Print this helpful help message and then exit.
-    
+
     --version
         Print the argos version number and then exit
 
@@ -108,6 +108,8 @@ void argos::main::PrintProgramVersion(std::ostream& os)
 ////////////////////////////////////////////////////////////////////////////////
 int argos::main::RunIApplication(const argos::RuntimeConfig* config, const char* name, rgmui::IApplication* app, ArgosDB* db)
 {
+    EnsureArgosDirectoryWriteable(*config);
+
     db::AppCache cache = db::AppCache::Defaults(name);
 
     std::shared_ptr<ArgosDB> adb;

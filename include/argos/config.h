@@ -17,7 +17,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
-// 
+//
 // The config file should contain mostly static information that is controlled
 // by the user. Paths, Global defaults, that sort of thing.
 //
@@ -51,8 +51,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RuntimeConfig,
     SourceDirectory
 );
 
-
 void InitDefaultRuntimeConfig(RuntimeConfig* config);
+void EnsureArgosDirectoryWriteable(const RuntimeConfig& config);
 
 }
 

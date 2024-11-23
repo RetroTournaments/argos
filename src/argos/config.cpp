@@ -60,3 +60,11 @@ void argos::InitDefaultRuntimeConfig(RuntimeConfig* config)
 #endif
 }
 
+void argos::EnsureArgosDirectoryWriteable(const RuntimeConfig& config)
+{
+    std::filesystem::file_status st = std::filesystem::status(config.ArgosDirectory);
+    if (!std::filesystem::exists(st)) {
+        std::filesystem::create_directories(config.ArgosDirectory);
+    }
+}
+
