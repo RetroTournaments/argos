@@ -117,7 +117,11 @@ int ConfigCommand::EditConfig()
     std::vector<uint8_t> originalContents;
     ReadFileToVector(configPath, &originalContents);
 
-    system(fmt::format("editor {}", configPath).c_str());
+    int ret = system(fmt::format("editor {}", configPath).c_str());
+    if (ret) {
+        std::cerr << "editor returned non-zero status?" << std::endl;
+        return ret;
+    }
 
     std::vector<uint8_t> newContents;
     ReadFileToVector(configPath, &newContents);

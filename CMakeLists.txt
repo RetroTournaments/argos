@@ -17,16 +17,20 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 ##
 ################################################################################
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0012 NEW)
 cmake_policy(SET CMP0077 NEW)
 
 project(argos)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -O3")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-find_package(ZeroMQ REQUIRED)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
+find_package(OpenCV REQUIRED)
+find_package(SQLite3 REQUIRED)
+find_package(ZMQ REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 

@@ -40,7 +40,6 @@ set(SDL_mixer_INCLUDE_DIRS
     PARENT_SCOPE
 )
 
-
 ################################################################################
 # imgui is just a very nice paradigm for developer friendly user interfaces
 set(imgui_INCLUDE_DIRS
@@ -62,7 +61,6 @@ target_include_directories(3rdimgui PUBLIC
     "imgui/"
 )
 target_link_libraries(3rdimgui SDL2 SDL2_mixer)
-target_compile_options(3rdimgui PUBLIC -Wno-unknown-warning-option)
 
 ################################################################################
 # spdlog is mainly included for 'fmt' but there are some useful bits in spdlog too
@@ -88,7 +86,6 @@ set(json_INCLUDE_DIRS
     PARENT_SCOPE
 )
 
-
 ################################################################################
 # nestopia is an accurate and performant NES emulator.
 add_subdirectory(nestopia)
@@ -110,7 +107,7 @@ set(3rdnativefiledialoglib
 set(3rdnativefiledialoglib 
     "${CMAKE_CURRENT_SOURCE_DIR}/nativefiledialog/build/lib/Release/x64/libnfd.a")
 add_custom_command(OUTPUT ${3rdnativefiledialoglib}
-                   COMMAND make CFLAGS=-fPIC
+                   COMMAND make CFLAGS=-fPIC > /dev/null
                    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/nativefiledialog/build/gmake_linux"
                    VERBATIM)
 add_custom_target(3rdlibnfd DEPENDS ${3rdnativefiledialoglib})
