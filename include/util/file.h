@@ -42,6 +42,7 @@ void ForFileOfExtensionInDirectory(const std::string& directory,
         std::function<bool(fs::path p)> cback);
 
 bool FileExists(const std::string& path);
+size_t FileSize(const std::string& path);
 
 int ReadFileToVector(const std::string& path, std::vector<uint8_t>* contents);
 void WriteVectorToFile(const std::string& path, const std::vector<uint8_t>& contents);

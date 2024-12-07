@@ -29,7 +29,7 @@ using namespace argos::util;
 using namespace argos::main;
 
 ////////////////////////////////////////////////////////////////////////////////
-// The 'db' command is to 
+// The 'db' command is to
 REGISTER_COMMAND(db, "edit / manage application data stored in argos.db",
 R"(
 EXAMPLES
@@ -53,6 +53,8 @@ OPTIONS:
         Print the path to database.
 )")
 {
+    EnsureArgosDirectoryWriteable(*config);
+
     if (argc == 0) {
         ArgosDB db(RuntimeConfig::ArgosDatabasePath(config));
         return db.SystemLaunchSQLite3WithExamples();

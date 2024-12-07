@@ -218,7 +218,6 @@ bool NESDatabase::SelectTASInputs(int tas_id, std::vector<nes::ControllerState>*
 
 bool NESDatabase::GetRomByName(const std::string& name, std::vector<uint8_t>* rom)
 {
-    assert(rom);
     sqlite3_stmt* stmt;
     sqliteext::PrepareOrThrow(m_Database, R"(
         SELECT rom FROM nes_rom WHERE name = ?;
@@ -229,7 +228,9 @@ bool NESDatabase::GetRomByName(const std::string& name, std::vector<uint8_t>* ro
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         int sz = sqlite3_column_bytes(stmt, 0);
         const uint8_t* dat = reinterpret_cast<const uint8_t*>(sqlite3_column_blob(stmt, 0));
-        rom->assign(dat, dat + sz);
+        if (rom) {
+            rom->assign(dat, dat + sz);
+        }
         ret = true;
     }
     sqlite3_finalize(stmt);

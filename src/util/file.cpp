@@ -54,6 +54,11 @@ bool argos::util::FileExists(const std::string& path)
     return fs::exists(path);
 }
 
+size_t argos::util::FileSize(const std::string& path)
+{
+    return fs::file_size(path);
+}
+
 int argos::util::ReadFileToVector(const std::string& path, std::vector<uint8_t>* contents)
 {
     std::ifstream ifs(path, std::ios::in | std::ios::binary);
@@ -61,7 +66,7 @@ int argos::util::ReadFileToVector(const std::string& path, std::vector<uint8_t>*
         throw std::invalid_argument("ifstream not good");
     }
     *contents = std::move(std::vector<uint8_t>(
-            std::istreambuf_iterator<char>(ifs), 
+            std::istreambuf_iterator<char>(ifs),
             std::istreambuf_iterator<char>()));
     return static_cast<int>(contents->size());
 }

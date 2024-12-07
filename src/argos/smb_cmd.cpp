@@ -20,6 +20,7 @@
 
 #include "argos/main.h"
 #include "util/arg.h"
+#include "util/file.h"
 
 #include "smb/smbdb.h"
 #include "smb/smbdbui.h"
@@ -29,35 +30,91 @@ using namespace argos;
 using namespace argos::util;
 using namespace argos::main;
 
-// 'argos smb db'
-int DoSMBDB(const argos::RuntimeConfig* config, int argc, char** argv)
+// argos smb db init
+int DoSMBDBInit(const argos::RuntimeConfig* config, smb::SMBDatabase* smbdb, int argc, char** argv)
 {
-    smb::SMBDatabase smbdb(RuntimeConfig::SMBDatabasePath(config));
+    if (argc > 1) {
+        Error("expected at most one argument (the path to the smb rom)");
+        return 1;
+    }
 
+    std::string rom_path;
+    ArgReadString(&argc, &argv, &rom_path);
+    if (rom_path == "") {
+        rom_path = argos::RuntimeConfig::SMBBlobPath(config);
+        if (FileExists(rom_path)) {
+            if (FileSize(rom_path) == 31482) {
+                std::string cmd = "gpg --decrypt " + rom_path;
+                auto pipe = popen(cmd.c_str(), "r");
+                if (!pipe) {
+                    Error("failed opening pipe '{}'", cmd);
+                    return 1;
+                }
+                std::vector<uint8_t> result(smb::BASE_ROM_SIZE);
+                size_t red = fread(reinterpret_cast<void*>(result.data()), 1, result.size(), pipe);
+                std::cout << smb::BASE_ROM_SIZE << std::endl;
+                std::cout << red << std::endl;
+                if (red != smb::BASE_ROM_SIZE) {
+                    Error("Did not read expected size from pipe");
+                    return 1;
+                }
+
+                //HERE parsing stuff
+
+            } else {
+                std::cerr << "Maybe you need to run 'git lfs pull origin main' in " << config->SourceDirectory << std::endl;
+            }
+        }
+    }
+
+
+    return 1;
+}
+
+bool SMBDBInit(const argos::RuntimeConfig* config, smb::SMBDatabase* smbdb) {
+    //if (!smbdb->IsInit()) {
+        if (DoSMBDBInit(config, smbdb, 0, nullptr)) {
+            Error("SMB Database is not initialized. Re-run 'argos smb db init'");
+            return false;
+        }
+    //}
+    return true;
+}
+
+// 'argos smb db'
+int DoSMBDB(const argos::RuntimeConfig* config, smb::SMBDatabase* smbdb, int argc, char** argv)
+{
     std::string arg;
     if (!ArgReadString(&argc, &argv, &arg)) {
-        return smbdb.SystemLaunchSQLite3WithExamples();
+        return smbdb->SystemLaunchSQLite3WithExamples();
     }
 
     if (arg == "edit") {
-        return smbdb.SystemLaunchSQLite3WithExamples();
+        return smbdb->SystemLaunchSQLite3WithExamples();
     } else if (arg == "ui") {
-        smbui::SMBDatabaseApplication app(&smbdb);
+        if (!SMBDBInit(config, smbdb)) {
+            return 1;
+        }
+        smbui::SMBDatabaseApplication app(smbdb);
         return RunIApplication(config, "argos smb db", &app);
     } else if (arg ==  "path") {
         std::cout << RuntimeConfig::SMBDatabasePath(config) << std::endl;;
         return 0;
+    } else if (arg ==  "init") {
+        return DoSMBDBInit(config, smbdb, argc, argv);
     } else {
-        Error("unrecognized argument. '{}', expected 'edit', 'ui', or 'path'", arg);
+        Error("unrecognized argument. '{}', expected 'edit', 'ui', 'path', or 'init'", arg);
         return 1;
     }
     return 0;
 }
 
-int DoSMBNTExtract(const argos::RuntimeConfig* config, int argc, char** argv)
+int DoSMBNTExtract(const argos::RuntimeConfig* config, smb::SMBDatabase* smbdb, int argc, char** argv)
 {
-    smb::SMBDatabase smbdb(RuntimeConfig::SMBDatabasePath(config));
-    smbui::SMBNTExtractApplication app(&smbdb);
+    if (!SMBDBInit(config, smbdb)) {
+        return 1;
+    }
+    smbui::SMBNTExtractApplication app(smbdb);
     return RunIApplication(config, "argos smb ntextract", &app);
 }
 
@@ -70,7 +127,7 @@ EXAMPLES:
 
     <todo?> argos smb host --port 5555
     <todo?> argos smb join --nestopia --connect "udp://127.0.0.1:5555"
-    <todo?> argos smb 
+    <todo?> argos smb
 
 USAGE:
     argos smb <action> [<args>...]
@@ -80,6 +137,9 @@ DESCRIPTION:
     Mario Bros.' This was the first game supported.
 
 OPTIONS:
+    db init [rom path]
+        Initialize the database using the smb rom
+
     db edit
         Edit the smb database in sqlite.
 
@@ -99,10 +159,12 @@ OPTIONS:
         return 1;
     }
 
+    smb::SMBDatabase smbdb(RuntimeConfig::SMBDatabasePath(config));
+
     if (action == "db") {
-        return DoSMBDB(config, argc, argv);
+        return DoSMBDB(config, &smbdb, argc, argv);
     } else if (action == "ntextract") {
-        return DoSMBNTExtract(config, argc, argv);
+        return DoSMBNTExtract(config, &smbdb, argc, argv);
     } else {
         Error("unrecognized action. '{}', expected 'db' or 'ntextract'", action);
         return 1;

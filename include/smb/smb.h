@@ -26,6 +26,10 @@
 namespace argos::smb
 {
 
+inline constexpr size_t BASE_ROM_SIZE = 40976;
+//add md5sum here and verify
+
+
 // Some of the most relevant RAM addresses in SMB
 enum RamAddress : uint16_t
 {
@@ -63,7 +67,7 @@ enum RamAddress : uint16_t
     SQUARE1_SOUND_QUEUE     = 0x00ff,
 };
 
-// Area IDs 
+// Area IDs
 //  (AREA_DATA_HIGH << 8) + AREA_DATA_LOW
 // Define what is typically considered a 'level' like 1-1 is GROUD_AREA_1 for example.
 // But also they are often re-used / shared.
@@ -134,7 +138,7 @@ enum class SoundEffect : uint32_t
 };
 const std::vector<SoundEffect>& AudibleSoundEffects();
 std::string ToString(SoundEffect effect);
-    
+
 // Music tracks
 //  From queues (AREA_MUSIC_QUEUE, EVENT_MUSIC_QUEUE)
 enum class MusicTrack : uint32_t
@@ -142,7 +146,7 @@ enum class MusicTrack : uint32_t
     SILENCE             = 0b00000000000000000000000000000000,
 
     // most of these tracks repeat
-    STAR_POWER          = 0b00000000000000000000000001000000, 
+    STAR_POWER          = 0b00000000000000000000000001000000,
     PIPE_INTRO          = 0b00000000000000000000000000100000, // does not repeat
     CLOUD               = 0b00000000000000000000000000010000,
     CASTLE              = 0b00000000000000000000000000001000,
@@ -154,7 +158,7 @@ enum class MusicTrack : uint32_t
     TIME_RUNNING_OUT    = 0b00000000000000000100000000000000,
     END_OF_LEVEL        = 0b00000000000000000010000000000000, // repeats
     ALT_GAME_OVER       = 0b00000000000000000001000000000000,
-    END_OF_CASTLE       = 0b00000000000000000000100000000000, 
+    END_OF_CASTLE       = 0b00000000000000000000100000000000,
     VICTORY             = 0b00000000000000000000010000000000,
     GAME_OVER           = 0b00000000000000000000001000000000,
     DEATH_MUSIC         = 0b00000000000000000000000100000000,
