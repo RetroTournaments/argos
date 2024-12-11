@@ -29,8 +29,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 find_package(OpenCV REQUIRED)
+find_package(OpenSSL REQUIRED)
 find_package(SQLite3 REQUIRED)
 find_package(ZMQ REQUIRED)
+
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 

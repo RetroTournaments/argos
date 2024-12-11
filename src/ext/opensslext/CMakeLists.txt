@@ -1,6 +1,6 @@
 ################################################################################
 ##
-## Copyright (C) 2023 Matthew Deutsch
+## Copyright (C) 2024 Matthew Deutsch
 ##
 ## Argos is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -18,17 +18,16 @@
 ##
 ################################################################################
 cmake_minimum_required(VERSION 3.6)
-project(opencvext)
+project(opensslext)
 
-find_package(OpenCV REQUIRED)
-
-add_library(opencvextlib STATIC
-    opencvext.cpp
+add_library(opensslextlib STATIC
+    opensslext.cpp
 )
-target_include_directories(opencvextlib PUBLIC
-    ${OpenCV_INCLUDE_DIRS}
+target_include_directories(opensslextlib PUBLIC
+    ${OPENSSL_INCLUDE_DIRS}
 )
-target_link_libraries(opencvextlib PUBLIC
-    ${OpenCV_LIBS}
+target_link_libraries(opensslextlib PUBLIC
+    ${OPENSSL_LIBRARIES}
 )
-
+target_compile_options(opensslextlib PRIVATE
+    "-Wno-deprecated-declarations")

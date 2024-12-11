@@ -66,5 +66,6 @@ void NTExtractTASComponent::OnFrame()
 void NTExtractTASComponent::SetInputsID(int id) {
     m_NTExtractID = id;
     m_Database->GetAllNTExtractRecords(id, &m_NTExtractRecords);
-    
+
 }
+

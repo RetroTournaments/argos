@@ -102,6 +102,20 @@ const char* SMBDatabase::NTExtractRecordSchema()
 );)";
 }
 
+bool SMBDatabase::IsInit()
+{
+    if (!GetBaseRom()) {
+        return false;
+    }
+
+    return true;
+}
+
+argos::nes::NESDatabase::RomSPtr SMBDatabase::GetBaseRom()
+{
+    return GetRomCached(1);
+}
+
 static bool GetWav(SMBDatabase* db, const char* table, const char* nm, uint32_t v, std::vector<uint8_t>* data)
 {
     sqlite3_stmt* stmt;
@@ -231,5 +245,42 @@ bool SMBDatabase::GetAllNTExtractRecords(int input_id, std::vector<db::nt_extrac
         nes::column_frame_palette(stmt, 7, &records->back().frame_palette);
     }
     sqlite3_finalize(stmt);
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+bool argos::smb::InitializeSMBDatabase(SMBDatabase* database,
+        const std::string& smb_data_path,
+        const std::vector<uint8_t>& smb_rom)
+{
+    int smb_id = database->InsertROM("SMB.nes", smb_rom);
+    if (smb_id != 1) {
+        std::cerr << "database not cleared?\n";
+        return false;
+    }
+
+    for (auto & sound_effect : smb::AudibleSoundEffects()) {
+        std::string path = util::fs::path(smb_data_path) / util::fs::path(fmt::format("SMB_SOUND_{:06x}.flac",
+                static_cast<uint32_t>(sound_effect)));
+        std::cout << "insert sound effect: " << smb::ToString(sound_effect) << " " << path << std::endl;
+        if (!InsertSoundEffect(database, sound_effect, path)) {
+            std::cerr << "Failed adding sound effect?\n";
+            return false;
+        }
+    }
+
+    for (auto & music_track : smb::AudibleMusicTracks()) {
+        std::string path = util::fs::path(smb_data_path) / util::fs::path(fmt::format("SMB_MUSIC_{:06x}.flac",
+                static_cast<uint32_t>(music_track)));
+        std::cout << "insert music track: " << smb::ToString(music_track) << " " << path << std::endl;
+        if (!InsertMusicTrack(database, music_track, path)) {
+            std::cerr << "Failed adding music track?\n";
+            return false;
+        }
+    }
+
+
     return true;
 }

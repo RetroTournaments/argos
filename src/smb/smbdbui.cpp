@@ -150,7 +150,7 @@ std::shared_ptr<sdlext::SDLExtMixMusic> SMBDBMusicComponent::GetMusic(smb::Music
 void SMBDBMusicComponent::DoMusicControls()
 {
     if (ImGui::Button("init music")) {
-        for (auto & track : smb::AllMusicTracks()) {
+        for (auto & track : smb::AudibleMusicTracks()) {
             auto ptr = GetMusic(track);
             if (ptr) {
                 m_Musics[track] = ptr;
@@ -162,7 +162,7 @@ void SMBDBMusicComponent::DoMusicControls()
         Mix_HaltMusic();
     }
 
-    for (auto & track : smb::AllMusicTracks()) {
+    for (auto & track : smb::AudibleMusicTracks()) {
         auto it = m_Musics.find(track);
         if (it != m_Musics.end()) {
             rgmui::TextFmt("{:32s} {:08x}", smb::ToString(track), static_cast<uint32_t>(track));
@@ -177,7 +177,7 @@ void SMBDBMusicComponent::DoMusicControls()
     }
 
     if (ImGui::CollapsingHeader("insert sound effects")) {
-        for (auto & track : smb::AllMusicTracks()) {
+        for (auto & track : smb::AudibleMusicTracks()) {
             rgmui::TextFmt("{:32s} {:08x}", smb::ToString(track), static_cast<uint32_t>(track));
             ImGui::SameLine();
             ImGui::PushID(static_cast<uint32_t>(track));

@@ -86,6 +86,10 @@ public:
     SMBDatabase(const std::string& path);
     ~SMBDatabase();
 
+    bool IsInit();
+
+    RomSPtr GetBaseRom();
+
     bool GetSoundEffectWav(SoundEffect effect, std::vector<uint8_t>* data);
     bool GetMusicTrackWav(MusicTrack track, std::vector<uint8_t>* data);
     bool GetNametablePage(AreaID area_id, uint8_t page, db::nametable_page* nt_page);
@@ -100,6 +104,10 @@ public:
     static const char* NTExtractInputsSchema();
     static const char* NTExtractRecordSchema();
 };
+
+//
+bool InitializeSMBDatabase(SMBDatabase* database, const std::string& smb_data_path,
+        const std::vector<uint8_t>& smb_rom);
 
 //
 bool InsertSoundEffect(SMBDatabase* database, SoundEffect effect, const std::string& wavpath);

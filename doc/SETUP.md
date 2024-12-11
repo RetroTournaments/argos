@@ -5,7 +5,7 @@ On an debian/ubuntu derived OS:
 ```
 # install necessary packages
 sudo apt-get install \
-    build-essential cmake ninja-build sqlite3 git-lfs \
+    build-essential cmake ninja-build sqlite3 git-lfs libssl-dev \
     libzmq3-dev pkg-config libgtk-3-dev libopencv-dev libasound2-dev
 
 git lfs install

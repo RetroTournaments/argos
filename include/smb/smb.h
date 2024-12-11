@@ -27,8 +27,10 @@ namespace argos::smb
 {
 
 inline constexpr size_t BASE_ROM_SIZE = 40976;
-//add md5sum here and verify
-
+inline constexpr std::array<uint8_t, 16> BASE_ROM_MD5 = {
+    0x81, 0x1b, 0x02, 0x7e, 0xaf, 0x99, 0xc2, 0xde,
+    0xf7, 0xb9, 0x33, 0xc5, 0x20, 0x86, 0x36, 0xde,
+};
 
 // Some of the most relevant RAM addresses in SMB
 enum RamAddress : uint16_t
@@ -163,7 +165,7 @@ enum class MusicTrack : uint32_t
     GAME_OVER           = 0b00000000000000000000001000000000,
     DEATH_MUSIC         = 0b00000000000000000000000100000000,
 };
-const std::vector<MusicTrack>& AllMusicTracks();
+const std::vector<MusicTrack>& AudibleMusicTracks();
 std::string ToString(MusicTrack track);
 
 // Game end state

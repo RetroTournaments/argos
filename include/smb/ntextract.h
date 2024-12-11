@@ -31,7 +31,7 @@ namespace argos::smbui
 // A very early task was to extract all of the nametables from all of the
 // levels. This encapsulates that process. At a high level:
 //
-//  1) Identify the relevant memory addresses, in this case reading the
+//  1) Identify the relevant memory addresses, in this case by reading the
 //     excellent disassembly from doppelganger et al.
 //
 //     AREA_DATA_LOW           = 0x00e7,
@@ -46,7 +46,7 @@ namespace argos::smbui
 // A few failed attempts before this would extract images (pngs) of the
 // backgrounds and stitch things together semi-manually and all that. But then
 // how to handle nametable changes? Like coins being collected or blocks
-// breaking?
+// breaking? Using the nametable data directly is the key.
 
 class SMBNTExtractApplication : public rgmui::IApplication
 {

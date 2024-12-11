@@ -55,4 +55,5 @@ target_link_libraries(argos
     rgmuilib
     smblib
     smbuilib
+    opensslextlib
 )

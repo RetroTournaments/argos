@@ -46,6 +46,7 @@ struct RuntimeConfig
     static std::string RuntimeConfigPath(const RuntimeConfig* config);
     static std::string ArgosDatabasePath(const RuntimeConfig* config);
     static std::string SMBDatabasePath(const RuntimeConfig* config);
+    static std::string SMBDataPath(const RuntimeConfig* config);
     static std::string SMBBlobPath(const RuntimeConfig* config);
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RuntimeConfig,

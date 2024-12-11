@@ -41,6 +41,11 @@ std::string argos::RuntimeConfig::SMBDatabasePath(const RuntimeConfig* config)
     return fs::path(config->ArgosDirectory) / fs::path("smb.db");
 }
 
+std::string argos::RuntimeConfig::SMBDataPath(const RuntimeConfig* config)
+{
+    return fs::path(config->SourceDirectory) / fs::path("data") / fs::path("smb");
+}
+
 std::string argos::RuntimeConfig::SMBBlobPath(const RuntimeConfig* config)
 {
     return fs::path(config->SourceDirectory) / fs::path("data") / fs::path("smb") / fs::path("blob.bin");

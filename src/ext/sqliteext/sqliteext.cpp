@@ -198,18 +198,26 @@ std::string argos::sqliteext::column_str(sqlite3_stmt* stmt, int column)
 SQLiteExtDB::SQLiteExtDB(const std::string& path)
     : m_DatabasePath(path)
 {
-    sqliteext::OpenOrThrow(m_DatabasePath, &m_Database);
+    Open();
 }
 
 SQLiteExtDB::~SQLiteExtDB()
 {
-    sqlite3_close(m_Database);
+    Close();
 }
 
-//void SQLiteExtDB::TableSchema(const char* table, const char* schema)
-//{
-//    ExecOrThrow(std::string(schema)); // todo register the table / schema somewhere for later query?
-//}
+void SQLiteExtDB::Close()
+{
+    if (m_Database) {
+        sqlite3_close(m_Database);
+    }
+    m_Database = nullptr;
+}
+
+void SQLiteExtDB::Open()
+{
+    sqliteext::OpenOrThrow(m_DatabasePath, &m_Database);
+}
 
 int SQLiteExtDB::ExecOrThrow(const std::string& query,
         std::function<bool(int argc, char** data, char** columns)> cback)

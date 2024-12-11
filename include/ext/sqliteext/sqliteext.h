@@ -60,11 +60,11 @@ public:
     SQLiteExtDB(const std::string& path);
     ~SQLiteExtDB();
 
+    void Open();
+    void Close();
+
     // calls 'system', so not suitable for most situations.
     int SystemLaunchSQLite3WithExamples();
-
-    // Be careful no error checking etc.
-    //void TableSchema(const char* table, const char* schema);
 
     int ExecOrThrow(const std::string& query,
             std::function<bool(int argc, char** data, char** columns)> cback = nullptr);

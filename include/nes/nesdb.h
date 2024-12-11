@@ -68,7 +68,6 @@ public:
     RomSPtr GetRomCached(int rom_id);
     bool GetRomByName(const std::string& name, std::vector<uint8_t>* rom);
 
-
     // And TASes
     void SelectAllTasesLight(std::vector<db::nes_tas>* tases);
     void DeleteTAS(int id);

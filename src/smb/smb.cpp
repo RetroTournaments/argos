@@ -77,10 +77,10 @@ std::string argos::smb::ToString(SoundEffect effect)
 }
 
 
-const std::vector<MusicTrack>& argos::smb::AllMusicTracks()
+const std::vector<MusicTrack>& argos::smb::AudibleMusicTracks()
 {
     static std::vector<MusicTrack> s_Tracks = {
-        MusicTrack::STAR_POWER, 
+        MusicTrack::STAR_POWER,
         MusicTrack::PIPE_INTRO,
         MusicTrack::CLOUD,
         MusicTrack::CASTLE,
@@ -90,7 +90,7 @@ const std::vector<MusicTrack>& argos::smb::AllMusicTracks()
         MusicTrack::TIME_RUNNING_OUT,
         MusicTrack::END_OF_LEVEL,
         MusicTrack::ALT_GAME_OVER,
-        MusicTrack::END_OF_CASTLE, 
+        MusicTrack::END_OF_CASTLE,
         MusicTrack::VICTORY,
         MusicTrack::GAME_OVER,
         MusicTrack::DEATH_MUSIC,

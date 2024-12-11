@@ -59,7 +59,7 @@ size_t argos::util::FileSize(const std::string& path)
     return fs::file_size(path);
 }
 
-int argos::util::ReadFileToVector(const std::string& path, std::vector<uint8_t>* contents)
+size_t argos::util::ReadFileToVector(const std::string& path, std::vector<uint8_t>* contents)
 {
     std::ifstream ifs(path, std::ios::in | std::ios::binary);
     if (!ifs.good()) {

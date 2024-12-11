@@ -22,6 +22,9 @@
 #include "util/arg.h"
 #include "util/file.h"
 
+#include "ext/opensslext/opensslext.h"
+#include "ext/nfdext/nfdext.h"
+
 #include "smb/smbdb.h"
 #include "smb/smbdbui.h"
 #include "smb/ntextract.h"
@@ -30,54 +33,112 @@ using namespace argos;
 using namespace argos::util;
 using namespace argos::main;
 
+static bool GetSMBRom(int argc, char** argv, const argos::RuntimeConfig* config, std::vector<uint8_t>* rom)
+{
+    std::string rom_path;
+    ArgReadString(&argc, &argv, &rom_path);
+
+    rom->resize(smb::BASE_ROM_SIZE);
+
+    if (rom_path == "") {
+        rom_path = argos::RuntimeConfig::SMBBlobPath(config);
+        if (FileExists(rom_path)) {
+            if (FileSize(rom_path) == 31482) {
+                std::string cmd = "gpg --pinentry-mode loopback --decrypt " + rom_path;
+                auto pipe = popen(cmd.c_str(), "r");
+                if (!pipe) {
+                    Error("failed opening pipe '{}'", cmd);
+                    return false;
+                }
+                size_t red = fread(reinterpret_cast<void*>(rom->data()), 1, rom->size(), pipe);
+                if (red != smb::BASE_ROM_SIZE) {
+                    Error("Did not read expected size from pipe");
+                    return false;
+                }
+            } else {
+                std::cerr << "Maybe you need to run 'git lfs pull origin main' in "
+                          << config->SourceDirectory << std::endl;
+            }
+        } else if (argos::nfdext::FileOpenDialog(&rom_path)) {
+            argos::util::ReadFileToVector(rom_path, rom);
+        } else {
+            Error("Must provide the base smb rom");
+            return false;
+        }
+    } else {
+        argos::util::ReadFileToVector(rom_path, rom);
+    }
+
+    if (rom->size() != smb::BASE_ROM_SIZE) {
+        Error("Provided SMB Rom is not the correct size '{}'", smb::BASE_ROM_SIZE);
+        return false;
+    }
+
+    auto sum = argos::opensslext::ComputeMD5Sum(rom->data(), rom->size());
+    bool md5correct = true;
+    for (size_t i = 0; i < MD5_DIGEST_LENGTH; i++) {
+        if (sum[i] != argos::smb::BASE_ROM_MD5[i]) {
+            md5correct = false;
+        }
+    }
+    if (!md5correct) {
+        Error("Did not get expected rom, md5sum incorrect");
+        std::cerr << "got      : ";
+        for (size_t i = 0; i < MD5_DIGEST_LENGTH; i++) {
+            std::cerr << fmt::format("{:02x}", sum[i]);
+        }
+        std::cerr << "\n";
+        std::cerr << "expected : ";
+        for (size_t i = 0; i < MD5_DIGEST_LENGTH; i++) {
+            std::cerr << fmt::format("{:02x}", argos::smb::BASE_ROM_MD5[i]);
+        }
+        std::cerr << "\n";
+        return false;
+    }
+
+    return true;
+}
+
 // argos smb db init
-int DoSMBDBInit(const argos::RuntimeConfig* config, smb::SMBDatabase* smbdb, int argc, char** argv)
+int DoSMBDBInit(const argos::RuntimeConfig* config, smb::SMBDatabase* orig, int argc, char** argv)
 {
     if (argc > 1) {
         Error("expected at most one argument (the path to the smb rom)");
         return 1;
     }
 
-    std::string rom_path;
-    ArgReadString(&argc, &argv, &rom_path);
-    if (rom_path == "") {
-        rom_path = argos::RuntimeConfig::SMBBlobPath(config);
-        if (FileExists(rom_path)) {
-            if (FileSize(rom_path) == 31482) {
-                std::string cmd = "gpg --decrypt " + rom_path;
-                auto pipe = popen(cmd.c_str(), "r");
-                if (!pipe) {
-                    Error("failed opening pipe '{}'", cmd);
-                    return 1;
-                }
-                std::vector<uint8_t> result(smb::BASE_ROM_SIZE);
-                size_t red = fread(reinterpret_cast<void*>(result.data()), 1, result.size(), pipe);
-                std::cout << smb::BASE_ROM_SIZE << std::endl;
-                std::cout << red << std::endl;
-                if (red != smb::BASE_ROM_SIZE) {
-                    Error("Did not read expected size from pipe");
-                    return 1;
-                }
-
-                //HERE parsing stuff
-
-            } else {
-                std::cerr << "Maybe you need to run 'git lfs pull origin main' in " << config->SourceDirectory << std::endl;
-            }
-        }
+    std::vector<uint8_t> smb_rom;
+    if (!GetSMBRom(argc, argv, config, &smb_rom)) {
+        Error("Failed to init smb rom");
+        return 1;
     }
 
-
-    return 1;
+    std::string TEMP_SMB_DB_PATH = "smbtemp.db";
+    {
+        if (fs::exists(TEMP_SMB_DB_PATH)) {
+            fs::remove(TEMP_SMB_DB_PATH);
+        }
+        smb::SMBDatabase smbdb(TEMP_SMB_DB_PATH);
+        std::string data_path = RuntimeConfig::SMBDataPath(config);
+        if (!smb::InitializeSMBDatabase(&smbdb, data_path, smb_rom)) {
+            Error("Failed to initialize SMBDatabase");
+            return 1;
+        }
+    }
+    orig->Close();
+    fs::remove(orig->m_DatabasePath);
+    fs::rename(TEMP_SMB_DB_PATH, orig->m_DatabasePath);
+    orig->Open();
+    return 0;
 }
 
 bool SMBDBInit(const argos::RuntimeConfig* config, smb::SMBDatabase* smbdb) {
-    //if (!smbdb->IsInit()) {
+    if (!smbdb->IsInit()) {
         if (DoSMBDBInit(config, smbdb, 0, nullptr)) {
-            Error("SMB Database is not initialized. Re-run 'argos smb db init'");
+            Error("SMB Database is not initialized. Run 'argos smb db init'");
             return false;
         }
-    //}
+    }
     return true;
 }
 
