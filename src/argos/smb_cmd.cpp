@@ -27,7 +27,6 @@
 
 #include "smb/smbdb.h"
 #include "smb/smbdbui.h"
-#include "smb/ntextract.h"
 
 using namespace argos;
 using namespace argos::util;
@@ -170,15 +169,6 @@ int DoSMBDB(const argos::RuntimeConfig* config, smb::SMBDatabase* smbdb, int arg
     return 0;
 }
 
-int DoSMBNTExtract(const argos::RuntimeConfig* config, smb::SMBDatabase* smbdb, int argc, char** argv)
-{
-    if (!SMBDBInit(config, smbdb)) {
-        return 1;
-    }
-    smbui::SMBNTExtractApplication app(smbdb);
-    return RunIApplication(config, "argos smb ntextract", &app);
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 // The 'smb' command is for the 1985 nes super mario bros
 REGISTER_COMMAND(smb, "Nintendo Entertainment System, Super Mario Bros., 1985",
@@ -210,8 +200,6 @@ OPTIONS:
     db path
         Print the path to the smb database.
 
-    ntextract
-        Run the ntextract application
 )")
 {
     std::string action;
@@ -224,10 +212,8 @@ OPTIONS:
 
     if (action == "db") {
         return DoSMBDB(config, &smbdb, argc, argv);
-    } else if (action == "ntextract") {
-        return DoSMBNTExtract(config, &smbdb, argc, argv);
     } else {
-        Error("unrecognized action. '{}', expected 'db' or 'ntextract'", action);
+        Error("unrecognized action. '{}', expected 'db'", action);
         return 1;
     }
 

@@ -22,6 +22,15 @@
 
 using namespace argos::nes;
 
+void argos::nes::column_inputs(sqlite3_stmt* stmt, int column, std::vector<nes::ControllerState>* inputs) {
+    if (!inputs) return;
+
+    int sz = sqlite3_column_bytes(stmt, column);
+    const uint8_t* dat = reinterpret_cast<const uint8_t*>(sqlite3_column_blob(stmt, column));
+    inputs->assign(dat, dat + sz);
+}
+
+
 NESDatabase::NESDatabase(const std::string& path)
     : game::GameDatabase(path)
 {
@@ -155,6 +164,35 @@ void NESDatabase::SelectAllTasesLight(std::vector<db::nes_tas>* tases)
 
 }
 
+bool NESDatabase::SelectTAS(int tas_id, db::nes_tas* tas,
+        std::vector<nes::ControllerState>* inputs)
+{
+    sqlite3_stmt* stmt;
+    sqliteext::PrepareOrThrow(m_Database, R"(
+        SELECT id, rom_id, name, start_string, inputs FROM nes_tas WHERE id = ?;
+    )", &stmt);
+    sqliteext::BindIntOrThrow(stmt, 1, tas_id);
+
+    bool ret = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        if (tas) {
+            if (!inputs) {
+                inputs = &tas->inputs;
+            }
+            tas->id = sqlite3_column_int(stmt, 0);
+            tas->rom_id = sqlite3_column_int(stmt, 1);
+            tas->name = sqliteext::column_str(stmt, 2);
+            tas->start_string = sqliteext::column_str(stmt, 3);
+        }
+        if (inputs) {
+            column_inputs(stmt, 4, inputs);
+        }
+        ret = true;
+    }
+    sqlite3_finalize(stmt);
+    return ret;
+}
+
 void NESDatabase::DeleteTAS(int id)
 {
     sqlite3_stmt* stmt;
@@ -195,27 +233,6 @@ int NESDatabase::InsertNewTAS(int rom_id, const std::string& name)
     return InsertNewTAS(rom_id, name, inputs);
 }
 
-bool NESDatabase::SelectTASInputs(int tas_id, std::vector<nes::ControllerState>* inputs)
-{
-    sqlite3_stmt* stmt;
-    sqliteext::PrepareOrThrow(m_Database, R"(
-        SELECT inputs FROM nes_tas WHERE id = ?;
-    )", &stmt);
-    sqliteext::BindIntOrThrow(stmt, 1, tas_id);
-
-    bool ret = false;
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        if (inputs) {
-            int sz = sqlite3_column_bytes(stmt, 0);
-            const uint8_t* dat = reinterpret_cast<const uint8_t*>(sqlite3_column_blob(stmt, 0));
-            inputs->assign(dat, dat + sz);
-        }
-        ret = true;
-    }
-    sqlite3_finalize(stmt);
-    return ret;
-}
-
 bool NESDatabase::GetRomByName(const std::string& name, std::vector<uint8_t>* rom)
 {
     sqlite3_stmt* stmt;
@@ -246,5 +263,17 @@ void argos::nes::column_frame_palette(sqlite3_stmt* stmt, int column, nes::Frame
     const uint8_t* dat = reinterpret_cast<const uint8_t*>(sqlite3_column_blob(stmt, column));
     for (int i = 0; i < nes::FRAMEPALETTE_SIZE; i++) {
         (*palette)[i] = dat[i];
+    }
+}
+
+void argos::nes::column_nametable(sqlite3_stmt* stmt, int column, nes::NameTable* nametable)
+{
+    int sz = sqlite3_column_bytes(stmt, column);
+    if (sz != nes::NAMETABLE_SIZE) {
+        throw std::runtime_error("not a nametable?");
+    }
+    const uint8_t* dat = reinterpret_cast<const uint8_t*>(sqlite3_column_blob(stmt, column));
+    for (int i = 0; i < nes::NAMETABLE_SIZE; i++) {
+        (*nametable)[i] = dat[i];
     }
 }

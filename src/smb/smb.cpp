@@ -19,9 +19,104 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "smb/smb.h"
+#include "fmt/fmt.h"
 
 using namespace argos;
 using namespace argos::smb;
+
+AreaID argos::smb::AreaIDFromRAM(uint8_t area_data_low, uint8_t area_data_high)
+{
+    uint16_t area_id = static_cast<uint16_t>(area_data_high);
+    area_id <<= 8;
+    area_id += static_cast<uint16_t>(area_data_low);
+    return static_cast<AreaID>(area_id);
+}
+
+const std::vector<AreaID>& argos::smb::KnownAreaIDs()
+{
+    static std::vector<AreaID> s_AreaIDs = {
+        AreaID::WATER_AREA_1,
+        AreaID::WATER_AREA_2,
+        AreaID::WATER_AREA_3,
+        AreaID::GROUND_AREA_1,
+        AreaID::GROUND_AREA_2,
+        AreaID::GROUND_AREA_3,
+        AreaID::GROUND_AREA_4,
+        AreaID::GROUND_AREA_5,
+        AreaID::GROUND_AREA_6,
+        AreaID::GROUND_AREA_7,
+        AreaID::GROUND_AREA_8,
+        AreaID::GROUND_AREA_9,
+        AreaID::GROUND_AREA_10,
+        AreaID::GROUND_AREA_11,
+        AreaID::GROUND_AREA_12,
+        AreaID::GROUND_AREA_13,
+        AreaID::GROUND_AREA_14,
+        AreaID::GROUND_AREA_15,
+        AreaID::GROUND_AREA_16,
+        AreaID::GROUND_AREA_17,
+        AreaID::GROUND_AREA_18,
+        AreaID::GROUND_AREA_19,
+        AreaID::GROUND_AREA_20,
+        AreaID::GROUND_AREA_21,
+        AreaID::GROUND_AREA_22,
+        AreaID::UNDERGROUND_AREA_1,
+        AreaID::UNDERGROUND_AREA_2,
+        AreaID::UNDERGROUND_AREA_3,
+        AreaID::CASTLE_AREA_1,
+        AreaID::CASTLE_AREA_2,
+        AreaID::CASTLE_AREA_3,
+        AreaID::CASTLE_AREA_4,
+        AreaID::CASTLE_AREA_5,
+        AreaID::CASTLE_AREA_6,
+    };
+    return s_AreaIDs;
+}
+
+std::string argos::smb::ToString(smb::AreaID area_id)
+{
+    static std::unordered_map<smb::AreaID, std::string> s_AreaStrings = {
+        {smb::AreaID::WATER_AREA_1        , "WATER_AREA_1        0xAE08"},
+        {smb::AreaID::WATER_AREA_2        , "WATER_AREA_2        0xAE47"},
+        {smb::AreaID::WATER_AREA_3        , "WATER_AREA_3        0xAEC2"},
+        {smb::AreaID::GROUND_AREA_1       , "GROUND_AREA_1       0xA46D"},
+        {smb::AreaID::GROUND_AREA_2       , "GROUND_AREA_2       0xA4D0"},
+        {smb::AreaID::GROUND_AREA_3       , "GROUND_AREA_3       0xA539"},
+        {smb::AreaID::GROUND_AREA_4       , "GROUND_AREA_4       0xA58C"},
+        {smb::AreaID::GROUND_AREA_5       , "GROUND_AREA_5       0xA61B"},
+        {smb::AreaID::GROUND_AREA_6       , "GROUND_AREA_6       0xA690"},
+        {smb::AreaID::GROUND_AREA_7       , "GROUND_AREA_7       0xA6F5"},
+        {smb::AreaID::GROUND_AREA_8       , "GROUND_AREA_8       0xA74A"},
+        {smb::AreaID::GROUND_AREA_9       , "GROUND_AREA_9       0xA7CF"},
+        {smb::AreaID::GROUND_AREA_10      , "GROUND_AREA_10      0xA834"},
+        {smb::AreaID::GROUND_AREA_11      , "GROUND_AREA_11      0xA83D"},
+        {smb::AreaID::GROUND_AREA_12      , "GROUND_AREA_12      0xA87C"},
+        {smb::AreaID::GROUND_AREA_13      , "GROUND_AREA_13      0xA891"},
+        {smb::AreaID::GROUND_AREA_14      , "GROUND_AREA_14      0xA8F8"},
+        {smb::AreaID::GROUND_AREA_15      , "GROUND_AREA_15      0xA95D"},
+        {smb::AreaID::GROUND_AREA_16      , "GROUND_AREA_16      0xA9D0"},
+        {smb::AreaID::GROUND_AREA_17      , "GROUND_AREA_17      0xAA01"},
+        {smb::AreaID::GROUND_AREA_18      , "GROUND_AREA_18      0xAA94"},
+        {smb::AreaID::GROUND_AREA_19      , "GROUND_AREA_19      0xAB07"},
+        {smb::AreaID::GROUND_AREA_20      , "GROUND_AREA_20      0xAB80"},
+        {smb::AreaID::GROUND_AREA_21      , "GROUND_AREA_21      0xABD9"},
+        {smb::AreaID::GROUND_AREA_22      , "GROUND_AREA_22      0xAC04"},
+        {smb::AreaID::UNDERGROUND_AREA_1  , "UNDERGROUND_AREA_1  0xAC37"},
+        {smb::AreaID::UNDERGROUND_AREA_2  , "UNDERGROUND_AREA_2  0xACDA"},
+        {smb::AreaID::UNDERGROUND_AREA_3  , "UNDERGROUND_AREA_3  0xAD7B"},
+        {smb::AreaID::CASTLE_AREA_1       , "CASTLE_AREA_1       0xA1B1"},
+        {smb::AreaID::CASTLE_AREA_2       , "CASTLE_AREA_2       0xA212"},
+        {smb::AreaID::CASTLE_AREA_3       , "CASTLE_AREA_3       0xA291"},
+        {smb::AreaID::CASTLE_AREA_4       , "CASTLE_AREA_4       0xA304"},
+        {smb::AreaID::CASTLE_AREA_5       , "CASTLE_AREA_5       0xA371"},
+        {smb::AreaID::CASTLE_AREA_6       , "CASTLE_AREA_6       0xA3FC"},
+    };
+    auto it = s_AreaStrings.find(area_id);
+    if (it == s_AreaStrings.end()) {
+        return fmt::format("UNKNOWN             {:04x}", static_cast<uint16_t>(area_id));
+    }
+    return it->second;
+}
 
 const std::vector<SoundEffect>& argos::smb::AudibleSoundEffects()
 {

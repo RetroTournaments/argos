@@ -20,11 +20,13 @@
 //
 // The PPUx is a means by which we can display NES information and build up the
 // combined images that we want. Given the importance:
+//
 //  I am a dancer, that is to say a conduit.
 //  I don't define music; music defines me.
 //  Every dance tells a story.
 //  A human mind.
 //  Exploration.
+//
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifndef ARGOS_NES_PPUX_HEADER
@@ -63,7 +65,7 @@ struct RenderInfo
     int OffX, OffY; // In PPUxPixels
     int Scale;
     // So tx = oamx.X * render.Scale + render.OffX : for example
-    
+
     std::vector<const uint8_t*> PatternTables; // All 0x1000 in size
     const uint8_t* PaletteBGR;   // 0x00C0 in size
 };
@@ -80,7 +82,7 @@ struct EffectInfo
 
 // Priority status is to allow sprites to be behind backgrounds (and other
 // sprites!) as a real NES PPU does.
-// For simple images err on the side of disabled. However if you want a background 
+// For simple images err on the side of disabled. However if you want a background
 // and sprites behind it then you need to enable it and manage the priority via
 // 'ResetPriority' on a new frame.
 enum class PPUxPriorityStatus
@@ -145,8 +147,8 @@ public:
 
 
     void RenderOAMxEntry(
-            const OAMxEntry& oamx, 
-            const RenderInfo& render, 
+            const OAMxEntry& oamx,
+            const RenderInfo& render,
             const EffectInfo& effects);
     void RenderNametableX(
             const Nametablex& ntx,
@@ -190,7 +192,7 @@ public:
             const uint8_t* data, // each byte is taken as an index into paletteBGR, will read width * height bytes
             const uint8_t* paletteBGR, // max value in data * 3 in size (at most 0xff * 3)
             RenderPaletteDataFlags flags,
-            const EffectInfo& effects); 
+            const EffectInfo& effects);
 
     // To 'outline' things we have a rather unfortunate problem. The sprite
     // entries are rendered in 8x8 tiles that might share edges etc. So! I have
@@ -201,7 +203,7 @@ public:
     void StrokeOutlineX(float outlineRadius, uint8_t paletteIndex, const uint8_t* paletteBGR); // squared outline
 
 
-    // 
+    //
     static size_t RequiredBGROutSize(int width, int height);
 
     // The ppu will draw a sprite behind the background, but still update it as
@@ -219,8 +221,8 @@ private:
     {
         R88_NAMETABLE       = 0b00000000,
         R88_IS_SPRITE       = 0b00000001, // Will skip palette entries of zero
-        R88_FLIP_VERTICAL   = 0b00000010, 
-        R88_FLIP_HORIZONTAL = 0b00000100, 
+        R88_FLIP_VERTICAL   = 0b00000010,
+        R88_FLIP_HORIZONTAL = 0b00000100,
         R88_SPRITE_PRIORITY = 0b00001000, // 0 in front, 1 behind background
     };
     Render88Flags GetSpriteRenderFlags(uint8_t attributes);
@@ -233,7 +235,7 @@ private:
             int scalx, int scaly, const EffectInfo& effects);
 
     void PutPixel(int x, int y, const uint8_t* bgr, // blue green red
-            bool overridePriority, bool isSprite, bool spritePriority, bool isBackground, 
+            bool overridePriority, bool isSprite, bool spritePriority, bool isBackground,
             const EffectInfo& effects);
 
     enum PPUxPriorityInfoEntry : uint8_t

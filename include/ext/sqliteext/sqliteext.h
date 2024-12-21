@@ -51,6 +51,7 @@ int ExecForSingleInt(sqlite3* db, const std::string& query);
 // int                  sqlite3_column_bytes(sqlite3_stmt*, int column)
 // const void*          sqlite3_column_blob(sqlite3_stmt*, int column)
 std::string column_str(sqlite3_stmt* stmt, int column);
+uint8_t column_uint8_t(sqlite3_stmt* stmt, int column);
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -63,13 +64,33 @@ public:
     void Open();
     void Close();
 
+    void BeginTransaction();
+    void Commit();
+
     // calls 'system', so not suitable for most situations.
     int SystemLaunchSQLite3WithExamples();
 
     int ExecOrThrow(const std::string& query,
             std::function<bool(int argc, char** data, char** columns)> cback = nullptr);
+    int ExecFileOrThrow(const std::string& path);
+
     sqlite3* m_Database;
     std::string m_DatabasePath;
+};
+
+class SQLiteExtTransaction
+{
+public:
+    SQLiteExtTransaction(SQLiteExtDB* db)
+        : m_db(db)
+    {
+        m_db->BeginTransaction();
+    }
+    ~SQLiteExtTransaction() {
+        m_db->Commit();
+    }
+private:
+    SQLiteExtDB* m_db;
 };
 
 }

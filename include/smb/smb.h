@@ -71,7 +71,7 @@ enum RamAddress : uint16_t
 
 // Area IDs
 //  (AREA_DATA_HIGH << 8) + AREA_DATA_LOW
-// Define what is typically considered a 'level' like 1-1 is GROUD_AREA_1 for example.
+// Define what is typically considered a 'level' like 1-1 is GROUD_AREA_6 for example.
 // But also they are often re-used / shared.
 enum class AreaID : uint16_t
 {
@@ -110,6 +110,9 @@ enum class AreaID : uint16_t
     CASTLE_AREA_5       = 0xA371,
     CASTLE_AREA_6       = 0xA3FC,
 };
+const std::vector<AreaID>& KnownAreaIDs();
+AreaID AreaIDFromRAM(uint8_t area_data_low, uint8_t area_data_high);
+std::string ToString(AreaID area_id);
 
 // Sound effects
 //  From queues (SQUARE1_SOUND_QUEUE, SQUARE2_SOUND_QUEUE, NOISE_SOUND_QUEUE, PAUSE_SOUND_QUEUE)

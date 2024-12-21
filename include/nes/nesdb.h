@@ -27,6 +27,10 @@
 namespace argos::nes
 {
 
+void column_inputs(sqlite3_stmt* stmt, int column, std::vector<nes::ControllerState>* inputs);
+void column_frame_palette(sqlite3_stmt* stmt, int column, nes::FramePalette* palette);
+void column_nametable(sqlite3_stmt* stmt, int column, nes::NameTable* nametable);
+
 namespace db
 {
 
@@ -49,8 +53,6 @@ struct nes_tas
 
 }
 
-void column_frame_palette(sqlite3_stmt* stmt, int column, nes::FramePalette* palette);
-
 class NESDatabase : public game::GameDatabase
 {
 public:
@@ -70,11 +72,12 @@ public:
 
     // And TASes
     void SelectAllTasesLight(std::vector<db::nes_tas>* tases);
+    bool SelectTAS(int id, db::nes_tas* tas,
+            std::vector<nes::ControllerState>* inputs = nullptr);
     void DeleteTAS(int id);
     void UpdateTASName(int id, const std::string& name);
     int InsertNewTAS(int rom_id, const std::string& name);
     int InsertNewTAS(int rom_id, const std::string& name, const std::vector<nes::ControllerState>& inputs);
-    bool SelectTASInputs(int tas_id, std::vector<nes::ControllerState>* inputs);
 
 
     static const char* ROMSchema();

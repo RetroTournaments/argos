@@ -27,6 +27,10 @@
 namespace argos::smb
 {
 
+AreaID column_area_id(sqlite3_stmt* stmt, int column);
+const uint8_t* rom_chr0(nes::NESDatabase::RomSPtr rom);
+const uint8_t* rom_chr1(nes::NESDatabase::RomSPtr rom);
+
 namespace db
 {
 
@@ -44,41 +48,35 @@ struct music_track
 
 struct nametable_page
 {
+    int id;
     AreaID area_id;
     uint8_t page;
     nes::FramePalette frame_palette;
-    nes::NameTable data;
+    nes::NameTable nametable;
 };
 
 struct minimap_page
 {
+    int id;
     AreaID area_id;
     uint8_t page;
     MinimapImage data;
 };
 
-struct nt_extract_inputs
-{
-    int id;
-    std::string name;
-    std::vector<nes::ControllerState> inputs;
-};
-
 struct nt_extract_record
 {
     int id;
-    int nt_extract_id;
+    int nes_tas_id;
     int frame;
+    AreaID area_id;
+    uint8_t page;
     int nt_index;
-    uint8_t area_data_low;
-    uint8_t area_data_high;
-    uint8_t screenedge_pageloc;
-    uint8_t screenedge_x_pos;
-    uint8_t block_buffer_84_disc;
-    nes::FramePalette frame_palette;
 };
 
 }
+
+class SMBNametableCache;
+typedef std::shared_ptr<SMBNametableCache> SMBNametableCachePtr;
 
 class SMBDatabase : public nes::NESDatabase
 {
@@ -89,20 +87,36 @@ public:
     bool IsInit();
 
     RomSPtr GetBaseRom();
+    SMBNametableCachePtr GetNametableCache();
 
     bool GetSoundEffectWav(SoundEffect effect, std::vector<uint8_t>* data);
     bool GetMusicTrackWav(MusicTrack track, std::vector<uint8_t>* data);
-    bool GetNametablePage(AreaID area_id, uint8_t page, db::nametable_page* nt_page);
     bool GetMinimapPage(AreaID area_id, uint8_t page, db::minimap_page* mini_page);
-    bool GetAllNTExtractInputs(std::vector<db::nt_extract_inputs>* inputs);
-    bool GetAllNTExtractRecords(int input_id, std::vector<db::nt_extract_record>* records);
+    bool GetAllNametablePages(std::vector<db::nametable_page>* pages);
+    bool GetAllNTExtractTASIDs(std::vector<int>* ids);
+    bool GetAllNTExtractRecords(int nes_tas_id, std::vector<db::nt_extract_record>* records);
 
     static const char* SoundEffectSchema();
     static const char* MusicTrackSchema();
     static const char* NametablePageSchema();
     static const char* MinimapPageSchema();
-    static const char* NTExtractInputsSchema();
     static const char* NTExtractRecordSchema();
+
+private:
+    SMBNametableCachePtr m_NametableCache;
+};
+
+class SMBNametableCache
+{
+public:
+    SMBNametableCache(SMBDatabase* database);
+    ~SMBNametableCache();
+
+    bool KnownPage(AreaID id, uint8_t page) const;
+    const db::nametable_page& GetPage(AreaID id, uint8_t page) const;
+
+private:
+    std::unordered_map<AreaID, std::vector<db::nametable_page>> m_pages;
 };
 
 //
@@ -112,6 +126,7 @@ bool InitializeSMBDatabase(SMBDatabase* database, const std::string& smb_data_pa
 //
 bool InsertSoundEffect(SMBDatabase* database, SoundEffect effect, const std::string& wavpath);
 bool InsertMusicTrack(SMBDatabase* database, MusicTrack track, const std::string& wavpath);
+bool InsertNametablePage(SMBDatabase* database, const db::nametable_page& nt);
 
 }
 

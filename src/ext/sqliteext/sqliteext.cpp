@@ -23,6 +23,7 @@
 #include <iostream>
 #include <iomanip>
 
+#include "util/file.h"
 #include "ext/sqliteext/sqliteext.h"
 
 using namespace argos::sqliteext;
@@ -190,7 +191,20 @@ void argos::sqliteext::StepAndFinalizeOrThrow(sqlite3_stmt* stmt)
 std::string argos::sqliteext::column_str(sqlite3_stmt* stmt, int column)
 {
     // TODO error handling?
-    return std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, column)));
+    const char* p = reinterpret_cast<const char*>(sqlite3_column_text(stmt, column));
+    if (!p) {
+        return "";
+    }
+    return std::string(p);
+}
+
+uint8_t argos::sqliteext::column_uint8_t(sqlite3_stmt* stmt, int column)
+{
+    int v = sqlite3_column_int(stmt, column);
+    if (v < 0 || v >= 256) {
+        throw std::runtime_error("out of bounds data in db for sqliteext::column_uint8_t");
+    }
+    return static_cast<uint8_t>(v);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -219,12 +233,27 @@ void SQLiteExtDB::Open()
     sqliteext::OpenOrThrow(m_DatabasePath, &m_Database);
 }
 
+void SQLiteExtDB::BeginTransaction()
+{
+    ExecOrThrow("BEGIN TRANSACTION;");
+}
+
+void SQLiteExtDB::Commit()
+{
+    ExecOrThrow("COMMIT;");
+}
+
 int SQLiteExtDB::ExecOrThrow(const std::string& query,
         std::function<bool(int argc, char** data, char** columns)> cback)
 {
     return sqliteext::ExecOrThrow(m_Database, query, cback);
 }
 
+int SQLiteExtDB::ExecFileOrThrow(const std::string& path)
+{
+    std::string contents = util::ReadFileToString(path);
+    return ExecOrThrow(contents);
+}
 
 int SQLiteExtDB::SystemLaunchSQLite3WithExamples()
 {

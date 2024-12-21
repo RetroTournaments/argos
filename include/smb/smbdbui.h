@@ -28,6 +28,8 @@
 namespace argos::smbui
 {
 
+bool AreaIDCombo(const char* label, smb::AreaID* id);
+
 class SMBDatabaseApplication : public rgmui::IApplication
 {
 public:
@@ -81,28 +83,24 @@ private:
     smb::SMBDatabase* m_Database;
 };
 
-class SMBDBNTExtractInputsComponent : public rgmui::IApplicationComponent
+class SMBDBNametablePageComponent : public rgmui::IApplicationComponent
 {
 public:
-    SMBDBNTExtractInputsComponent(smb::SMBDatabase* db);
-    ~SMBDBNTExtractInputsComponent();
+    SMBDBNametablePageComponent(smb::SMBDatabase* db);
+    ~SMBDBNametablePageComponent();
 
     void OnFrame();
 
 private:
-    smb::SMBDatabase* m_Database;
-};
-
-class SMBDBNTExtractRecordsComponent : public rgmui::IApplicationComponent
-{
-public:
-    SMBDBNTExtractRecordsComponent(smb::SMBDatabase* db);
-    ~SMBDBNTExtractRecordsComponent();
-
-    void OnFrame();
+    void RefreshPage();
 
 private:
-    smb::SMBDatabase* m_Database;
+    nes::NESDatabase::RomSPtr m_Rom;
+    smb::SMBNametableCachePtr m_Cache;
+    smb::AreaID m_AreaID;
+    uint8_t m_Page;
+
+    cv::Mat m_Mat;
 };
 
 };

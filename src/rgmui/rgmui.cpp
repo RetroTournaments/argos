@@ -90,7 +90,7 @@ IApplicationConfig IApplicationConfig::Defaults() {
     return cfg;
 }
 
-IApplication::IApplication(IApplicationConfig config) 
+IApplication::IApplication(IApplicationConfig config)
     : m_Config(config)
     , m_DockspaceID(0)
     , m_FirstFrame(true)
@@ -337,11 +337,11 @@ static int InputTextCallback(ImGuiInputTextCallbackData* data) {
     return 0;
 }
 
-bool argos::rgmui::InputText(const char* label, std::string* str, 
+bool argos::rgmui::InputText(const char* label, std::string* str,
         ImGuiInputTextFlags flags)
 {
     flags |= ImGuiInputTextFlags_CallbackResize;
-    bool ret = ImGui::InputText(label, const_cast<char*>(str->c_str()), 
+    bool ret = ImGui::InputText(label, const_cast<char*>(str->c_str()),
         str->capacity() + 1, flags, InputTextCallback, (void*)str);
     ImGui::PushID("context");
     if (ImGui::BeginPopupContextItem(label, ImGuiPopupFlags_MouseButtonRight)) {
@@ -367,7 +367,7 @@ bool argos::rgmui::InputTextMulti(const char* label, std::string* str, const ImV
         ImGuiInputTextFlags flags)
 {
     flags |= ImGuiInputTextFlags_CallbackResize;
-    bool ret = ImGui::InputTextMultiline(label, const_cast<char*>(str->c_str()), 
+    bool ret = ImGui::InputTextMultiline(label, const_cast<char*>(str->c_str()),
         str->capacity() + 1, size, flags, InputTextCallback, (void*)str);
     ImGui::PushID("context");
     if (ImGui::BeginPopupContextItem(label, ImGuiPopupFlags_MouseButtonRight)) {
@@ -466,7 +466,7 @@ bool argos::rgmui::InputPaletteIndex(const char* label, uint8_t* paletteIndex,
             changed = true;
         }
 
-        if (ImGui::BeginTable("p2", numcols, ImGuiTableFlags_SizingFixedSame 
+        if (ImGui::BeginTable("p2", numcols, ImGuiTableFlags_SizingFixedSame
                     | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX)) {
             int tpalIndex = 0;
             for (;;) {
@@ -506,13 +506,13 @@ static bool SliderExt(T* v, T min, T max, bool allowArrowKeys, bool allowMouseWh
         }
 
         T m = 0;
-        if (allowArrowKeys && 
+        if (allowArrowKeys &&
                 ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) {
             if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow)) {
                 m = -1;
             } else if (ImGui::IsKeyPressed(ImGuiKey_RightArrow)) {
                 m = 1;
-            } 
+            }
         }
 
         if (m == 0 && allowMouseWheel) {
@@ -542,6 +542,16 @@ static bool SliderExt(T* v, T min, T max, bool allowArrowKeys, bool allowMouseWh
         }
     }
     return changed;
+}
+
+bool argos::rgmui::SliderUint8Ext(const char* label, uint8_t* v, uint8_t min, uint8_t max,
+        ImGuiSliderFlags flags, bool allowArrowKeys, bool allowMouseWheel, uint8_t singleMove, uint8_t shiftMult) {
+    if (!v) throw std::invalid_argument("null v disallowed");
+    int iv = static_cast<int>(*v);
+    bool ret = SliderIntExt(label, &iv, static_cast<int>(min), static_cast<int>(max),
+            "0x%02x", flags, allowArrowKeys, allowMouseWheel, static_cast<int>(singleMove), static_cast<int>(shiftMult));
+    *v = static_cast<uint8_t>(iv);
+    return ret;
 }
 
 bool argos::rgmui::SliderIntExt(const char* label, int* v, int min, int max,
@@ -598,7 +608,7 @@ void argos::rgmui::Mat(const char* label, const cv::Mat& img) {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-MatAnnotator::MatAnnotator(const char* label, const cv::Mat& mat, float scale, Vector2F origin, 
+MatAnnotator::MatAnnotator(const char* label, const cv::Mat& mat, float scale, Vector2F origin,
         bool clipped)
     : m_OriginalCursorPosition(ImGui::GetCursorScreenPos())
     , m_List(ImGui::GetWindowDrawList())
@@ -625,7 +635,7 @@ MatAnnotator::~MatAnnotator() {
 }
 
 
-MatAnnotator::ClipHelper::ClipHelper(MatAnnotator* anno) 
+MatAnnotator::ClipHelper::ClipHelper(MatAnnotator* anno)
     : m_Anno(anno)
 {
     if (m_Anno->m_Clipped) {
@@ -650,8 +660,8 @@ Vector2F MatAnnotator::MatPosToScreenPos2F(const Vector2F& v) const {
 
 Vector2F MatAnnotator::ScreenPosToMatPos2F(const ImVec2& p) const {
     Vector2F v;
-    v.x = (p.x + m_Origin.x - m_OriginalCursorPosition.x) / m_Scale; 
-    v.y = (p.y + m_Origin.y - m_OriginalCursorPosition.y) / m_Scale; 
+    v.x = (p.x + m_Origin.x - m_OriginalCursorPosition.x) / m_Scale;
+    v.y = (p.y + m_Origin.y - m_OriginalCursorPosition.y) / m_Scale;
     return v;
 }
 
@@ -727,7 +737,7 @@ void MatAnnotator::AddRectFilled(const Vector2F& pmin, const Vector2F& pmax,
     AddRectFilledNC(pmin, pmax, col, rounding, flags);
 }
 
-void MatAnnotator::AddRectFilled(const Rect2F& rect, 
+void MatAnnotator::AddRectFilled(const Rect2F& rect,
         ImU32 col, float rounding, ImDrawFlags flags) {
     AddRectFilled(rect.TopLeft(), rect.BottomRight(), col, rounding, flags);
 }
@@ -741,7 +751,7 @@ void MatAnnotator::AddRectFilledNC(const Vector2F& pmin, const Vector2F& pmax,
 
 bool MatAnnotator::IsHovered(bool requireWindowFocus)
 {
-    return m_IsHovered && 
+    return m_IsHovered &&
         (!requireWindowFocus || ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows));
 }
 

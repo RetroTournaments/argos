@@ -20,12 +20,49 @@
 
 #include "smb/smbdbui.h"
 #include "nes/nesdbui.h"
+#include "nes/ppux.h"
 #include "ext/nfdext/nfdext.h"
 #include "ext/sdlext/sdlextui.h"
 
 using namespace argos;
 using namespace argos::smbui;
 using namespace argos::smb;
+
+bool argos::smbui::AreaIDCombo(const char* label, smb::AreaID* id)
+{
+    bool changed = false;
+    if (!id) {
+        throw std::invalid_argument("null id disallowed");
+    }
+    const auto& area_ids = KnownAreaIDs();
+    size_t idx = 0;
+    for (auto & aid : area_ids) {
+        if (aid == *id) {
+            break;
+        }
+        idx++;
+    }
+
+    if (ImGui::BeginCombo(label, ToString(*id).c_str())) {
+        for (auto & aid : area_ids) {
+            bool selected = *id == aid;
+            if (ImGui::Selectable(ToString(aid).c_str(), selected)) {
+                *id = aid;
+                changed = true;
+            }
+            if (selected) {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    } else {
+        if (rgmui::HandleCombo4Scroll(&idx, area_ids.size())) {
+            *id = area_ids[idx];
+            changed = true;
+        }
+    }
+    return changed;
+}
 
 SMBDatabaseApplication::SMBDatabaseApplication(SMBDatabase* db)
 {
@@ -34,9 +71,8 @@ SMBDatabaseApplication::SMBDatabaseApplication(SMBDatabase* db)
     RegisterComponent(std::make_shared<sdlextui::SDLExtMixComponent>());
     RegisterComponent(std::make_shared<smbui::SMBDBSoundComponent>(db));
     RegisterComponent(std::make_shared<smbui::SMBDBMusicComponent>(db));
+    RegisterComponent(std::make_shared<smbui::SMBDBNametablePageComponent>(db));
     RegisterComponent(std::make_shared<smbui::SMBDBNametableMiniComponent>(db));
-    RegisterComponent(std::make_shared<smbui::SMBDBNTExtractInputsComponent>(db));
-    RegisterComponent(std::make_shared<smbui::SMBDBNTExtractRecordsComponent>(db));
 }
 
 SMBDatabaseApplication::~SMBDatabaseApplication()
@@ -209,36 +245,59 @@ void SMBDBNametableMiniComponent::OnFrame()
     ImGui::End();
 }
 
-SMBDBNTExtractInputsComponent::SMBDBNTExtractInputsComponent(smb::SMBDatabase* db)
-    : m_Database(db)
+SMBDBNametablePageComponent::SMBDBNametablePageComponent(smb::SMBDatabase* db)
+    : m_Rom(db->GetBaseRom())
+    , m_Cache(db->GetNametableCache())
+    , m_AreaID(smb::AreaID::GROUND_AREA_6)
+    , m_Page(0x01)
+{
+    RefreshPage();
+}
+
+SMBDBNametablePageComponent::~SMBDBNametablePageComponent()
 {
 }
 
-SMBDBNTExtractInputsComponent::~SMBDBNTExtractInputsComponent()
+void SMBDBNametablePageComponent::OnFrame()
 {
-}
-
-void SMBDBNTExtractInputsComponent::OnFrame()
-{
-    if (ImGui::Begin("smb_ntextract_inputs")) {
-        ImGui::Text("use 'argos smb ntextract'");
+    if (ImGui::Begin("smb_nametable_page")) {
+        if (smbui::AreaIDCombo("Area ID", &m_AreaID)) {
+            RefreshPage();
+        }
+        if (rgmui::SliderUint8Ext("Page", &m_Page, 0x00, 0x20)) {
+            RefreshPage();
+        }
+        rgmui::MatAnnotator anno("nametable_pages", m_Mat);
+        if (anno.IsHovered()) {
+            if (rgmui::HoverScroll<uint8_t>(&m_Page, 0x00, 0x20)) {
+                RefreshPage();
+            }
+        }
     }
     ImGui::End();
 }
 
-SMBDBNTExtractRecordsComponent::SMBDBNTExtractRecordsComponent(smb::SMBDatabase* db)
-    : m_Database(db)
+void SMBDBNametablePageComponent::RefreshPage()
 {
-}
+    m_Mat = cv::Mat::zeros(nes::FRAME_HEIGHT, nes::FRAME_WIDTH * 3, CV_8UC3);
+    nes::PPUx ppux(m_Mat.cols, m_Mat.rows, m_Mat.data,
+            nes::PPUxPriorityStatus::DISABLED);
+    for (int i = 0; i < 3; i++) {
+        if (i == 0 && m_Page == 0) {
+            continue;
+        }
 
-SMBDBNTExtractRecordsComponent::~SMBDBNTExtractRecordsComponent()
-{
-}
+        uint8_t p = m_Page + i - 1;
+        if (m_Cache->KnownPage(m_AreaID, p)) {
+            const auto& ntpage = m_Cache->GetPage(m_AreaID, p);
 
-void SMBDBNTExtractRecordsComponent::OnFrame()
-{
-    if (ImGui::Begin("smb_ntextract_records")) {
-        ImGui::Text("use 'argos smb ntextract'");
+            ppux.RenderNametable(nes::FRAME_WIDTH * i, 0,
+                    nes::NAMETABLE_WIDTH_BYTES, nes::NAMETABLE_HEIGHT_BYTES,
+                    ntpage.nametable.data(),
+                    ntpage.nametable.data() + nes::NAMETABLE_ATTRIBUTE_OFFSET,
+                    smb::rom_chr1(m_Rom), ntpage.frame_palette.data(),
+                    nes::DefaultPaletteBGR().data(), 1,
+                    nes::EffectInfo::Defaults());
+        }
     }
-    ImGui::End();
 }

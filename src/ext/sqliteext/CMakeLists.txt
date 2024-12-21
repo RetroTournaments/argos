@@ -24,6 +24,7 @@ add_library(sqliteextlib STATIC
     sqliteext.cpp
 )
 target_link_libraries(sqliteextlib
+    utillib
     sqlite3
 )
 

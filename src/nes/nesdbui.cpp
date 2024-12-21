@@ -70,7 +70,7 @@ void NESDBRomComponent::OnFrame()
                     ImGui::TableSetupColumn("name         ", ImGuiTableColumnFlags_WidthFixed);
                     ImGui::TableSetupColumn("rom size ", ImGuiTableColumnFlags_WidthFixed);
                     ImGui::TableSetupColumn("         ", ImGuiTableColumnFlags_WidthFixed);
-                }, 
+                },
                 [](nes::db::nes_rom* rom,
                     bool* selected,
                     int* scroll,
@@ -86,9 +86,9 @@ void NESDBRomComponent::OnFrame()
                         NESDBRomComponent* comp = reinterpret_cast<NESDBRomComponent*>(nesdbromcomponent);
                         comp->SetIDToDelete(rom->id);
                     }
-                
+
                     return false;
-                }, 
+                },
                 this);
 
         if (m_RomToDelete >= 0) {
@@ -216,13 +216,13 @@ void NESDBTASComponent::OnFrame()
         ImGui::Checkbox("Locked", &m_Locked);
         m_TasToDelete = -1;
         sqliteext::ui::DoDBViewTable<nes::db::nes_tas>("db::nes_tas", &m_NESTasInfo, &m_SelectedTASID,
-            4, 
+            4,
             [](void*){
                 ImGui::TableSetupColumn("id    ", ImGuiTableColumnFlags_WidthFixed);
                 ImGui::TableSetupColumn("rom_id", ImGuiTableColumnFlags_WidthFixed);
                 ImGui::TableSetupColumn("name         ", ImGuiTableColumnFlags_WidthFixed);
                 ImGui::TableSetupColumn("         ", ImGuiTableColumnFlags_WidthFixed);
-            }, 
+            },
             [](nes::db::nes_tas* tas,
                 bool* selected,
                 int* scroll,
@@ -244,7 +244,7 @@ void NESDBTASComponent::OnFrame()
                     comp->ChangeName(tas->id, tas->name);
                 }
                 return changed;
-            }, 
+            },
             this);
         if (m_TasToDelete >= 0) {
             m_Database->DeleteTAS(m_TasToDelete);
@@ -314,7 +314,7 @@ bool NESDBTASComponent::SetSubComponentTAS(const nes::db::nes_tas& tas)
     }
 
     std::vector<nes::ControllerState> inputs;
-    if (!m_Database->SelectTASInputs(tas.id, &inputs)) {
+    if (!m_Database->SelectTAS(tas.id, nullptr, &inputs)) {
         return false;
     }
 
