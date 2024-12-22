@@ -49,6 +49,7 @@ add_executable(argos
     smb_cmd.cpp
     smpte_cmd.cpp
     list_cmd.cpp
+    rgms_cmd.cpp
 )
 target_link_libraries(argos
     argoslib
@@ -56,4 +57,5 @@ target_link_libraries(argos
     smblib
     smbuilib
     opensslextlib
+    rgmslib
 )

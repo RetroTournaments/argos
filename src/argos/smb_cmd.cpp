@@ -180,11 +180,8 @@ int DoSMBDB(const argos::RuntimeConfig* config, smb::SMBDatabase* smbdb, int arg
 REGISTER_COMMAND(smb, "Nintendo Entertainment System, Super Mario Bros., 1985",
 R"(
 EXAMPLES:
+    argos smb db init
     argos smb db ui
-
-    <todo?> argos smb host --port 5555
-    <todo?> argos smb join --nestopia --connect "udp://127.0.0.1:5555"
-    <todo?> argos smb
 
 USAGE:
     argos smb <action> [<args>...]

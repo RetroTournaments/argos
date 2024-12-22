@@ -42,3 +42,10 @@ target_link_libraries(smbuilib
     sdlextuilib
 )
 
+# The old library.
+add_library(rgmslib
+    rgms.cpp
+)
+target_link_libraries(rgmslib
+    smbuilib
+)
