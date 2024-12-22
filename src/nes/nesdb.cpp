@@ -54,11 +54,24 @@ void argos::nes::column_nametable(sqlite3_stmt* stmt, int column, nes::NameTable
     }
 }
 
+void argos::nes::column_pattern_table(sqlite3_stmt* stmt, int column, nes::PatternTable* pattern_table)
+{
+    int sz = sqlite3_column_bytes(stmt, 0);
+    if (sz != nes::PATTERNTABLE_SIZE) {
+        throw std::runtime_error("not a pattern table?");
+    }
+    const uint8_t* dat = reinterpret_cast<const uint8_t*>(sqlite3_column_blob(stmt, 0));
+    for (int i = 0; i < nes::PATTERNTABLE_SIZE; i++) {
+        (*pattern_table)[i] = dat[i];
+    }
+}
+
 NESDatabase::NESDatabase(const std::string& path)
     : game::GameDatabase(path)
 {
     ExecOrThrow(NESDatabase::ROMSchema());
     ExecOrThrow(NESDatabase::TASSchema());
+    ExecOrThrow(NESDatabase::PatternTableSchema());
 }
 
 NESDatabase::~NESDatabase()
@@ -83,6 +96,15 @@ const char* NESDatabase::TASSchema()
     name            TEXT,
     start_string    BLOB,
     inputs          BLOB NOT NULL
+);)";
+}
+
+const char* NESDatabase::PatternTableSchema()
+{
+    return R"(CREATE TABLE IF NOT EXISTS nes_pattern_table (
+    id              INTEGER PRIMARY KEY,
+    name            TEXT,
+    pattern_table   BLOB NOT NULL
 );)";
 }
 
@@ -271,6 +293,23 @@ bool NESDatabase::GetRomByName(const std::string& name, std::vector<uint8_t>* ro
         if (rom) {
             rom->assign(dat, dat + sz);
         }
+        ret = true;
+    }
+    sqlite3_finalize(stmt);
+    return ret;
+}
+
+bool NESDatabase::GetPatternTableByName(const std::string& name,
+        nes::PatternTable* pattern_table) {
+    sqlite3_stmt* stmt;
+    sqliteext::PrepareOrThrow(m_Database, R"(
+        SELECT pattern_table FROM nes_pattern_table WHERE name = ?;
+    )", &stmt);
+    sqliteext::BindStrOrThrow(stmt, 1, name);
+
+    bool ret = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        column_pattern_table(stmt, 0, pattern_table);
         ret = true;
     }
     sqlite3_finalize(stmt);

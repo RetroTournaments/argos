@@ -381,6 +381,68 @@ static int DoReceive(int argc, char** argv)
     return DoReceiveStuff(bindings);
 }
 
+static int DoSMBComp(int argc, char** argv, argos::RuntimeConfig* config)
+{
+    void* sharedMem = nullptr;
+
+    std::string name;
+
+    //int f = util::DoArgsFlags_PrintErrors | util::DoArgsFlags_ThrowErrors;
+    int dno = -1, pdno = -1;
+
+    std::string arg;
+    while (util::ArgReadString(&argc, &argv, &arg)) {
+        if (arg == "--name") {
+            if (!util::ArgReadString(&argc, &argv, &name)) {
+                Error("argument required to --name");
+                return 1;
+            }
+        } else if (arg == "--aux-display") {
+            if (!util::ArgReadInt(&argc, &argv, &dno)) {
+                Error("argument required to --aux-display");
+                return 1;
+            }
+        } else if (arg == "--prime-display") {
+            if (!util::ArgReadInt(&argc, &argv, &pdno)) {
+                Error("argument required to --prime-display");
+                return 1;
+            }
+        } else {
+            Error("Unknown argument to smbcomp");
+        }
+    }
+
+    if (dno != -1) {
+    //    sharedMem = mmap(NULL, SHARED_MEM_SIZE, PROT_READ | PROT_WRITE,
+    //            MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    //    uint8_t* b = reinterpret_cast<uint8_t*>(sharedMem);
+    //    b[0] = 0x00;
+    //    b[SHARED_MEM_QUIT] = 0x00;
+
+    //    int pid = fork();
+    //    if (pid == 0) {
+    //        SMBCompAppAux app2(sharedMem);
+    //        DoApp(config, "RGMS SMB Comp 2", &app2, -1, -1, dno);
+    //    } else {
+    //        SMBCompApp app(config);
+    //        if (name != "") {
+    //            app.LoadNamedConfig(name);
+    //        }
+
+    //        app.SetSharedMemory(sharedMem);
+    //        DoApp(config, "RGMS SMB Comp", &app, 2400, 1180, pdno);
+    //    }
+    } else {
+        argos::rgms::SMBCompApp app(config);
+        if (name != "") {
+            app.LoadNamedConfig(name);
+        }
+        RunIApplication(config, "RGMS SMB Comp", &app); //, 2400, 1180, pdno);
+        //DoApp(config, "RGMS SMB Comp", &app, 2400, 1380);
+    }
+    return 0;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // The 'rgms' command is for bad original code that needs to be moved eventually
 REGISTER_COMMAND(rgms, "RGMS",
@@ -409,6 +471,8 @@ OPTIONS:
         return DoTransmit(argc, argv, config);
     } else if (action == "receive") {
         return DoReceive(argc, argv);
+    } else if (action == "smbcomp") {
+        return DoSMBComp(argc, argv, config);
     }
 
     return 0;

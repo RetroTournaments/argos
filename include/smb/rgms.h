@@ -33,10 +33,29 @@
 #include <cstdint>
 #include <thread>
 
+#include "nlohmann/json.hpp"
+
+#include "argos/config.h"
 #include "nes/nes.h"
+#include "nes/nesdb.h"
+#include "nes/nestopiaimpl.h"
 #include "smb/smbdb.h"
+#include "rgmui/rgmui.h"
 #include "util/serial.h"
 #include "util/clock.h"
+#include "util/rect.h"
+#include "ext/sdlext/sdlext.h"
+
+namespace argos::util {
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Vector2F,
+    x, y);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Rect2F,
+    X, Y, Width, Height);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Rect2I,
+    X, Y, Width, Height);
+
+}
 
 namespace argos::internesceptor {
 
@@ -472,7 +491,1559 @@ private:
     size_t m_tag;
 };
 
+}
+namespace argos::rgms {
 
+enum RaceCategory : uint8_t
+{
+    ANY_PERCENT = 0x00,
+    WARPLESS    = 0x01,
+};
+NLOHMANN_JSON_SERIALIZE_ENUM(RaceCategory, {
+    {RaceCategory::ANY_PERCENT, "any_percent"},
+    {RaceCategory::WARPLESS, "warpless"},
+});
+
+struct PlayerColors
+{
+    uint8_t RepresentativeColor;
+    uint8_t OutlineColor;
+    uint8_t MarioColors[3];
+    uint8_t FireMarioColors[3];
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PlayerColors, RepresentativeColor, OutlineColor, MarioColors, FireMarioColors);
+void InitializePlayerColors(PlayerColors* colors, bool mario = true);
+
+bool IsMarioTile(uint8_t tileIndex);
+
+struct ControllerColors
+{
+    ImVec4 Base;        // some kind of light gray
+    ImVec4 BaseDark;    // some kind of light gray
+    ImVec4 Dark;        // some kind of near black
+    ImVec4 Accent;      // a middling gray
+    ImVec4 Black;       // for the holes etc.
+    // ImVec4 Text;        // a dark red TODO
+
+    ImVec4 ABButton;    // a light red
+    ImVec4 STButton;    // darkish black
+    ImVec4 DPad;        // darkish black
+    ImVec4 Pressed;     // maybe a green?
+
+    static ControllerColors Defaults();
+};
+
+inline constexpr int NUM_ACCENTS = 4;
+struct ControllerGeometry
+{
+    struct {
+        float Width;
+        float Height;
+        float Radius;
+
+        struct {
+            float CenterX;
+            float Width;
+            float Height;
+        } ControllerPort;
+    } Boundary;
+
+    struct {
+        // Offset from the edge of the controller to three edges of the dark region
+        float Offset;
+        float Height;
+        float Radius;
+    } DarkRegion;
+
+    struct {
+        float CenterX;
+        float CenterY;
+        float PadDiameter;
+        float PadWidth;
+        float Radius;
+
+        struct {
+            float Thickness;
+            float Radius;
+        } Outline;
+    } DPad;
+
+    struct {
+        float CenterX;
+        float Width;
+        float AccentRadius;
+        struct {
+            float TY; //
+            float Height; // Last one special case
+            ImDrawFlags Rounding;
+        } Accent[NUM_ACCENTS];
+
+        struct {
+            float CenterY;
+            float Height;
+
+            struct {
+                float OffsetX;
+                float Width;
+                float Height;
+            } Button;
+        } ButtonInset;
+    } SelectStart;
+
+    struct {
+        float CenterX;
+        float CenterY;
+        float OutsideWidth;
+
+        float ButtonDiameter;
+
+        struct {
+            float Width;
+            float Radius;
+        } Accent;
+    } ABButtons;
+
+    static ControllerGeometry Defaults();
+};
+
+struct DogboneGeometry
+{
+    struct {
+        float Width;
+        float Height;
+        float BetweenCentersWidth;
+        float InnerHeight;
+
+        struct {
+            float Width;
+            float Height;
+        } ControllerPort;
+    } Boundary;
+
+    struct {
+        float PadDiameter;
+        float PadWidth;
+        float Radius;
+
+        struct {
+            float Thickness;
+            float Radius;
+        } Outline;
+    } DPad;
+
+    struct {
+        struct {
+            float Width;
+            float Height;
+            float Angle;
+        } Button;
+
+        float InterDistance;
+    } SelectStart;
+
+    struct {
+        float Angle;
+        float InterDistance;
+        float ButtonDiameter;
+    } ABButtons;
+
+    static DogboneGeometry Defaults();
+};
+
+typedef std::pair<ImVec2, ImVec2> ButtonLocation;
+typedef std::vector<ButtonLocation> ButtonLocations;
+ImVec2 DrawController(
+        nes::ControllerState state,
+        const ControllerColors& colors,
+        const ControllerGeometry& geometry,
+        float x, float y, float scale,
+        ImDrawList* list,
+        ButtonLocations* buttons);
+ImVec2 DrawDogbone(
+        nes::ControllerState state,
+        const ControllerColors& colors,
+        const DogboneGeometry& geometry,
+        float x, float y, float scale,
+        ImDrawList* list,
+        ButtonLocations* buttons);
+
+struct NESControllerComponentOptions
+{
+    ControllerColors Colors;
+    ControllerGeometry Geometry;
+    DogboneGeometry DogGeometry;
+    bool IsDogbone;
+    float Scale;
+    float ButtonPad;
+
+    bool AllowEdits;
+
+    static NESControllerComponentOptions Defaults();
+};
+
+enum class ControllerType
+{
+    BRICK,
+    DOGBONE
+};
+NLOHMANN_JSON_SERIALIZE_ENUM(ControllerType, {
+    {ControllerType::BRICK, "brick"},
+    {ControllerType::DOGBONE, "dogbone"},
+})
+
+class NESControllerComponent : public rgmui::IApplicationComponent
+{
+public:
+    NESControllerComponent(const std::string& windowName);
+    ~NESControllerComponent();
+
+    virtual void OnFrame() override;
+
+    static bool Controls(nes::ControllerState* state, NESControllerComponentOptions* options);
+
+    nes::ControllerState& GetState();
+    const nes::ControllerState& GetState() const;
+
+    NESControllerComponentOptions& GetOptions();
+    const NESControllerComponentOptions& GetOptions() const;
+
+private:
+    std::string m_WindowName;
+    NESControllerComponentOptions m_Options;
+    nes::ControllerState m_ControllerState;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// A fundamental part of RGMS is to take in video data (see rgmvideo!), and then
+// take a /part/ of that as the area of interest. It also might be important to
+// process it via a perspective or 'uncrt' transform - however that is less
+// common for the actual competitions
+enum class AreaOfInterestType {
+    NONE,
+    SCALE,
+    CROP,
+    PERSPECTIVE,
+    UNCRT
+};
+NLOHMANN_JSON_SERIALIZE_ENUM(AreaOfInterestType, {
+    {AreaOfInterestType::NONE, "none"},
+    {AreaOfInterestType::SCALE, "scale"},
+    {AreaOfInterestType::CROP, "crop"},
+    {AreaOfInterestType::PERSPECTIVE, "perspective"},
+    {AreaOfInterestType::UNCRT, "uncrt"},
+})
+
+struct AreaOfInterest {
+    AreaOfInterestType Type;
+    util::Rect2F Crop;
+    util::Quadrilateral2F Quad; // In FFMPEG order!
+    int Patch;
+    //util::BezierPatch Patch;
+    int OutWidth, OutHeight;
+
+    static AreaOfInterest DefaultRect(int width, int height);
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AreaOfInterest,
+        Type, Crop, Quad, Patch,
+        OutWidth, OutHeight);
+void InitAOIRect(AreaOfInterest* aoi, int width, int height);
+void InitAOICrop(AreaOfInterest* aoi, int x, int y, int width, int height, int outwidth, int outheight);
+
+//cv::Mat ExtractAOI(cv::Mat input, const AreaOfInterest& aoi, const video::PixelContributions* contrib = nullptr);
+
+struct NamedAreaOfInterest {
+    std::string Name;
+    AreaOfInterest AOI;
+};
+int ScanDirectoryForAOIs(const std::string& directory, std::vector<NamedAreaOfInterest>* aois);
+
+}
+
+namespace argos::rgms {
+
+// A simple single 'window' (ImGui::Begin/ImGui::End block) that has the 'x' in
+// the corner and indicates to the owner if that x was closed.
+class ISMBCompSimpleWindowComponent : public rgmui::IApplicationComponent
+{
+public:
+    ISMBCompSimpleWindowComponent(std::string windowName);
+    virtual ~ISMBCompSimpleWindowComponent();
+
+    virtual void OnFrame() override final;
+    bool WindowWasClosedLastFrame();
+
+    virtual void DoControls() = 0;
+
+private:
+
+    std::string m_WindowName;
+    bool m_WasClosed;
+};
+
+// A 'container' for several windows with no begin/end itself, but instead a
+// toggle-able entry into the main menu
+class ISMBCompSimpleWindowContainerComponent : public rgmui::IApplicationComponent
+{
+public:
+    ISMBCompSimpleWindowContainerComponent(std::string menuName, bool startsOpen);
+    ~ISMBCompSimpleWindowContainerComponent();
+
+    virtual void OnFrame() override final;
+    void DoMenuItem();
+
+protected:
+    void RegisterWindow(std::shared_ptr<ISMBCompSimpleWindowComponent> window);
+
+private:
+    std::string m_MenuName;
+    bool m_IsOpen;
+    std::vector<std::shared_ptr<ISMBCompSimpleWindowComponent>> m_Windows;
+};
+
+class ISMBCompSingleWindowComponent : public rgmui::IApplicationComponent
+{
+public:
+    ISMBCompSingleWindowComponent(std::string menuName, std::string windowName, bool startsOpen);
+    ~ISMBCompSingleWindowComponent();
+
+    virtual void OnFrame() override final;
+    virtual void DoMenuItem() final;
+    virtual void OnFrameAlways();
+
+    virtual void DoControls() = 0;
+
+private:
+    std::string m_WindowName;
+    std::string m_MenuName;
+    bool m_IsOpen;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+struct SMBComp;
+struct SMBCompVisuals;
+struct SMBCompStaticData;
+
+
+struct SMBCompPlayerNames
+{
+    std::string ShortName;
+    std::string FullName;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SMBCompPlayerNames, ShortName, FullName);
+
+struct SMBCompPlayerVideoInput
+{
+    std::string Path;
+    util::Rect2I Crop;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SMBCompPlayerVideoInput, Path, Crop);
+
+struct SMBCompPlayerAudioInput
+{
+    std::string Path;
+    std::string Format; // "PA_SAMPLE_S16LE"
+    int Channels;       // 2
+    int Rate;           // 44100
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SMBCompPlayerAudioInput, Path, Format, Channels, Rate);
+
+struct SMBCompPlayerSerialInput
+{
+    std::string Path;
+    int Baud;           // 40000000
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SMBCompPlayerSerialInput, Path, Baud);
+
+struct SMBCompPlayerInputs
+{
+    SMBCompPlayerVideoInput Video;
+    SMBCompPlayerAudioInput Audio;
+    SMBCompPlayerSerialInput Serial;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SMBCompPlayerInputs, Video, Audio, Serial);
+void InitializeSMBCompPlayerInputs(SMBCompPlayerInputs* inputs);
+
+struct SMBCompPlayer
+{
+    uint32_t UniquePlayerID;
+
+    SMBCompPlayerNames Names;
+    argos::rgms::PlayerColors Colors;
+    SMBCompPlayerInputs Inputs;
+    argos::rgms::ControllerType ControllerType;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SMBCompPlayer, UniquePlayerID, Names, Colors, Inputs, ControllerType);
+void InitializeSMBCompPlayer(SMBCompPlayer* player);
+
+struct SMBCompPlayers
+{
+    std::vector<SMBCompPlayer> Players; // Prefer free functions below
+    std::vector<uint32_t> InvalidPlayerIDs; // don't serialize
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SMBCompPlayers, Players);
+void InitializeSMBCompPlayers(SMBCompPlayers* players);
+
+uint32_t GetNewUniquePlayerID(const SMBCompPlayers& players); // Used when adding a new player
+void AddNewPlayer(SMBCompPlayers* players, const SMBCompPlayer& player);
+void RemovePlayer(SMBCompPlayers* players, uint32_t uniqueID);
+const SMBCompPlayer* FindPlayer(const SMBCompPlayers& players, uint32_t uniqueID);
+
+class SMBCompConfigurationPlayersComponent : public ISMBCompSimpleWindowComponent
+{
+public:
+    SMBCompConfigurationPlayersComponent(argos::RuntimeConfig* info, SMBCompPlayers* players,
+            const SMBCompVisuals* visuals);
+    ~SMBCompConfigurationPlayersComponent();
+
+    void DoControls() override;
+
+    static bool PlayerNamesEditingControls(SMBCompPlayerNames* names);
+    static bool PlayerColorsEditingPopup(argos::rgms::PlayerColors* colors, const SMBCompVisuals* visuals);
+    typedef std::function<void(std::vector<NamedAreaOfInterest>*, bool)> GetAOIcback;
+    static bool PlayerInputsVideoEditingPopup(SMBCompPlayer* player, GetAOIcback cback);
+    static bool PlayerInputsEditingControls(SMBCompPlayer* player, GetAOIcback cback = nullptr);
+    static bool PlayerEditingControls(const char* label, SMBCompPlayer* player, const SMBCompVisuals* visuals, GetAOIcback cback = nullptr);
+
+private:
+    argos::RuntimeConfig* m_Info;
+    bool m_FirstInputs;
+    std::vector<NamedAreaOfInterest> m_NamedAreasOfInterest;
+    void GetNamedAreasOfInterest(std::vector<NamedAreaOfInterest>* aois, bool refresh);
+
+private:
+    SMBCompPlayers* m_Players;
+    const SMBCompVisuals* m_Visuals;
+
+    SMBCompPlayer m_PendingPlayer;
+};
+
+struct SMBCompVisuals
+{
+    nes::Palette Palette;
+    int Scale;
+    float OtherAlpha;
+    float OutlineRadius;
+    bool OutlineType;
+    bool UsePlayerColors;
+    float PlayerNameAlpha;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SMBCompVisuals, Palette, Scale, OtherAlpha, OutlineRadius, OutlineType, UsePlayerColors, PlayerNameAlpha);
+void InitializeSMBCompVisuals(SMBCompVisuals* visuals);
+
+class SMBCompConfigurationVisualsComponent : public ISMBCompSimpleWindowComponent
+{
+public:
+    SMBCompConfigurationVisualsComponent(SMBCompVisuals* visuals);
+    ~SMBCompConfigurationVisualsComponent();
+
+    void DoControls();
+
+private:
+    SMBCompVisuals* m_Visuals;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+struct SMBCompTournament
+{
+    std::string DisplayName;
+    std::string ScoreName;
+    std::string FileName;
+
+    //argos::rgms::RaceCategory Category;
+
+    std::vector<SMBCompPlayerSerialInput> Seats;
+    std::vector<SMBCompPlayer> Players;
+
+    std::vector<int> PointIncrements; // num seats in size
+    int DNFInc;
+    int DNSInc;
+
+    std::vector<std::vector<int>> Schedule;
+
+    std::string TowerName;
+    int CurrentRound;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SMBCompTournament,
+    DisplayName, ScoreName, FileName,
+    //Category,
+    Seats, Players, PointIncrements, DNFInc, DNSInc, Schedule
+);
+void InitializeSMBCompTournament(SMBCompTournament* tournament);
+
+struct SMBCompConfiguration
+{
+    SMBCompTournament Tournament;
+    SMBCompVisuals Visuals;
+    SMBCompPlayers Players;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SMBCompConfiguration, Tournament, Visuals, Players);
+void InitializeSMBCompConfiguration(SMBCompConfiguration* config);
+
+struct NamedSMBCompConfiguration {
+    std::string Name;
+    SMBCompConfiguration Config;
+};
+#define RGMS_SMB_CONFIG_EXTENSION ".smbconfig.json"
+int ScanDirectoryForSMBCompConfigurations(const std::string& directory, std::vector<NamedSMBCompConfiguration>* configs);
+
+class SMBCompConfigurationSaveLoadComponent : public ISMBCompSimpleWindowComponent
+{
+public:
+    SMBCompConfigurationSaveLoadComponent(argos::RuntimeConfig* info, SMBCompConfiguration* config);
+    ~SMBCompConfigurationSaveLoadComponent();
+
+    void DoControls();
+    void LoadNamedConfig(const std::string& name);
+
+private:
+    SMBCompConfiguration* m_Config;
+    argos::RuntimeConfig* m_Info;
+
+    std::string m_PendingName;
+    std::string m_LastName;
+
+    bool m_FirstLoad;
+    std::vector<NamedSMBCompConfiguration> m_KnownConfigs;
+};
+
+class SMBCompConfigurationTournamentComponent : public ISMBCompSimpleWindowComponent
+{
+public:
+    SMBCompConfigurationTournamentComponent(SMBComp* comp, const SMBCompStaticData* staticData);
+    ~SMBCompConfigurationTournamentComponent();
+
+    void DoControls();
+
+private:
+    SMBComp* m_Comp;
+    const SMBCompStaticData* m_StaticData;
+};
+
+
+class SMBCompConfigurationComponent : public ISMBCompSimpleWindowContainerComponent
+{
+public:
+    SMBCompConfigurationComponent(argos::RuntimeConfig* info, SMBComp* comp, const SMBCompStaticData* staticData);
+    ~SMBCompConfigurationComponent();
+
+    void LoadNamedConfig(const std::string& name);
+
+private:
+    std::shared_ptr<SMBCompConfigurationSaveLoadComponent> m_SaveLoadComponent;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class SMBCompTournamentManagerWindow;
+
+class SMBCompTournamentComponent : public ISMBCompSimpleWindowContainerComponent
+{
+public:
+    SMBCompTournamentComponent(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompTournamentComponent();
+
+    void LoadTournament(const std::string& path);
+
+private:
+    std::shared_ptr<SMBCompTournamentManagerWindow> m_Manager;
+};
+
+class SMBCompTournamentManagerWindow : public ISMBCompSimpleWindowComponent
+{
+public:
+    SMBCompTournamentManagerWindow(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompTournamentManagerWindow();
+
+    void DoControls();
+
+    void LoadTournament(const std::string& path);
+
+private:
+    void UpdatePaths();
+    bool m_First;
+    std::string m_CurrentPath;
+    std::vector<std::string> m_Paths;
+
+    std::string m_TournamentToLoad;
+
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Comp;
+};
+
+class SMBCompTournamentSeatsWindow : public ISMBCompSimpleWindowComponent
+{
+public:
+    SMBCompTournamentSeatsWindow(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompTournamentSeatsWindow();
+
+    void DoControls();
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Comp;
+};
+
+class SMBCompTournamentPlayersWindow : public ISMBCompSimpleWindowComponent
+{
+public:
+    SMBCompTournamentPlayersWindow(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompTournamentPlayersWindow();
+
+    void DoControls();
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Comp;
+    bool m_UpdatingThreeColors;
+};
+
+class SMBCompTournamentScheduleWindow : public ISMBCompSimpleWindowComponent
+{
+public:
+    SMBCompTournamentScheduleWindow(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompTournamentScheduleWindow();
+
+    void DoControls();
+    void SetToRound(int i);
+
+private:
+    int m_Round;
+    void SetScheduleTxt(const std::string& p);
+
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Comp;
+};
+
+class SMBCompTournamentColorsWindow : public ISMBCompSimpleWindowComponent
+{
+public:
+    SMBCompTournamentColorsWindow(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompTournamentColorsWindow();
+
+    void DoControls();
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Comp;
+};
+
+struct IndividualResult
+{
+    int Round;
+    std::string ShortName;
+    std::string Time;
+    int MS;
+    int Completed;
+    int Points;
+};
+
+class SMBCompTournamentResultsWindow : public ISMBCompSimpleWindowComponent
+{
+public:
+    SMBCompTournamentResultsWindow(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompTournamentResultsWindow();
+
+    void DoControls();
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Comp;
+
+    std::vector<IndividualResult> m_Results;
+    std::unordered_map<std::string, int> m_Totals;
+
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+struct SMBCompControllerData
+{
+    argos::rgms::ControllerColors ControllerColors;
+    argos::rgms::ControllerGeometry ControllerGeometry;
+    argos::rgms::DogboneGeometry DogboneGeometry;
+    float DogboneScale;
+    float ControllerScale;
+};
+void InitializeSMBCompControllerData(SMBCompControllerData* controllers);
+
+struct SMBCompROMData
+{
+    argos::nes::NESDatabase::RomSPtr rom;
+    const uint8_t* ROM;
+    const uint8_t* PRG;
+    const uint8_t* CHR0;
+    const uint8_t* CHR1;
+};
+void InitializeSMBCompROMData(argos::smb::SMBDatabase* db, SMBCompROMData* rom);
+
+struct SMBCompSounds
+{
+    std::unordered_map<smb::SoundEffect, Mix_Chunk*> SoundEffects;
+    std::unordered_map<smb::MusicTrack, Mix_Music*> Musics;
+};
+void InitializeSMBCompSounds(const argos::RuntimeConfig* info, SMBCompSounds* sounds);
+
+//struct AreaPointerSection
+//{
+//    //AreaPointer AP;
+//    argos::smb::AreaID AID;
+//    int Left; // >=
+//    int Right; // <
+//    int World;
+//    int Level;
+//};
+//
+//struct VisibleSection
+//{
+//    const AreaPointerSection* Section;
+//    int PPUxLoc;
+//};
+//
+//struct SMBRaceCategoryInfo
+//{
+//    RaceCategory Category;
+//    std::string Name;
+//    std::vector<AreaPointerSection> Sections;
+//
+//    int TotalWidth; // Includes 16 pixel buffers between zones.
+//
+//    //void RenderMinimapTo(nes::PPUx* ppux, int categoryX,
+//    //        const MinimapPalette& minimapPalette,
+//    //        const SMBBackgroundNametables& nametables,
+//    //        std::vector<VisibleSection>* visibleSections) const;
+//
+//    //bool InCategory(AreaPointer ap, int apx, int world, int level, int* categoryX, int* sectionIndex) const;
+//};
+//
+//struct SMBRaceCategories
+//{
+//    std::vector<SMBRaceCategoryInfo> Categories;
+//
+//    const SMBRaceCategoryInfo* FindCategory(RaceCategory category) const;
+//};
+//void InitializeSMBRaceCategories(SMBRaceCategories* cats);
+
+struct SMBCompStaticData
+{
+    argos::smb::SMBNametableCachePtr Nametables;
+    //SMBRaceCategories Categories;
+    //SMBCompControllerData Controllers;
+    SMBCompROMData ROM;
+    nes::PatternTable Font;
+    SMBCompSounds Sounds;
+};
+void InitializeSMBCompStaticData(const argos::RuntimeConfig* info, SMBCompStaticData* staticData);
+
+////////////////////////////////////////////////////////////////////////////////
+
+struct SMBCompFeed
+{
+    uint32_t UniquePlayerID;
+
+    SMBMessageProcessorOutputPtr CachedOutput;
+
+//    std::unique_ptr<video::LiveVideoThread> LiveVideoThread;
+    ISMBSerialSource* Source;
+
+    std::unique_ptr<SMBSerialProcessorThread> MySMBSerialProcessorThread;
+    std::unique_ptr<SMBZMQRef> MySMBZMQRef;
+    std::unique_ptr<SMBSerialRecording> MySMBSerialRecording;
+    std::string ErrorMessage;
+};
+
+struct SMBCompFeeds
+{
+
+    std::unordered_map<uint32_t, std::unique_ptr<SMBCompFeed>> Feeds;
+};
+SMBCompFeed* GetPlayerFeed(const SMBCompPlayer& player, SMBCompFeeds* feeds);
+void InitializeFeedSerialThread(const SMBCompPlayer& player, const SMBCompStaticData& data, SMBCompFeed* feed);
+//void InitializeFeedLiveVideoThread(const SMBCompPlayer& player, SMBCompFeed* feed);
+void InitializeFeedRecording(SMBCompFeed* feed, const SMBCompStaticData& data, const std::string& path);
+
+////////////////////////////////////////////////////////////////////////////////
+
+struct Lerper
+{
+    float Position;
+    float Target;
+
+    // State
+    float LastVelocity[4];
+
+    // Parameters
+    float Acceleration;
+    float DampenAmount;
+    float MaxVelocity;
+};
+void InitializeLerper(Lerper* lerper);
+void StepLerper(Lerper* lerper);
+
+enum class MinimapFollowMethod
+{
+    FOLLOW_NONE,
+    FOLLOW_PLAYER,
+    FOLLOW_FARTHEST
+};
+
+struct SMBCompMinimap
+{
+    int LeftX; // The current x position of the minimap view
+    int Width;
+
+    cv::Mat Img; // UGH
+
+    MinimapFollowMethod FollowMethod;
+    uint32_t PlayerID;
+
+    int TargetMarioX;
+
+    //
+    Lerper CameraLerp;
+};
+void InitializeSMBCompMinimap(SMBCompMinimap* minimap);
+//void StepSMBCompMinimap(SMBCompMinimap* minimap); TODO should have done this...
+
+////////////////////////////////////////////////////////////////////////////////
+
+struct SMBCompPlayerLocations
+{
+    std::vector<uint32_t> PlayerIdsByPosition; // In timing tower
+    struct PlayerScreenLocation {
+        uint32_t PlayerID;
+
+        bool OnScreen;
+        int SectionIndex;
+        int CategoryX;
+    };
+    std::vector<PlayerScreenLocation> ScreenLocations; // On Minimap
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+#define TIMING_TOWER_Y_SPACING 12
+struct TimingTowerEntry
+{
+    int Position;
+    uint8_t Color;
+    std::string Name;
+    int64_t IntervalMS; // -ve for blank, 0 for 'gap' (or 'leader')
+    bool IsFinalTime;
+    bool InSection;
+    bool IsHighlight;
+    int Y; // from the top, (zero for top, n * TIMING_TOWER_Y_SPACING for the others..)
+};
+
+struct TimingTowerState
+{
+    std::string Title;
+    std::string Subtitle;
+    std::vector<TimingTowerEntry> Entries;
+};
+
+// /Before/ scaling by 2, 4
+void DrawTowerStateSize(const TimingTowerState& state, int* w, int* h);
+void DrawTowerState(nes::PPUx* ppux, int x, int y,
+        const nes::Palette& palette,
+        const nes::PatternTable& font,
+        const TimingTowerState& state,
+        bool fromLeader);
+
+enum class TimingState
+{
+    WAITING_FOR_1_1,
+    RUNNING,
+};
+
+struct SMBCompPlayerTimings
+{
+    TimingState State;
+    std::vector<uint64_t> SplitM2s;
+    std::vector<std::vector<uint64_t>> SplitPageM2s;
+};
+void TimingsSectionPageIndex(const SMBCompPlayerTimings& timings, int* section, int* page);
+void SplitTimings(SMBCompPlayerTimings* timings, int section, int page, uint64_t m2);
+
+void InitializeSMBCompPlayerTimings(SMBCompPlayerTimings* timings);
+
+struct TimingTowerEntryReconciliation
+{
+    int PositionIndex; // in the tower from 0 to num players,
+    int StartY;
+
+};
+struct TimingTowerStateReconciliation
+{
+    int MovingTimer;
+    std::vector<TimingTowerEntryReconciliation> Entries;
+};
+
+struct SMBCompTimingTower
+{
+    TimingTowerState DrawState; // As actually drawn
+    TimingTowerState TargetState; // The one that is based on the current
+    TimingTowerStateReconciliation Reconcilation;
+    bool FromLeader;
+
+    cv::Mat Img;
+
+    std::unordered_map<uint32_t, SMBCompPlayerTimings> Timings;
+};
+void InitializeSMBCompTimingTower(SMBCompTimingTower* tower);
+void ResetSMBCompTimingTower(SMBCompTimingTower* tower);
+//void StepSMBCompPlayerTimings(SMBCompPlayerTimings* timings, SMBMessageProcessorOutputPtr out,
+//        const SMBRaceCategoryInfo* catinfo);
+
+////////////////////////////////////////////////////////////////////////////////
+
+enum class ViewType
+{
+    NO_PLAYER,
+    NO_OUTPUT,
+    CONSOLE_OFF,
+
+    TITLESCREEN_MODE,
+    GAMEOVER_MODE,
+
+    PLAYING,
+};
+
+struct SMBCompCombinedViewInfo
+{
+    bool FollowSmart;
+    struct {
+        int Cnt;
+    } SmartInfo;
+    uint32_t PlayerID;
+
+    cv::Mat Img; // UGH
+
+
+    //
+    ViewType Type;
+
+    //smb::AreaPointer AP;
+    argos::smb::AreaID AID;
+    int APX;
+    int Width;
+    nes::FramePalette FramePalette;
+};
+void InitializeSMBCompCombinedViewInfo(SMBCompCombinedViewInfo* view);
+
+#define POINTS_COUNTDOWN_MAX 30
+
+struct SMBCompPoints
+{
+    std::unordered_map<uint32_t, int> LastPoints;
+    std::unordered_map<uint32_t, int> Points;
+
+    bool Visible;
+
+    int Countdown;
+};
+void InitializeSMBCompPoints(SMBCompPoints* points);
+void StepSMBCompPoints(SMBComp* comp, SMBCompPoints* points);
+
+// Before scaling by 2, 4 UGHHGHAHG
+void DrawPointsSize(const SMBComp* comp, int* w, int* h);
+void DrawPoints(nes::PPUx* ppux, int x, int y,
+        const nes::Palette& palette,
+        const nes::PatternTable& font,
+        const SMBComp* comp);
+void DrawFinalTimes(nes::PPUx* ppux, int x, int y,
+        const nes::Palette& palette,
+        const nes::PatternTable& font,
+        SMBComp* comp);
+
+////////////////////////////////////////////////////////////////////////////////
+
+struct SMBComp
+{
+    SMBCompStaticData StaticData; // Totally static data
+    // Semi static (config and serialized data)
+    SMBCompConfiguration Config;
+    SMBCompPoints Points;
+
+    // The dynamic information
+    SMBCompFeeds Feeds;
+    SMBCompMinimap Minimap;
+    SMBCompTimingTower Tower;
+    SMBCompPlayerLocations Locations;
+    SMBCompCombinedViewInfo CombinedView;
+
+    int FrameNumber;
+    bool DoingRecordingOfRecordings;
+    bool BeginCountdown;
+    std::string SetTxtViewTo;
+    bool SetToOverlay;
+};
+void InitializeSMBComp(const argos::RuntimeConfig* info, SMBComp* comp);
+nes::RenderInfo DefaultSMBCompRenderInfo(const SMBComp& comp);
+SMBMessageProcessorOutputPtr GetLatestPlayerOutput(SMBComp& comp, const SMBCompPlayer& player);
+
+//
+class SMBCompReplayComponent;
+class SMBCompSoundComponent;
+void StepTimingTower(SMBComp* comp, SMBCompTimingTower* tower, SMBCompPlayerLocations* locations,
+        SMBCompReplayComponent* replay, SMBCompSoundComponent* sound);
+void StepCombinedView(SMBComp* comp, SMBCompCombinedViewInfo* view);
+bool TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timings, const SMBCompPlayer& player,
+        std::string* text, int64_t* elapsedt = nullptr);
+
+////////////////////////////////////////////////////////////////////////////////
+
+class SMBCompPlayerWindow : public ISMBCompSimpleWindowComponent
+{
+public:
+    SMBCompPlayerWindow(
+            SMBComp* comp,
+            uint32_t id, const SMBCompPlayers* players, const SMBCompVisuals* visuals,
+            const SMBCompStaticData* staticData, SMBCompFeeds* feeds,
+            argos::RuntimeConfig* info,
+            std::vector<std::string>* priorRecordings);
+    ~SMBCompPlayerWindow();
+
+    virtual void DoControls() override;
+
+    const SMBCompPlayer* GetPlayer();
+
+
+    static void UpdateRecordings2(argos::RuntimeConfig* info, std::vector<std::string>* priorRecordings);
+
+private:
+    void DoControls(const SMBCompPlayer* player);
+
+    void DoVideoControls(const SMBCompPlayer* player, SMBCompFeeds* feeds);
+
+    void UpdateRecordings();
+
+    void DoSerialControls(const SMBCompPlayer* player, SMBCompFeeds* feeds);
+    void DoRecordingControls(const SMBCompPlayer* player, SMBCompFeeds* feeds);
+    void DoSerialPlayerOutput(const SMBCompPlayer* player, const SMBMessageProcessorOutput* out);
+
+    //
+    SMBComp* m_Competition;
+    argos::RuntimeConfig* m_Info;
+    uint32_t m_PlayerID;
+    const SMBCompPlayers* m_Players;
+    const SMBCompVisuals* m_Visuals;
+    const SMBCompStaticData* m_StaticData;
+    SMBCompFeeds* m_Feeds;
+
+    std::string m_PendingRecording;
+    std::vector<std::string>* m_PriorRecordings;
+};
+
+class SMBCompPlayerWindowsComponent : public rgmui::IApplicationComponent
+{
+public:
+    SMBCompPlayerWindowsComponent(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompPlayerWindowsComponent();
+
+    virtual void OnFrame() override final;
+    void DoMenuItem();
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Competition;
+    std::vector<std::string> m_PriorRecordings;
+
+    std::unordered_map<uint32_t, std::shared_ptr<SMBCompPlayerWindow>> m_Windows;
+
+    bool m_IsOpen;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class SMBCompIndividualViewsComponent : public ISMBCompSingleWindowComponent
+{
+public:
+    SMBCompIndividualViewsComponent(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompIndividualViewsComponent();
+
+    virtual void DoControls() override final;
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Competition;
+    int m_Columns;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class SMBCompCombinedViewComponent : public ISMBCompSingleWindowComponent
+{
+public:
+    SMBCompCombinedViewComponent(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompCombinedViewComponent();
+
+    virtual void DoControls() override final;
+
+    static void MakeImage(SMBComp* comp, nes::PPUx* ppux);
+    static bool MakeImageIndividual(SMBComp* comp, nes::PPUx* ppux, const SMBCompPlayer* player,
+            bool applyVisuals, bool fullView = false,
+            int* screenLeft = nullptr,
+            int* screenRight = nullptr,
+            int* doingOwnOAMx = nullptr,
+            SMBMessageProcessorOutputPtr* output = nullptr);
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Competition;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class SMBCompTimingTowerViewComponent : public ISMBCompSingleWindowComponent
+{
+public:
+    SMBCompTimingTowerViewComponent(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompTimingTowerViewComponent();
+
+    virtual void DoControls() override final;
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Competition;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class SMBCompMinimapViewComponent : public ISMBCompSingleWindowComponent
+{
+public:
+    SMBCompMinimapViewComponent(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompMinimapViewComponent();
+
+    virtual void DoControls() override final;
+
+private:
+    void DoMinimapEditControls();
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Competition;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class SMBCompRecordingsHelperComponent : public ISMBCompSingleWindowComponent
+{
+public:
+    SMBCompRecordingsHelperComponent(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompRecordingsHelperComponent();
+
+    virtual void DoControls() override final;
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Competition;
+    std::string m_FileName;
+    bool m_OneFramePerStep;
+    int m_FrameCount;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class SMBCompPointsComponent : public ISMBCompSingleWindowComponent
+{
+public:
+    SMBCompPointsComponent(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompPointsComponent();
+
+    virtual void DoControls() override final;
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Competition;
+
+    std::unordered_map<uint32_t, int> m_PendingPoints;
+};
+
+class SMBCompCompetitionComponent : public ISMBCompSingleWindowComponent
+{
+public:
+    SMBCompCompetitionComponent(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompCompetitionComponent();
+
+    virtual void DoControls() override final;
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Competition;
+};
+
+struct GhostInfo
+{
+    std::string Recording;
+    uint8_t RepresentativeColor;
+    std::string ShortName;
+    std::string FullName;
+    std::vector<SMBMessageProcessorOutputPtr> Outputs;
+};
+
+class SMBCompGhostViewComponent : public ISMBCompSingleWindowComponent
+{
+public:
+    SMBCompGhostViewComponent(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompGhostViewComponent();
+
+    virtual void DoControls() override final;
+
+
+    static cv::Mat CreateGhostFrameExt(const std::vector<GhostInfo>& ghostInfo,
+            SMBComp* comp,
+            int ghostIndex, int frameIndex, int* lastMiniX);
+
+private:
+    void Export(int ghostIndex);
+    cv::Mat CreateGhostFrame(int ghostIndex, int frameIndex, int* lastMiniX);
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Competition;
+    std::string m_FileName;
+
+    std::vector<GhostInfo> m_GhostInfo;
+    int m_GhostIndex;
+    int m_FrameIndex;
+    int m_LastMiniX;
+};
+
+class SMBCompPointTransitionComponent : public ISMBCompSingleWindowComponent
+{
+public:
+    SMBCompPointTransitionComponent(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompPointTransitionComponent();
+
+    virtual void DoControls() override final;
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Competition;
+
+    bool m_Points;
+    std::unordered_map<uint32_t, uint64_t> m_FakeM2s;
+
+    int m_CountdownOverride;
+
+    cv::Mat m_Begin;
+};
+
+//struct RecreatePlayerInfo
+//{
+//    std::string Name;
+//    int64_t PTSOffset;
+//    std::vector<nes::ControllerState> Inputs;
+//
+//    //
+//    std::unique_ptr<nes::StateSequenceThread> StateThread;
+//    std::unique_ptr<nes::NestopiaNESEmulator> Emulator;
+//    nesui::NESInputsComponentOptions InputsOptions;
+//    nesui::NESInputsComponentState InputsState;
+//};
+//NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RecreatePlayerInfo, Name, PTSOffset, Inputs);
+//
+//class RecreateApp : public rgmui::IApplication
+//{
+//public:
+//    RecreateApp(argos::RuntimeConfig* info);
+//    ~RecreateApp();
+//
+//    bool OnFrame();
+//
+//private:
+//    enum class InputAction {
+//        NO_ACTON,
+//        SMB_JUMP_EARLIER,
+//        SMB_JUMP_LATER,
+//        SMB_REMOVE_LAST_JUMP,
+//        SMB_JUMP,
+//        SMB_FULL_JUMP,
+//        SMB_JUMP_SHORTER,
+//        SMB_JUMP_LONGER,
+//        SMB_START,
+//    };
+//    static std::pair<int, int> FindPreviousJump(RecreatePlayerInfo* player);
+//    static InputAction GetActionFromKeysPressed();
+//    static void DoAction(RecreatePlayerInfo* player, InputAction action);
+//
+//
+//    void DoPlayerControls(RecreatePlayerInfo* player, int64_t* pts);
+//
+//private:
+//    argos::RuntimeConfig* m_Info;
+//    SMBComp m_Competition;
+//    std::unique_ptr<video::StaticVideoThread> m_VideoThread;
+//
+//    int64_t m_PTS;
+//
+//    std::vector<RecreatePlayerInfo> m_Players;
+//    RecreatePlayerInfo* m_ActivePlayer;
+//};
+//
+//class VecSource : public smb::ISMBSerialSource
+//{
+//public:
+//    VecSource(std::vector<smb::SMBMessageProcessorOutputPtr>* vec);
+//    ~VecSource();
+//
+//    smb::SMBMessageProcessorOutputPtr Get(size_t index);
+//
+//    virtual smb::SMBMessageProcessorOutputPtr GetLatestProcessorOutput() override;
+//    virtual smb::SMBMessageProcessorOutputPtr GetNextProcessorOutput() override;
+//
+//    void Next();
+//
+//private:
+//    std::vector<smb::SMBMessageProcessorOutputPtr>* m_Vec;
+//    size_t m_RetIndex;
+//    size_t m_Index;
+//};
+//
+//class SMBCompRecreateComponent : public ISMBCompSingleWindowComponent
+//{
+//public:
+//    SMBCompRecreateComponent(argos::RuntimeConfig* info, SMBComp* comp);
+//    ~SMBCompRecreateComponent();
+//
+//    virtual void DoControls() override final;
+//
+//private:
+//    argos::RuntimeConfig* m_Info;
+//    SMBComp* m_Competition;
+//
+//    std::vector<RecreatePlayerInfo> m_Players;
+//    std::vector<GhostInfo> m_Ghosts;
+//    std::vector<VecSource> m_VecSources;
+//
+//    int m_FrameCount;
+//    int m_GhostIndex;
+//    int m_FrameIndex;
+//    int m_LastMiniX;
+//    bool m_OneFramePerStep;
+//};
+//
+class SMBCompCreditsComponent : public ISMBCompSingleWindowComponent
+{
+public:
+    SMBCompCreditsComponent(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompCreditsComponent();
+
+    virtual void DoControls() override final;
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Competition;
+
+    int m_CreditY;
+    int m_Start;
+    int m_End;
+    std::string m_Credits;
+
+    bool m_OnePerStep;
+    int m_Amt;
+    int m_RecIndex;
+    bool m_Rec;
+};
+
+class SMBCompSoundComponent : public ISMBCompSingleWindowComponent
+{
+public:
+    SMBCompSoundComponent(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompSoundComponent();
+
+    virtual void DoControls() override final;
+    virtual void OnFrameAlways() override;
+
+    void NoteOutput(const SMBCompPlayer& player, SMBMessageProcessorOutputPtr out);
+    void MusicFinished();
+
+private:
+    void StartMusic(smb::MusicTrack t);
+    void StopMusic();
+    void PlaySoundEffect(uint32_t playerId, smb::SoundEffect effect);
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Competition;
+
+    std::unordered_map<uint32_t, smb::MusicTrack> m_PlayerToMusic;
+    smb::MusicTrack m_CurrentMusic;
+};
+
+class SMBCompReplayComponent : public ISMBCompSingleWindowComponent
+{
+public:
+    SMBCompReplayComponent(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompReplayComponent();
+
+    virtual void DoControls() override final;
+    void NoteOutput(const SMBCompPlayer& player, SMBMessageProcessorOutputPtr out);
+
+    void DoReplay(cv::Mat aux);
+
+private:
+    void DoPlayerDeck(const SMBCompPlayer& player, const std::deque<SMBMessageProcessorOutputPtr>& deck);
+    void ColorPlayerDeck(const std::deque<SMBMessageProcessorOutputPtr>& deck, cv::Mat m);
+
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Competition;
+    int m_BufferSize;
+
+    bool m_PendingReplay;
+    uint32_t m_PendingId;
+    int m_PendingIdx;
+
+    std::unordered_map<uint32_t, std::deque<SMBMessageProcessorOutputPtr>> m_ReplayBuffer;
+
+    std::string m_OngoingName;
+    std::deque<SMBMessageProcessorOutputPtr> m_OngoingReplay;
+
+    bool m_HalfSpeed;
+    bool m_Counter;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+//class SMBCompFixedOverlay : public ISMBCompSingleWindowComponent
+//{
+//public:
+//    SMBCompFixedOverlay(argos::RuntimeConfig* info, SMBComp* comp);
+//    ~SMBCompFixedOverlay();
+//
+//    virtual void DoControls() override final;
+//
+//    void DoDisplay(cv::Mat* m);
+//
+//
+//private:
+//    void LoadingThread();
+//
+//private:
+//    void RedrawMatCompletely();
+//
+//    argos::RuntimeConfig* m_Info;
+//    SMBComp* m_Comp;
+//
+//    std::vector<std::string> m_ThanksPaths;
+//    std::shared_ptr<rgms::video::StaticVideoThread> m_StaticVideoThread;
+//    int m_FrameIndex;
+//
+//    std::string m_Text;
+//
+//    bool m_First;
+//    cv::Mat m_Mat;
+//    cv::Mat m_ThanksMat;
+//};
+//
+//class SMBCompTxtDisplay : public ISMBCompSingleWindowComponent
+//{
+//public:
+//    SMBCompTxtDisplay(argos::RuntimeConfig* info, SMBComp* comp);
+//    ~SMBCompTxtDisplay();
+//
+//    virtual void DoControls() override final;
+//
+//    void DoDisplay(cv::Mat m);
+//    void SetStem(const std::string& stem);
+//
+//private:
+//    void UpdateStems();
+//
+//private:
+//    argos::RuntimeConfig* m_Info;
+//    SMBComp* m_Comp;
+//
+//    std::string m_Stem;
+//    std::string m_Text;
+//
+//    bool m_FirstTime;
+//    std::vector<std::string> m_Stems;
+//    cv::Mat m_Mat;
+//};
+
+////////////////////////////////////////////////////////////////////////////////
+
+#define SHARED_MEM_SIZE 6220900
+#define SHARED_MEM_MAT  6220800
+#define SHARED_MEM_QUIT 6220800
+
+class SMBCompApp : public rgmui::IApplication
+{
+public:
+    SMBCompApp(argos::RuntimeConfig* info);
+    ~SMBCompApp();
+
+    bool OnFrame();
+
+    void LoadNamedConfig(const std::string& name);
+    void SetSharedMemory(void* sharedMem);
+
+    void DoAuxDisplay();
+
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp m_Competition;
+
+    cv::Mat m_AuxDisplay;
+    void* m_SharedMemory;
+
+    bool m_AuxVisibleInPrimary;
+    float m_AuxVisibleScale;
+    int m_AuxDisplayType;
+
+    bool m_CountingDown;
+    util::mclock::time_point m_CountdownStart;
+    bool m_ShowTimer;
+
+    // Components
+    //SMBCompConfigurationComponent m_CompConfigurationComponent;
+    //SMBCompPlayerWindowsComponent m_CompPlayerWindowsComponent;
+    //SMBCompCombinedViewComponent m_CompCombinedViewComponent;
+    //SMBCompIndividualViewsComponent m_CompIndividualViewsComponent;
+    //SMBCompPointsComponent m_CompPointsComponent;
+    //SMBCompMinimapViewComponent m_CompMinimapViewComponent;
+    //SMBCompRecordingsHelperComponent m_CompRecordingsHelperComponent;
+    //SMBCompTimingTowerViewComponent m_CompTimingTowerViewComponent;
+    //SMBCompCompetitionComponent m_CompCompetitionComponent;
+    //SMBCompGhostViewComponent m_CompGhostViewComponent;
+    //SMBCompPointTransitionComponent m_CompPointTransitionComponent;
+    ////SMBCompRecreateComponent m_CompRecreateComponent;
+    //SMBCompCreditsComponent m_CompCreditsComponent;
+    //SMBCompSoundComponent m_CompSoundComponent;
+    //SMBCompReplayComponent m_CompReplayComponent;
+    ////SMBCompFixedOverlay m_CompFixedOverlay;
+    ////SMBCompTxtDisplay m_CompTxtDisplay;
+    //SMBCompTournamentComponent m_CompTournamentComponent;
+};
+
+class SMBCompAppAux : public rgmui::IApplication
+{
+public:
+    SMBCompAppAux(void* sharedMem);
+    ~SMBCompAppAux();
+
+    bool OnFrame();
+
+private:
+    void* m_SharedMemory;
+    cv::Mat m_Mat;
+    unsigned int m_Gluint;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+bool MarioInOutput(SMBMessageProcessorOutputPtr out, int* mariox, int* marioy);
+//void EmuToOutput(int frameIndex, int* startIndex, nes::ControllerState cs,
+//        const nes::NestopiaNESEmulator& emu, SMBMessageProcessorOutput* out,
+//        const smb::SMBBackgroundNametables& nametables);
 
 
 }

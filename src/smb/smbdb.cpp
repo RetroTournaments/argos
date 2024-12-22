@@ -565,6 +565,7 @@ bool argos::smb::InitializeSMBDatabase(SMBDatabase* database,
     }
 
     ExecAndLog("minimap.sql");
+    ExecAndLog("pattern_tables.sql");
 
     return true;
 }

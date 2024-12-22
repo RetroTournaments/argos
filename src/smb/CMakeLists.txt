@@ -54,4 +54,6 @@ target_link_libraries(rgmslib
     smbuilib
     libzmq
     cppzmq
+    jsonextlib
+    sdlextlib
 )

@@ -30,6 +30,7 @@ namespace argos::nes
 void column_inputs(sqlite3_stmt* stmt, int column, std::vector<nes::ControllerState>* inputs);
 void column_frame_palette(sqlite3_stmt* stmt, int column, nes::FramePalette* palette);
 void column_nametable(sqlite3_stmt* stmt, int column, nes::NameTable* nametable);
+void column_pattern_table(sqlite3_stmt* stmt, int column, nes::PatternTable* pattern_table);
 
 namespace db
 {
@@ -49,6 +50,13 @@ struct nes_tas
     std::string                         name;
     std::string                         start_string;
     std::vector<nes::ControllerState>   inputs;
+};
+
+struct nes_pattern_table
+{
+    int                 id;
+    std::string         name;
+    nes::PatternTable   pattern_table;
 };
 
 }
@@ -79,9 +87,14 @@ public:
     int InsertNewTAS(int rom_id, const std::string& name);
     int InsertNewTAS(int rom_id, const std::string& name, const std::vector<nes::ControllerState>& inputs);
 
+    // And pattern tables
+    bool GetPatternTableByName(const std::string& name,
+            nes::PatternTable* pattern_table);
+
 
     static const char* ROMSchema();
     static const char* TASSchema();
+    static const char* PatternTableSchema();
 
 private:
     std::unordered_map<int, RomSPtr> m_CachedRoms;
