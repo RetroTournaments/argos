@@ -39,6 +39,18 @@ AreaID argos::smb::column_area_id(sqlite3_stmt* stmt, int column)
     return static_cast<AreaID>(v);
 }
 
+void argos::smb::column_minimap(sqlite3_stmt* stmt, int column, smb::MinimapImage* minimap)
+{
+    int sz = sqlite3_column_bytes(stmt, column);
+    if (sz != smb::MINIMAP_NUM_BYTES) {
+        throw std::runtime_error("not a minimap?");
+    }
+    const uint8_t* dat = reinterpret_cast<const uint8_t*>(sqlite3_column_blob(stmt, column));
+    for (int i = 0; i < smb::MINIMAP_NUM_BYTES; i++) {
+        (*minimap)[i] = dat[i];
+    }
+}
+
 const uint8_t* argos::smb::rom_chr0(nes::NESDatabase::RomSPtr rom)
 {
     return rom->data() + 0x8010;
@@ -94,9 +106,10 @@ const char* SMBDatabase::NametablePageSchema()
 const char* SMBDatabase::MinimapPageSchema()
 {
     return R"(CREATE TABLE IF NOT EXISTS minimap_page (
-    area_id         INTEGER PRIMARY KEY,
+    id              INTEGER PRIMARY KEY,
+    area_id         INTEGER NOT NULL,
     page            INTEGER NOT NULL,
-    data            BLOB NOT NULL
+    minimap         BLOB NOT NULL
 );)";
 }
 
@@ -239,6 +252,28 @@ bool SMBDatabase::GetAllNametablePages(std::vector<db::nametable_page>* nt_pages
     return true;
 }
 
+bool SMBDatabase::GetAllMinimapPages(std::vector<db::minimap_page>* mini_pages)
+{
+    if (!mini_pages) return false;
+
+    sqlite3_stmt* stmt;
+    sqliteext::PrepareOrThrow(m_Database, R"(
+        SELECT * FROM minimap_page;
+    )", &stmt);
+
+    mini_pages->clear();
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        db::minimap_page page;
+        page.id = sqlite3_column_int(stmt, 0);
+        page.area_id = column_area_id(stmt, 1);
+        page.page = sqliteext::column_uint8_t(stmt, 2);
+        smb::column_minimap(stmt, 3, &page.minimap);
+        mini_pages->push_back(page);
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
 bool SMBDatabase::GetMinimapPage(AreaID area_id, uint8_t page, db::minimap_page* mini_page)
 {
     if (!mini_page) return false;
@@ -293,14 +328,24 @@ bool SMBDatabase::GetAllNTExtractTASIDs(std::vector<int>* ids)
 
 SMBNametableCache::SMBNametableCache(SMBDatabase* database)
 {
-    std::vector<db::nametable_page> pages;
-    database->GetAllNametablePages(&pages);
-    for (auto & page : pages) {
-        auto& v = m_pages[page.area_id];
-        if (v.size() <= page.page) {
-            v.resize(page.page + 1);
+    std::vector<db::nametable_page> nametables;
+    database->GetAllNametablePages(&nametables);
+    for (auto & nametable : nametables) {
+        auto& v = m_nametables[nametable.area_id];
+        if (v.size() <= nametable.page) {
+            v.resize(nametable.page + 1);
         }
-        v[page.page] = page;
+        v[nametable.page] = nametable;
+    }
+
+    std::vector<db::minimap_page> minimaps;
+    database->GetAllMinimapPages(&minimaps);
+    for (auto & minimap : minimaps) {
+        auto& v = m_minimaps[minimap.area_id];
+        if (v.size() <= minimap.page) {
+            v.resize(minimap.page + 1);
+        }
+        v[minimap.page] = minimap;
     }
 }
 
@@ -308,10 +353,10 @@ SMBNametableCache::~SMBNametableCache()
 {
 }
 
-bool SMBNametableCache::KnownPage(AreaID id, uint8_t page) const
+bool SMBNametableCache::KnownNametable(AreaID id, uint8_t page) const
 {
-    auto it = m_pages.find(id);
-    if (it == m_pages.end()) {
+    auto it = m_nametables.find(id);
+    if (it == m_nametables.end()) {
         return false;
     }
     if (static_cast<size_t>(page) >= it->second.size()) {
@@ -320,16 +365,44 @@ bool SMBNametableCache::KnownPage(AreaID id, uint8_t page) const
     return true;
 }
 
-const db::nametable_page& SMBNametableCache::GetPage(AreaID id, uint8_t page) const
+const db::nametable_page& SMBNametableCache::GetNametable(AreaID id, uint8_t page) const
 {
-    auto it = m_pages.find(id);
-    if (it == m_pages.end()) {
-        throw std::runtime_error(fmt::format("no page? {:04x} {:d}",
+    auto it = m_nametables.find(id);
+    if (it == m_nametables.end()) {
+        throw std::runtime_error(fmt::format("no nametable? {:04x} {:d}",
                     static_cast<int>(id), page));
     }
 
     if (static_cast<size_t>(page) >= it->second.size()) {
-        throw std::runtime_error(fmt::format("no page? {:04x} {:d}",
+        throw std::runtime_error(fmt::format("no nametable? {:04x} {:d}",
+                    static_cast<int>(id), page));
+    }
+
+    return it->second[page];
+}
+
+bool SMBNametableCache::KnownMinimap(AreaID id, uint8_t page) const
+{
+    auto it = m_minimaps.find(id);
+    if (it == m_minimaps.end()) {
+        return false;
+    }
+    if (static_cast<size_t>(page) >= it->second.size()) {
+        return false;
+    }
+    return true;
+}
+
+const db::minimap_page& SMBNametableCache::GetMinimap(AreaID id, uint8_t page) const
+{
+    auto it = m_minimaps.find(id);
+    if (it == m_minimaps.end()) {
+        throw std::runtime_error(fmt::format("no minimap? {:04x} {:d}",
+                    static_cast<int>(id), page));
+    }
+
+    if (static_cast<size_t>(page) >= it->second.size()) {
+        throw std::runtime_error(fmt::format("no minimap? {:04x} {:d}",
                     static_cast<int>(id), page));
     }
 
@@ -482,6 +555,8 @@ bool argos::smb::InitializeSMBDatabase(SMBDatabase* database,
         std::cerr << "Failed initializing nametable pages\n";
         return false;
     }
+
+    ExecAndLog("minimap.sql");
 
     return true;
 }

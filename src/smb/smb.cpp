@@ -236,3 +236,35 @@ const MinimapPaletteBGR& argos::smb::DefaultMinimapPaletteBGR()
     };
     return b;
 }
+
+void argos::smb::RenderMinimapToPPUx(int x, int y,
+        const MinimapImage& img, const MinimapPalette& miniPal, const nes::Palette& nesPal, nes::PPUx* ppux)
+{
+    if (!ppux) return;
+
+    int rem = 0;
+    uint8_t v = 0x00;
+
+    nes::EffectInfo effects = nes::EffectInfo::Defaults();
+
+    const uint8_t* in = img.data();
+    for (int iny = 0; iny < nes::FRAME_HEIGHT; iny++) {
+        for (int inx = 0; inx < nes::FRAME_WIDTH; inx++) {
+            if (rem == 0) {
+                v = *in;
+                rem = 4;
+                in++;
+            }
+
+            uint8_t q = v & 0b11;
+            if (q) {
+                ppux->RenderPaletteData(x + inx, y + iny, 1, 1,
+                        &miniPal[q], nesPal.data(), nes::PPUx::RPD_AS_NAMETABLE, effects);
+            }
+
+            v >>= 2;
+            rem--;
+        }
+    }
+}
+

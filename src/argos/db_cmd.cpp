@@ -55,17 +55,19 @@ OPTIONS:
 {
     EnsureArgosDirectoryWriteable(*config);
 
+    std::string argosdbpath = config->ArgosPathTo("argos.db");
+
     if (argc == 0) {
-        ArgosDB db(RuntimeConfig::ArgosDatabasePath(config));
+        ArgosDB db(argosdbpath);
         return db.SystemLaunchSQLite3WithExamples();
     } else {
         std::string arg(argv[0]);
         if (arg == "--reset") {
-            fs::remove(RuntimeConfig::ArgosDatabasePath(config));
-            ArgosDB db(RuntimeConfig::ArgosDatabasePath(config));
+            fs::remove(argosdbpath);
+            ArgosDB db(argosdbpath);
             return 0;
         } else if (arg == "path" || arg == "--path") {
-            std::cout << RuntimeConfig::ArgosDatabasePath(config) << std::endl;
+            std::cout << argosdbpath << std::endl;
             return 0;
         } else {
             Error("unrecognized argument. '{}'", arg);

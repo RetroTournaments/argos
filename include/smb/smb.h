@@ -22,6 +22,7 @@
 #define ARGOS_SMB_SMB_HEADER
 
 #include "nes/nes.h"
+#include "nes/ppux.h"
 
 namespace argos::smb
 {
@@ -184,6 +185,10 @@ const MinimapPalette& DefaultMinimapPalette(); // indices
 const MinimapPaletteBGR& DefaultMinimapPaletteBGR(); // bgr
 
 typedef std::array<uint8_t, MINIMAP_NUM_BYTES> MinimapImage;
+
+void RenderMinimapToPPUx(int x, int y,
+        const MinimapImage& img, const MinimapPalette& miniPal,
+        const nes::Palette& nesPal, nes::PPUx* ppux);
 
 }
 

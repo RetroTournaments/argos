@@ -28,6 +28,7 @@ namespace argos::smb
 {
 
 AreaID column_area_id(sqlite3_stmt* stmt, int column);
+void column_minimap(sqlite3_stmt* stmt, int column, smb::MinimapImage* img);
 const uint8_t* rom_chr0(nes::NESDatabase::RomSPtr rom);
 const uint8_t* rom_chr1(nes::NESDatabase::RomSPtr rom);
 
@@ -60,7 +61,7 @@ struct minimap_page
     int id;
     AreaID area_id;
     uint8_t page;
-    MinimapImage data;
+    MinimapImage minimap;
 };
 
 struct nt_extract_record
@@ -93,6 +94,7 @@ public:
     bool GetMusicTrackWav(MusicTrack track, std::vector<uint8_t>* data);
     bool GetMinimapPage(AreaID area_id, uint8_t page, db::minimap_page* mini_page);
     bool GetAllNametablePages(std::vector<db::nametable_page>* pages);
+    bool GetAllMinimapPages(std::vector<db::minimap_page>* pages);
     bool GetAllNTExtractTASIDs(std::vector<int>* ids);
     bool GetAllNTExtractRecords(int nes_tas_id, std::vector<db::nt_extract_record>* records);
 
@@ -112,11 +114,15 @@ public:
     SMBNametableCache(SMBDatabase* database);
     ~SMBNametableCache();
 
-    bool KnownPage(AreaID id, uint8_t page) const;
-    const db::nametable_page& GetPage(AreaID id, uint8_t page) const;
+    bool KnownNametable(AreaID id, uint8_t page) const;
+    const db::nametable_page& GetNametable(AreaID id, uint8_t page) const;
+
+    bool KnownMinimap(AreaID id, uint8_t page) const;
+    const db::minimap_page& GetMinimap(AreaID id, uint8_t page) const;
 
 private:
-    std::unordered_map<AreaID, std::vector<db::nametable_page>> m_pages;
+    std::unordered_map<AreaID, std::vector<db::nametable_page>> m_nametables;
+    std::unordered_map<AreaID, std::vector<db::minimap_page>> m_minimaps;
 };
 
 //

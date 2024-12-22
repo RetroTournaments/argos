@@ -30,6 +30,29 @@ void argos::nes::column_inputs(sqlite3_stmt* stmt, int column, std::vector<nes::
     inputs->assign(dat, dat + sz);
 }
 
+void argos::nes::column_frame_palette(sqlite3_stmt* stmt, int column, nes::FramePalette* palette)
+{
+    int sz = sqlite3_column_bytes(stmt, column);
+    if (sz != nes::FRAMEPALETTE_SIZE) {
+        throw std::runtime_error("not a frame palette?");
+    }
+    const uint8_t* dat = reinterpret_cast<const uint8_t*>(sqlite3_column_blob(stmt, column));
+    for (int i = 0; i < nes::FRAMEPALETTE_SIZE; i++) {
+        (*palette)[i] = dat[i];
+    }
+}
+
+void argos::nes::column_nametable(sqlite3_stmt* stmt, int column, nes::NameTable* nametable)
+{
+    int sz = sqlite3_column_bytes(stmt, column);
+    if (sz != nes::NAMETABLE_SIZE) {
+        throw std::runtime_error("not a nametable?");
+    }
+    const uint8_t* dat = reinterpret_cast<const uint8_t*>(sqlite3_column_blob(stmt, column));
+    for (int i = 0; i < nes::NAMETABLE_SIZE; i++) {
+        (*nametable)[i] = dat[i];
+    }
+}
 
 NESDatabase::NESDatabase(const std::string& path)
     : game::GameDatabase(path)
@@ -252,28 +275,4 @@ bool NESDatabase::GetRomByName(const std::string& name, std::vector<uint8_t>* ro
     }
     sqlite3_finalize(stmt);
     return ret;
-}
-
-void argos::nes::column_frame_palette(sqlite3_stmt* stmt, int column, nes::FramePalette* palette)
-{
-    int sz = sqlite3_column_bytes(stmt, column);
-    if (sz != nes::FRAMEPALETTE_SIZE) {
-        throw std::runtime_error("not a frame palette?");
-    }
-    const uint8_t* dat = reinterpret_cast<const uint8_t*>(sqlite3_column_blob(stmt, column));
-    for (int i = 0; i < nes::FRAMEPALETTE_SIZE; i++) {
-        (*palette)[i] = dat[i];
-    }
-}
-
-void argos::nes::column_nametable(sqlite3_stmt* stmt, int column, nes::NameTable* nametable)
-{
-    int sz = sqlite3_column_bytes(stmt, column);
-    if (sz != nes::NAMETABLE_SIZE) {
-        throw std::runtime_error("not a nametable?");
-    }
-    const uint8_t* dat = reinterpret_cast<const uint8_t*>(sqlite3_column_blob(stmt, column));
-    for (int i = 0; i < nes::NAMETABLE_SIZE; i++) {
-        (*nametable)[i] = dat[i];
-    }
 }

@@ -71,18 +71,6 @@ private:
     std::unordered_map<smb::MusicTrack, std::shared_ptr<sdlext::SDLExtMixMusic>> m_Musics;
 };
 
-class SMBDBNametableMiniComponent : public rgmui::IApplicationComponent
-{
-public:
-    SMBDBNametableMiniComponent(smb::SMBDatabase* db);
-    ~SMBDBNametableMiniComponent();
-
-    void OnFrame();
-
-private:
-    smb::SMBDatabase* m_Database;
-};
-
 class SMBDBNametablePageComponent : public rgmui::IApplicationComponent
 {
 public:
@@ -100,7 +88,8 @@ private:
     smb::AreaID m_AreaID;
     uint8_t m_Page;
 
-    cv::Mat m_Mat;
+    cv::Mat m_NametableMat;
+    cv::Mat m_MinimapMat;
 };
 
 };

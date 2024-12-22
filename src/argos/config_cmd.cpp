@@ -108,7 +108,7 @@ ConfigCommand::~ConfigCommand()
 
 int ConfigCommand::EditConfig()
 {
-    std::string configPath = RuntimeConfig::RuntimeConfigPath(m_RuntimeConfig);
+    std::string configPath = m_RuntimeConfig->RuntimeConfigPath();
     if (!util::FileExists(configPath)) {
         int ret = SetDefaults();
         if (ret) return ret;
@@ -137,7 +137,7 @@ int ConfigCommand::EditConfig()
 
 int ConfigCommand::SetDefaults()
 {
-    std::string configPath = RuntimeConfig::RuntimeConfigPath(m_RuntimeConfig);
+    std::string configPath = m_RuntimeConfig->RuntimeConfigPath();
 
     if (util::FileExists(configPath)) {
         fs::rename(fs::path(configPath), fs::path(configPath + "~"));
@@ -163,7 +163,7 @@ int ConfigCommand::SetDefaults()
 
 int ConfigCommand::RestoreLast()
 {
-    std::string configPath = RuntimeConfig::RuntimeConfigPath(m_RuntimeConfig);
+    std::string configPath = m_RuntimeConfig->RuntimeConfigPath();
 
     if (util::FileExists(configPath + "~")) {
         // no error checking because yolo
@@ -180,6 +180,6 @@ int ConfigCommand::RestoreLast()
 
 int ConfigCommand::Path()
 {
-    std::cout << RuntimeConfig::RuntimeConfigPath(m_RuntimeConfig) << std::endl;
+    std::cout << m_RuntimeConfig->RuntimeConfigPath() << std::endl;
     return 0;
 }

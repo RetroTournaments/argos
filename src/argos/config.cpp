@@ -26,29 +26,19 @@
 using namespace argos;
 using namespace argos::util;
 
-std::string argos::RuntimeConfig::RuntimeConfigPath(const RuntimeConfig* config)
+std::string argos::RuntimeConfig::RuntimeConfigPath() const
 {
-    return fs::path(config->ArgosDirectory) / fs::path("config.json");
+    return fs::path(ArgosDirectory) / fs::path("config.json");
 }
 
-std::string argos::RuntimeConfig::ArgosDatabasePath(const RuntimeConfig* config)
+std::string argos::RuntimeConfig::ArgosPathTo(const std::string& path) const
 {
-    return fs::path(config->ArgosDirectory) / fs::path("argos.db");
+    return fs::path(ArgosDirectory) / fs::path(path);
 }
 
-std::string argos::RuntimeConfig::SMBDatabasePath(const RuntimeConfig* config)
+std::string argos::RuntimeConfig::SourcePathTo(const std::string& path) const
 {
-    return fs::path(config->ArgosDirectory) / fs::path("smb.db");
-}
-
-std::string argos::RuntimeConfig::SMBDataPath(const RuntimeConfig* config)
-{
-    return fs::path(config->SourceDirectory) / fs::path("data") / fs::path("smb");
-}
-
-std::string argos::RuntimeConfig::SMBBlobPath(const RuntimeConfig* config)
-{
-    return fs::path(config->SourceDirectory) / fs::path("data") / fs::path("smb") / fs::path("blob.bin");
+    return fs::path(SourceDirectory) / fs::path(path);
 }
 
 RuntimeConfig RuntimeConfig::Defaults()

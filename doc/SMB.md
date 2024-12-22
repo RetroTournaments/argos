@@ -1,3 +1,7 @@
+The first task was to get an understanding of the game as a player and also
+technically. The first part, there are tutorials. The second part, there is the
+disassembly. Read / Skim it and mess with it. Create TASes watch memory
+addresses, tinker etc.
 
 A very early task was to extract all of the nametables from all of the
 levels. That process is not currently included in this repository. At a high
@@ -22,3 +26,7 @@ breaking? Using the nametable data directly was the key.
 
 The inputs and relevant frames identified in this process are stored in
 `data/smb/nt_extract_tas.sql` and `data/smb/nt_extract_record.sql`
+
+Then I wanted a minimap. This a 4 bit image of the entire world. The tool for
+this is in another repo. But the data is in data/smb/minimap.sql
+

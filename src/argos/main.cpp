@@ -114,7 +114,7 @@ int argos::main::RunIApplication(const argos::RuntimeConfig* config, const char*
 
     std::shared_ptr<ArgosDB> adb;
     if (!db) {
-        adb = std::make_shared<ArgosDB>(RuntimeConfig::ArgosDatabasePath(config));
+        adb = std::make_shared<ArgosDB>(config->ArgosPathTo("argos.db"));
         db = adb.get();
     }
 

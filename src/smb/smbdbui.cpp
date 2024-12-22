@@ -72,7 +72,6 @@ SMBDatabaseApplication::SMBDatabaseApplication(SMBDatabase* db)
     RegisterComponent(std::make_shared<smbui::SMBDBSoundComponent>(db));
     RegisterComponent(std::make_shared<smbui::SMBDBMusicComponent>(db));
     RegisterComponent(std::make_shared<smbui::SMBDBNametablePageComponent>(db));
-    RegisterComponent(std::make_shared<smbui::SMBDBNametableMiniComponent>(db));
 }
 
 SMBDatabaseApplication::~SMBDatabaseApplication()
@@ -229,22 +228,6 @@ void SMBDBMusicComponent::DoMusicControls()
     }
 }
 
-SMBDBNametableMiniComponent::SMBDBNametableMiniComponent(smb::SMBDatabase* db)
-    : m_Database(db)
-{
-}
-
-SMBDBNametableMiniComponent::~SMBDBNametableMiniComponent()
-{
-}
-
-void SMBDBNametableMiniComponent::OnFrame()
-{
-    if (ImGui::Begin("smb_nametable_mini")) {
-    }
-    ImGui::End();
-}
-
 SMBDBNametablePageComponent::SMBDBNametablePageComponent(smb::SMBDatabase* db)
     : m_Rom(db->GetBaseRom())
     , m_Cache(db->GetNametableCache())
@@ -267,7 +250,13 @@ void SMBDBNametablePageComponent::OnFrame()
         if (rgmui::SliderUint8Ext("Page", &m_Page, 0x00, 0x20)) {
             RefreshPage();
         }
-        rgmui::MatAnnotator anno("nametable_pages", m_Mat);
+        rgmui::MatAnnotator anno("nametable_pages", m_NametableMat);
+        if (anno.IsHovered()) {
+            if (rgmui::HoverScroll<uint8_t>(&m_Page, 0x00, 0x20)) {
+                RefreshPage();
+            }
+        }
+        rgmui::MatAnnotator anno2("minimap_pages", m_MinimapMat);
         if (anno.IsHovered()) {
             if (rgmui::HoverScroll<uint8_t>(&m_Page, 0x00, 0x20)) {
                 RefreshPage();
@@ -279,8 +268,8 @@ void SMBDBNametablePageComponent::OnFrame()
 
 void SMBDBNametablePageComponent::RefreshPage()
 {
-    m_Mat = cv::Mat::zeros(nes::FRAME_HEIGHT, nes::FRAME_WIDTH * 3, CV_8UC3);
-    nes::PPUx ppux(m_Mat.cols, m_Mat.rows, m_Mat.data,
+    m_NametableMat = cv::Mat::zeros(nes::FRAME_HEIGHT, nes::FRAME_WIDTH * 3, CV_8UC3);
+    nes::PPUx ppux(m_NametableMat.cols, m_NametableMat.rows, m_NametableMat.data,
             nes::PPUxPriorityStatus::DISABLED);
     for (int i = 0; i < 3; i++) {
         if (i == 0 && m_Page == 0) {
@@ -288,8 +277,8 @@ void SMBDBNametablePageComponent::RefreshPage()
         }
 
         uint8_t p = m_Page + i - 1;
-        if (m_Cache->KnownPage(m_AreaID, p)) {
-            const auto& ntpage = m_Cache->GetPage(m_AreaID, p);
+        if (m_Cache->KnownNametable(m_AreaID, p)) {
+            const auto& ntpage = m_Cache->GetNametable(m_AreaID, p);
 
             ppux.RenderNametable(nes::FRAME_WIDTH * i, 0,
                     nes::NAMETABLE_WIDTH_BYTES, nes::NAMETABLE_HEIGHT_BYTES,
@@ -298,6 +287,26 @@ void SMBDBNametablePageComponent::RefreshPage()
                     smb::rom_chr1(m_Rom), ntpage.frame_palette.data(),
                     nes::DefaultPaletteBGR().data(), 1,
                     nes::EffectInfo::Defaults());
+        }
+    }
+
+    m_MinimapMat = cv::Mat::zeros(nes::FRAME_HEIGHT, nes::FRAME_WIDTH * 3, CV_8UC3);
+    nes::PPUx ppux2(m_MinimapMat.cols, m_MinimapMat.rows, m_MinimapMat.data,
+            nes::PPUxPriorityStatus::DISABLED);
+    ppux2.FillBackground(nes::PALETTE_ENTRY_WHITE,
+            nes::DefaultPaletteBGR().data());
+    for (int i = 0; i < 3; i++) {
+        if (i == 0 && m_Page == 0) {
+            continue;
+        }
+
+        uint8_t p = m_Page + i - 1;
+        if (m_Cache->KnownMinimap(m_AreaID, p)) {
+            const auto& minipage = m_Cache->GetMinimap(m_AreaID, p);
+
+            smb::RenderMinimapToPPUx(nes::FRAME_WIDTH * i, 0,
+                    minipage.minimap, smb::DefaultMinimapPalette(),
+                    nes::DefaultPaletteBGR(), &ppux2);
         }
     }
 }

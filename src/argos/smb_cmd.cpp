@@ -40,36 +40,42 @@ static bool GetSMBRom(int argc, char** argv, const argos::RuntimeConfig* config,
     rom->resize(smb::BASE_ROM_SIZE);
 
     if (rom_path == "") {
-        rom_path = argos::RuntimeConfig::SMBBlobPath(config);
+        rom_path = config->SourcePathTo("data/smb/smb.nes");
         if (FileExists(rom_path)) {
-            if (FileSize(rom_path) == 31482) {
-                std::string cmd = "gpg --pinentry-mode loopback --decrypt " + rom_path;
-                auto pipe = popen(cmd.c_str(), "r");
-                if (!pipe) {
-                    Error("failed opening pipe '{}'", cmd);
-                    return false;
-                }
-                size_t red = fread(reinterpret_cast<void*>(rom->data()), 1, rom->size(), pipe);
-                if (red != smb::BASE_ROM_SIZE) {
-                    Error("Did not read expected size from pipe");
-                    return false;
-                }
-            } else {
-                std::cerr << "Maybe you need to run 'git lfs pull origin main' in "
-                          << config->SourceDirectory << std::endl;
-            }
-        } else if (argos::nfdext::FileOpenDialog(&rom_path)) {
             argos::util::ReadFileToVector(rom_path, rom);
         } else {
-            Error("Must provide the base smb rom");
-            return false;
+            rom_path = config->SourcePathTo("data/smb/blob.bin");
+            if (FileExists(rom_path)) {
+                if (FileSize(rom_path) == 31482) {
+                    std::string cmd = "gpg --pinentry-mode loopback --decrypt " + rom_path;
+                    auto pipe = popen(cmd.c_str(), "r");
+                    if (!pipe) {
+                        Error("failed opening pipe '{}'", cmd);
+                        return false;
+                    }
+                    size_t red = fread(reinterpret_cast<void*>(rom->data()), 1, rom->size(), pipe);
+                    if (red != smb::BASE_ROM_SIZE) {
+                        Error("Did not read expected size from pipe");
+                        return false;
+                    }
+                } else {
+                    std::cerr << "Maybe you need to run 'git lfs pull origin main' in "
+                              << config->SourceDirectory << std::endl;
+                }
+            } else if (argos::nfdext::FileOpenDialog(&rom_path)) {
+                argos::util::ReadFileToVector(rom_path, rom);
+            } else {
+                Error("Must provide the base smb rom");
+                return false;
+            }
         }
     } else {
         argos::util::ReadFileToVector(rom_path, rom);
     }
 
     if (rom->size() != smb::BASE_ROM_SIZE) {
-        Error("Provided SMB Rom is not the correct size '{}'", smb::BASE_ROM_SIZE);
+        Error("Provided SMB Rom '{}' is not the correct size '{}'",
+                rom_path, smb::BASE_ROM_SIZE);
         return false;
     }
 
@@ -118,7 +124,7 @@ int DoSMBDBInit(const argos::RuntimeConfig* config, smb::SMBDatabase* orig, int 
             fs::remove(TEMP_SMB_DB_PATH);
         }
         smb::SMBDatabase smbdb(TEMP_SMB_DB_PATH);
-        std::string data_path = RuntimeConfig::SMBDataPath(config);
+        std::string data_path = config->SourcePathTo("data/smb/");
         if (!smb::InitializeSMBDatabase(&smbdb, data_path, smb_rom)) {
             Error("Failed to initialize SMBDatabase");
             return 1;
@@ -158,7 +164,7 @@ int DoSMBDB(const argos::RuntimeConfig* config, smb::SMBDatabase* smbdb, int arg
         smbui::SMBDatabaseApplication app(smbdb);
         return RunIApplication(config, "argos smb db", &app);
     } else if (arg ==  "path") {
-        std::cout << RuntimeConfig::SMBDatabasePath(config) << std::endl;;
+        std::cout << config->ArgosPathTo("smb.db") << std::endl;;
         return 0;
     } else if (arg ==  "init") {
         return DoSMBDBInit(config, smbdb, argc, argv);
@@ -208,7 +214,7 @@ OPTIONS:
         return 1;
     }
 
-    smb::SMBDatabase smbdb(RuntimeConfig::SMBDatabasePath(config));
+    smb::SMBDatabase smbdb(config->ArgosPathTo("smb.db"));
 
     if (action == "db") {
         return DoSMBDB(config, &smbdb, argc, argv);
