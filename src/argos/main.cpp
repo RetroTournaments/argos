@@ -19,6 +19,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <fstream>
+#include <signal.h>
 
 #include "util/arg.h"
 #include "util/file.h"
@@ -131,9 +132,21 @@ int argos::main::RunIApplication(const argos::RuntimeConfig* config, const char*
     return 0;
 }
 
+bool argos::main::g_SIGINT = false;
+static void sig_handler(int signum)
+{
+    static bool sig_handled = false;
+    if (g_SIGINT || sig_handled) {
+        std::exit(1);
+    }
+    g_SIGINT = true;
+    sig_handled = true;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
 {
+    signal(SIGINT, sig_handler);
     util::ArgNext(&argc, &argv); // skip program argument
     if (argc == 0) {
         Error("arguments required");

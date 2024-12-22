@@ -32,6 +32,8 @@
 namespace argos::main
 {
 
+extern bool g_SIGINT;
+
 void PrintProgramUsage(std::ostream& os);
 void PrintProgramVersion(std::ostream& os);
 
@@ -43,7 +45,7 @@ void Error(fmt::format_string<T...> fmt, T&&... args) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-int RunIApplication(const argos::RuntimeConfig* config, const char* name, rgmui::IApplication* app, ArgosDB* db = nullptr); 
+int RunIApplication(const argos::RuntimeConfig* config, const char* name, rgmui::IApplication* app, ArgosDB* db = nullptr);
 
 ////////////////////////////////////////////////////////////////////////////////
 
