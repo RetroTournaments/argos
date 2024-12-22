@@ -46,6 +46,12 @@ target_link_libraries(smbuilib
 add_library(rgmslib
     rgms.cpp
 )
+target_include_directories(rgmslib PUBLIC
+    ${cppzmq_INCLUDE_DIRS}
+    ${ZeroMQ_INCLUDE_DIR}
+)
 target_link_libraries(rgmslib
     smbuilib
+    libzmq
+    cppzmq
 )

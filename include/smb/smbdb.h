@@ -116,9 +116,11 @@ public:
 
     bool KnownNametable(AreaID id, uint8_t page) const;
     const db::nametable_page& GetNametable(AreaID id, uint8_t page) const;
+    const db::nametable_page* MaybeGetNametable(AreaID id, uint8_t page) const;
 
     bool KnownMinimap(AreaID id, uint8_t page) const;
     const db::minimap_page& GetMinimap(AreaID id, uint8_t page) const;
+
 
 private:
     std::unordered_map<AreaID, std::vector<db::nametable_page>> m_nametables;

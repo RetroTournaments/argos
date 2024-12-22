@@ -18,11 +18,19 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "fmt/bundled/color.h"
+#include "zmq.hpp"
+#include "zmq_addon.hpp"
+
 #include "argos/main.h"
-#include "smb/rgms.h"
+
 #include "util/arg.h"
 #include "util/serial.h"
-#include "fmt/bundled/color.h"
+#include "util/clock.h"
+#include "util/file.h"
+#include "util/string.h"
+
+#include "smb/rgms.h"
 
 using namespace argos;
 using namespace argos::util;
@@ -268,6 +276,111 @@ static int DoWatch(int argc, char** argv, const argos::RuntimeConfig* config)
     return r;
 }
 
+static int DoTransmitStuff(const std::string& ttypath, const std::string& target, const std::string& name, const argos::RuntimeConfig* config, bool norecord) {
+    smb::SMBDatabase db(config->ArgosPathTo("smb.db"));
+    auto nametables = db.GetNametableCache();
+
+    util::fs::create_directories(fmt::format("{}rec/", config->ArgosDirectory));
+    std::string recordingPath = fmt::format("{}rec/{}_{}.rec", config->ArgosDirectory,
+            util::GetTimestampNow(), name);
+
+    argos::rgms::SMBSerialProcessorThreadInfo tinfo;
+    argos::rgms::SMBSerialProcessorThread thread(ttypath, nametables);
+    if (!norecord) {
+        thread.StartRecording(recordingPath);
+    }
+
+    zmq::context_t context(2);
+    zmq::socket_t socket(context, zmq::socket_type::pub);
+    socket.bind(target);
+
+    std::vector<uint8_t> buffer;
+
+    int sleeps = 0;
+    int totsent = 0;
+    for (;;) {
+        while (auto p = thread.GetNextProcessorOutput()) {
+            if (p->Frame.NTDiffs.size() > 5000) {
+                p->Frame.NTDiffs.resize(5000);
+            }
+            OutputToBytes(p, &buffer);
+            socket.send(zmq::str_buffer("smb"), zmq::send_flags::sndmore);
+            socket.send(zmq::message_t(name.data(), name.size()), zmq::send_flags::sndmore);
+            socket.send(zmq::message_t(buffer.data(), buffer.size()), zmq::send_flags::none);
+            totsent++;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        sleeps++;
+        if (sleeps == 250) {
+            thread.GetInfo(&tinfo);
+            fmt::print("bytes: {:10s} bps: {:8.1f} msgs: {:10d} mps: {:8.1f} err: {:5d} tot: {:6d}\n",
+
+                    util::BytesFmt(tinfo.ByteCount), tinfo.ApproxBytesPerSecond,
+                    tinfo.MessageCount, tinfo.ApproxMessagesPerSecond, tinfo.ErrorCount, totsent);
+
+            sleeps = 0;
+        }
+        if (g_SIGINT) {
+            fmt::print("\n");
+            fmt::print("Interrupted\n");
+            break;
+        }
+    }
+
+    return 0;
+}
+
+static int DoTransmit(int argc, char** argv, argos::RuntimeConfig* config)
+{
+    if (argc < 3 || argc > 4) {
+        Error("transmit <tty> <target> <name>");
+        Error("transmit /dev/ttyUSB1 tcp://0.0.0.0:5555 seat1");
+        return 1;
+    }
+    std::string ttypath(argv[0]);
+    std::string target(argv[1]);
+    std::string name(argv[2]);
+
+    return DoTransmitStuff(ttypath, target, name, config, argc == 4);
+}
+
+static int DoReceiveStuff(const std::vector<std::string>& bindings)
+{
+    //socket.connect("tcp://192.168.0.3:5555");
+
+    zmq::context_t context(2);
+    zmq::socket_t socket(context, zmq::socket_type::sub);
+    for (auto & bind : bindings) {
+        socket.connect(bind);
+    }
+    socket.set(zmq::sockopt::subscribe, "smb");
+    while(true) {
+        std::vector<zmq::message_t> recv_msgs;
+        zmq::recv_result_t result =
+            zmq::recv_multipart(socket, std::back_inserter(recv_msgs));
+        std::cout << recv_msgs[0].to_string() << " " << recv_msgs[1].to_string() << " " << recv_msgs[2].size() << std::endl;
+        if (g_SIGINT) {
+            fmt::print("\n");
+            fmt::print("Interrupted\n");
+            break;
+        }
+    }
+    return 0;
+}
+
+static int DoReceive(int argc, char** argv)
+{
+    std::vector<std::string> bindings;
+    if (argc == 0) {
+        return 1;
+    }
+    for (int i = 0; i < argc; i++) {
+        bindings.emplace_back(argv[i]);
+    }
+    return DoReceiveStuff(bindings);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // The 'rgms' command is for bad original code that needs to be moved eventually
 REGISTER_COMMAND(rgms, "RGMS",
@@ -292,6 +405,10 @@ OPTIONS:
         return DoList(argc, argv);
     } else if (action == "watch") {
         return DoWatch(argc, argv, config);
+    } else if (action == "transmit") {
+        return DoTransmit(argc, argv, config);
+    } else if (action == "receive") {
+        return DoReceive(argc, argv);
     }
 
     return 0;

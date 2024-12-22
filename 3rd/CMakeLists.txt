@@ -77,6 +77,10 @@ set(cppzmq_INCLUDE_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/cppzmq/"
     PARENT_SCOPE
 )
+set(ZMQ_BUILD_TESTS OFF)
+add_subdirectory(libzmq)
+set(CPPZMQ_BUILD_TESTS OFF)
+add_subdirectory(cppzmq)
 
 ################################################################################
 # nlohmann/json is a header only json library (embedded instead of submoduled

@@ -381,6 +381,14 @@ const db::nametable_page& SMBNametableCache::GetNametable(AreaID id, uint8_t pag
     return it->second[page];
 }
 
+const db::nametable_page* SMBNametableCache::MaybeGetNametable(AreaID id, uint8_t page) const
+{
+    if (!KnownNametable(id, page)) {
+        return nullptr;
+    }
+    return &GetNametable(id, page);
+}
+
 bool SMBNametableCache::KnownMinimap(AreaID id, uint8_t page) const
 {
     auto it = m_minimaps.find(id);
