@@ -19,3 +19,6 @@
 [submodule "3rd/SDL_mixer"]
 	path = 3rd/SDL_mixer
 	url = https://github.com/libsdl-org/SDL_mixer.git
+[submodule "3rd/libzmq"]
+	path = 3rd/libzmq
+	url = https://github.com/zeromq/libzmq.git
