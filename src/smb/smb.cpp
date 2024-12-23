@@ -237,7 +237,7 @@ const MinimapPaletteBGR& argos::smb::DefaultMinimapPaletteBGR()
     return b;
 }
 
-void argos::smb::RenderMinimapToPPUx(int x, int y,
+void argos::smb::RenderMinimapToPPUx(int x, int y, int sx, int ex,
         const MinimapImage& img, const MinimapPalette& miniPal, const nes::Palette& nesPal, nes::PPUx* ppux)
 {
     if (!ppux) return;
@@ -258,12 +258,38 @@ void argos::smb::RenderMinimapToPPUx(int x, int y,
 
             uint8_t q = v & 0b11;
             if (q) {
-                ppux->RenderPaletteData(x + inx, y + iny, 1, 1,
-                        &miniPal[q], nesPal.data(), nes::PPUx::RPD_AS_NAMETABLE, effects);
+                if (inx >= sx && inx < ex) {
+                    ppux->RenderPaletteData(x + inx, y + iny, 1, 1,
+                            &miniPal[q], nesPal.data(),
+                            nes::PPUx::RPD_AS_NAMETABLE, effects);
+                }
             }
 
             v >>= 2;
             rem--;
+        }
+    }
+}
+
+void Route::GetVisibleSections(int xloc, int width, std::vector<WorldSection>* sections)
+{
+    if (!sections || width <= 0) {
+        return;
+    }
+    sections->clear();
+
+    int rxloc = xloc + width;
+
+    for (auto & sec : m_Route) {
+        int rx = sec.XLoc + sec.Width();
+
+        if (!(rx < xloc || sec.XLoc > rxloc)) {
+            WorldSection vsec = sec;
+            vsec.XLoc = sec.XLoc - xloc;
+            sections->push_back(vsec);
+        }
+        if (sec.XLoc > rxloc) {
+            break;
         }
     }
 }

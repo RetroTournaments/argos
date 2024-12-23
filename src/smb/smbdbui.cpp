@@ -72,6 +72,7 @@ SMBDatabaseApplication::SMBDatabaseApplication(SMBDatabase* db)
     RegisterComponent(std::make_shared<smbui::SMBDBSoundComponent>(db));
     RegisterComponent(std::make_shared<smbui::SMBDBMusicComponent>(db));
     RegisterComponent(std::make_shared<smbui::SMBDBNametablePageComponent>(db));
+    RegisterComponent(std::make_shared<smbui::SMBDBRouteComponent>(db));
 }
 
 SMBDatabaseApplication::~SMBDatabaseApplication()
@@ -211,7 +212,7 @@ void SMBDBMusicComponent::DoMusicControls()
         }
     }
 
-    if (ImGui::CollapsingHeader("insert sound effects")) {
+    if (ImGui::CollapsingHeader("insert music track")) {
         for (auto & track : smb::AudibleMusicTracks()) {
             rgmui::TextFmt("{:32s} {:08x}", smb::ToString(track), static_cast<uint32_t>(track));
             ImGui::SameLine();
@@ -227,6 +228,8 @@ void SMBDBMusicComponent::DoMusicControls()
         }
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 SMBDBNametablePageComponent::SMBDBNametablePageComponent(smb::SMBDatabase* db)
     : m_Rom(db->GetBaseRom())
@@ -304,9 +307,69 @@ void SMBDBNametablePageComponent::RefreshPage()
         if (m_Cache->KnownMinimap(m_AreaID, p)) {
             const auto& minipage = m_Cache->GetMinimap(m_AreaID, p);
 
-            smb::RenderMinimapToPPUx(nes::FRAME_WIDTH * i, 0,
+            smb::RenderMinimapToPPUx(nes::FRAME_WIDTH * i, 0, 0, nes::FRAME_WIDTH,
                     minipage.minimap, smb::DefaultMinimapPalette(),
                     nes::DefaultPaletteBGR(), &ppux2);
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+SMBDBRouteComponent::SMBDBRouteComponent(smb::SMBDatabase* db)
+    : m_Database(db)
+    , m_Cache(db->GetNametableCache())
+{
+    m_Database->GetRouteNames(&m_RouteNames);
+    if (!m_RouteNames.empty()) {
+        m_Database->GetRoute(m_RouteNames.front(), &m_Route);
+    }
+    m_XLoc = 0;
+    RefreshView();
+}
+
+SMBDBRouteComponent::~SMBDBRouteComponent()
+{
+}
+
+void SMBDBRouteComponent::OnFrame()
+{
+    if (ImGui::Begin("smb_route")) {
+        if (rgmui::Combo4("route", &m_Route.name, m_RouteNames, m_RouteNames)) {
+            m_Database->GetRoute(m_Route.name, &m_Route);
+            RefreshView();
+        }
+        int xmx = m_Route.route.last_x(m_ViewMat.cols);
+        if (rgmui::SliderIntExt("XLoc", &m_XLoc, 0, xmx)) {
+            RefreshView();
+        }
+        rgmui::MatAnnotator anno("route", m_ViewMat);
+
+    }
+    ImGui::End();
+}
+
+void SMBDBRouteComponent::RefreshView()
+{
+    m_ViewMat = cv::Mat::zeros(nes::FRAME_HEIGHT, nes::FRAME_WIDTH * 3, CV_8UC3);
+    nes::PPUx ppux(m_ViewMat.cols, m_ViewMat.rows, m_ViewMat.data,
+            nes::PPUxPriorityStatus::DISABLED);
+    ppux.FillBackground(nes::PALETTE_ENTRY_WHITE,
+            nes::DefaultPaletteBGR().data());
+
+    std::vector<WorldSection> visible;
+    m_Route.route.GetVisibleSections(m_XLoc, m_ViewMat.cols, &visible);
+
+    for (auto & vsec : visible) {
+        uint8_t lp = vsec.LeftPage();
+        for (uint8_t p = lp; p < vsec.RightPage(); p++) {
+            const auto* minipage = m_Cache->MaybeGetMinimap(vsec.AID, p);
+            if (minipage) {
+                smb::RenderMinimapToPPUx(vsec.XLoc + 256 * (p - lp), 0,
+                        vsec.PageLeft(p), vsec.PageRight(p),
+                        minipage->minimap, smb::DefaultMinimapPalette(),
+                        nes::DefaultPaletteBGR(), &ppux);
+            }
         }
     }
 }

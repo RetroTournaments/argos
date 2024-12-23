@@ -92,6 +92,28 @@ private:
     cv::Mat m_MinimapMat;
 };
 
+class SMBDBRouteComponent : public rgmui::IApplicationComponent
+{
+public:
+    SMBDBRouteComponent(smb::SMBDatabase* db);
+    ~SMBDBRouteComponent();
+
+    void OnFrame();
+
+private:
+    void RefreshView();
+
+private:
+    smb::SMBDatabase* m_Database;
+    smb::SMBNametableCachePtr m_Cache;
+
+    std::vector<std::string> m_RouteNames;
+    smb::db::route m_Route;
+    int m_XLoc;
+
+    cv::Mat m_ViewMat;
+};
+
 };
 
 #endif

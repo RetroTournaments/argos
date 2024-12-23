@@ -494,16 +494,6 @@ private:
 }
 namespace argos::rgms {
 
-enum RaceCategory : uint8_t
-{
-    ANY_PERCENT = 0x00,
-    WARPLESS    = 0x01,
-};
-NLOHMANN_JSON_SERIALIZE_ENUM(RaceCategory, {
-    {RaceCategory::ANY_PERCENT, "any_percent"},
-    {RaceCategory::WARPLESS, "warpless"},
-});
-
 struct PlayerColors
 {
     uint8_t RepresentativeColor;

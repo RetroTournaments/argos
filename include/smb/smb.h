@@ -175,6 +175,98 @@ std::string ToString(MusicTrack track);
 // Game end state
 //  OPER_MODE == 2, OPER_MODE_TASK == 0x00, PLAYER_X_SPEED == 0x18
 
+// Part of the world
+struct WorldSection
+{
+    AreaID AID;
+
+    // World-Level (like 5-2)
+    int World;
+    int Level;
+
+    // Pixel extents of this section (in world coordinates)
+    int Left; // >=
+    int Right; // <
+    int Width() const {
+        return Right - Left;
+    }
+    uint8_t LeftPage() const {
+        return static_cast<uint8_t>(Left / 256);
+    }
+    uint8_t RightPage() const {
+        return static_cast<uint8_t>(Right / 256) + 1;
+    }
+    int PageLeft(uint8_t p) {
+        int pxl = static_cast<int>(p) * 256;
+        if (pxl < Left) {
+            return std::min(Left - pxl, 256);
+        }
+        return 0;
+    }
+    int PageRight(uint8_t p) {
+        int pxl = static_cast<int>(p) * 256;
+        int pxr = static_cast<int>(p) * 256 + 256;
+        if (pxr > Right) {
+            return std::max(Right - pxl, 0);
+        }
+        return 256;
+    }
+
+    // Location from farthest left (or relative to ppux)
+    int XLoc;
+};
+
+class Route
+{
+public:
+    typedef std::vector<WorldSection>::iterator iterator;
+    typedef std::vector<WorldSection>::const_iterator const_iterator;
+
+    Route() = default;
+    ~Route() = default;
+
+    bool empty() const {
+        return m_Route.empty();
+    }
+    WorldSection& emplace_back() {
+        return m_Route.emplace_back();
+    }
+    WorldSection& back() {
+        return m_Route.back();
+    }
+    void clear() {
+        m_Route.clear();
+    }
+    iterator begin() {
+        return m_Route.begin();
+    }
+    const_iterator begin() const {
+        return m_Route.begin();
+    }
+    iterator end() {
+        return m_Route.end();
+    }
+    const_iterator end() const {
+        return m_Route.end();
+    }
+    int total_width() const {
+        if (m_Route.empty()) {
+            return 0;
+        }
+        return m_Route.back().XLoc + m_Route.back().Width();
+    }
+    int last_x(int width) const {
+        return std::max(total_width() - width, 0);
+    }
+
+    void GetVisibleSections(int xloc, int width,
+            std::vector<WorldSection>* sections);
+
+private:
+    std::vector<WorldSection> m_Route;
+};
+
+
 // Minimap is just a 2bpp image of the same size as a normal nes frame
 inline constexpr int MINIMAP_NUM_BYTES = nes::FRAME_SIZE / 4;
 inline constexpr int MINIMAP_RGB_PALETTE_SIZE = 4 * nes::BYTES_PER_PALETTE_ENTRY;
@@ -186,7 +278,9 @@ const MinimapPaletteBGR& DefaultMinimapPaletteBGR(); // bgr
 
 typedef std::array<uint8_t, MINIMAP_NUM_BYTES> MinimapImage;
 
-void RenderMinimapToPPUx(int x, int y,
+
+// TODO These should be somewhere else?
+void RenderMinimapToPPUx(int x, int y, int sx, int ex,
         const MinimapImage& img, const MinimapPalette& miniPal,
         const nes::Palette& nesPal, nes::PPUx* ppux);
 

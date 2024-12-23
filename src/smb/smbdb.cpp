@@ -70,6 +70,8 @@ SMBDatabase::SMBDatabase(const std::string& path)
     ExecOrThrow(SMBDatabase::NametablePageSchema());
     ExecOrThrow(SMBDatabase::MinimapPageSchema());
     ExecOrThrow(SMBDatabase::NTExtractRecordSchema());
+    ExecOrThrow(SMBDatabase::RouteSchema());
+    ExecOrThrow(SMBDatabase::RouteSectionSchema());
 }
 
 SMBDatabase::~SMBDatabase()
@@ -122,6 +124,28 @@ const char* SMBDatabase::NTExtractRecordSchema()
     area_id                 INTEGER NOT NULL,
     page                    INTEGER NOT NULL,
     nt_index                INTEGER NOT NULL
+);)";
+}
+
+const char* SMBDatabase::RouteSchema()
+{
+    return R"(CREATE TABLE IF NOT EXISTS route (
+    id                      INTEGER PRIMARY KEY,
+    name                    TEXT NOT NULL UNIQUE
+);)";
+}
+
+const char* SMBDatabase::RouteSectionSchema()
+{
+    return R"(CREATE TABLE IF NOT EXISTS route_section (
+    id                      INTEGER PRIMARY KEY,
+    route_id                INTEGER REFERENCES route(id) ON DELETE RESTRICT NOT NULL,
+    area_id                 INTEGER NOT NULL,
+    world                   INTEGER NOT NULL,
+    level                   INTEGER NOT NULL,
+    left                    INTEGER NOT NULL,
+    right                   INTEGER NOT NULL,
+    xloc                    INTEGER NOT NULL
 );)";
 }
 
@@ -324,6 +348,75 @@ bool SMBDatabase::GetAllNTExtractTASIDs(std::vector<int>* ids)
     return true;
 }
 
+bool SMBDatabase::GetRouteNames(std::vector<std::string>* names)
+{
+    if (!names) {
+        return false;
+    }
+
+    sqlite3_stmt* stmt;
+    sqliteext::PrepareOrThrow(m_Database, R"(
+        SELECT name FROM route;
+    )", &stmt);
+    names->clear();
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        names->push_back(sqliteext::column_str(stmt, 0));
+    }
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+bool SMBDatabase::GetRoute(const std::string& name, db::route* route)
+{
+    bool ret = false;
+    sqlite3_stmt* stmt;
+    sqliteext::PrepareOrThrow(m_Database, R"(
+        SELECT id FROM route WHERE name = ?;
+    )", &stmt);
+    sqliteext::BindStrOrThrow(stmt, 1, name);
+
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        if (route) {
+            route->id = sqlite3_column_int(stmt, 0);
+            route->name = name;
+        }
+        ret = true;
+    }
+    sqlite3_finalize(stmt);
+
+    if (route) {
+        route->route.clear();
+    }
+
+    if (route && ret) {
+        sqliteext::PrepareOrThrow(m_Database, R"(
+            SELECT area_id, world, level, left, right, xloc FROM route_section
+            WHERE route_id = ?;
+        )", &stmt);
+        sqliteext::BindIntOrThrow(stmt, 1, route->id);
+
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            route->route.emplace_back();
+            auto& sec = route->route.back();
+
+            sec.AID = smb::column_area_id(stmt, 0);
+            sec.World = sqlite3_column_int(stmt, 1);
+            sec.Level = sqlite3_column_int(stmt, 2);
+            sec.Left = sqlite3_column_int(stmt, 3);
+            sec.Right = sqlite3_column_int(stmt, 4);
+            sec.XLoc = sqlite3_column_int(stmt, 5);
+        }
+        sqlite3_finalize(stmt);
+
+        std::sort(route->route.begin(), route->route.end(),
+        [&](const WorldSection& l, const WorldSection& r){
+            return l.XLoc < r.XLoc;
+        });
+    }
+
+    return ret;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 SMBNametableCache::SMBNametableCache(SMBDatabase* database)
@@ -415,6 +508,14 @@ const db::minimap_page& SMBNametableCache::GetMinimap(AreaID id, uint8_t page) c
     }
 
     return it->second[page];
+}
+
+const db::minimap_page* SMBNametableCache::MaybeGetMinimap(AreaID id, uint8_t page) const
+{
+    if (!KnownMinimap(id, page)) {
+        return nullptr;
+    }
+    return &GetMinimap(id, page);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -566,6 +667,7 @@ bool argos::smb::InitializeSMBDatabase(SMBDatabase* database,
 
     ExecAndLog("minimap.sql");
     ExecAndLog("pattern_tables.sql");
+    ExecAndLog("routes.sql");
 
     return true;
 }

@@ -74,6 +74,13 @@ struct nt_extract_record
     int nt_index;
 };
 
+struct route
+{
+    int id;
+    std::string name;
+    Route route;
+};
+
 }
 
 class SMBNametableCache;
@@ -97,12 +104,16 @@ public:
     bool GetAllMinimapPages(std::vector<db::minimap_page>* pages);
     bool GetAllNTExtractTASIDs(std::vector<int>* ids);
     bool GetAllNTExtractRecords(int nes_tas_id, std::vector<db::nt_extract_record>* records);
+    bool GetRouteNames(std::vector<std::string>* names);
+    bool GetRoute(const std::string& name, db::route* route);
 
     static const char* SoundEffectSchema();
     static const char* MusicTrackSchema();
     static const char* NametablePageSchema();
     static const char* MinimapPageSchema();
     static const char* NTExtractRecordSchema();
+    static const char* RouteSchema();
+    static const char* RouteSectionSchema();
 
 private:
     SMBNametableCachePtr m_NametableCache;
@@ -120,6 +131,7 @@ public:
 
     bool KnownMinimap(AreaID id, uint8_t page) const;
     const db::minimap_page& GetMinimap(AreaID id, uint8_t page) const;
+    const db::minimap_page* MaybeGetMinimap(AreaID id, uint8_t page) const;
 
 
 private:
