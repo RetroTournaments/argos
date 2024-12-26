@@ -51,7 +51,7 @@ struct nametable_page
 {
     int id;
     AreaID area_id;
-    uint8_t page;
+    int page;
     nes::FramePalette frame_palette;
     nes::NameTable nametable;
 };
@@ -60,7 +60,7 @@ struct minimap_page
 {
     int id;
     AreaID area_id;
-    uint8_t page;
+    int page;
     MinimapImage minimap;
 };
 
@@ -70,7 +70,7 @@ struct nt_extract_record
     int nes_tas_id;
     int frame;
     AreaID area_id;
-    uint8_t page;
+    int page;
     int nt_index;
 };
 
@@ -99,7 +99,7 @@ public:
 
     bool GetSoundEffectWav(SoundEffect effect, std::vector<uint8_t>* data);
     bool GetMusicTrackWav(MusicTrack track, std::vector<uint8_t>* data);
-    bool GetMinimapPage(AreaID area_id, uint8_t page, db::minimap_page* mini_page);
+    bool GetMinimapPage(AreaID area_id, int page, db::minimap_page* mini_page);
     bool GetAllNametablePages(std::vector<db::nametable_page>* pages);
     bool GetAllMinimapPages(std::vector<db::minimap_page>* pages);
     bool GetAllNTExtractTASIDs(std::vector<int>* ids);
@@ -119,19 +119,21 @@ private:
     SMBNametableCachePtr m_NametableCache;
 };
 
-class SMBNametableCache
+class SMBNametableCache : public INametableCache
 {
 public:
     SMBNametableCache(SMBDatabase* database);
     ~SMBNametableCache();
 
-    bool KnownNametable(AreaID id, uint8_t page) const;
-    const db::nametable_page& GetNametable(AreaID id, uint8_t page) const;
-    const db::nametable_page* MaybeGetNametable(AreaID id, uint8_t page) const;
+    bool KnownNametable(AreaID id, int page) const;
+    const nes::NameTable* Nametable(AreaID id, int page) const final;
+    const db::nametable_page& GetNametable(AreaID id, int page) const;
+    const db::nametable_page* MaybeGetNametable(AreaID id, int page) const;
 
-    bool KnownMinimap(AreaID id, uint8_t page) const;
-    const db::minimap_page& GetMinimap(AreaID id, uint8_t page) const;
-    const db::minimap_page* MaybeGetMinimap(AreaID id, uint8_t page) const;
+    bool KnownMinimap(AreaID id, int page) const;
+    const MinimapImage* Minimap(AreaID id, int page) const final;
+    const db::minimap_page& GetMinimap(AreaID id, int page) const;
+    const db::minimap_page* MaybeGetMinimap(AreaID id, int page) const;
 
 
 private:

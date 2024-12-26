@@ -34,7 +34,7 @@ AreaID argos::smb::column_area_id(sqlite3_stmt* stmt, int column)
 {
     int v = sqlite3_column_int(stmt, column);
     if (v < 0 || v > std::numeric_limits<uint16_t>::max()) {
-        throw std::runtime_error("out of bounds data in db for sqliteext::column_uint8_t");
+        throw std::runtime_error("out of bounds data in db for sqliteext::column_area_id");
     }
     return static_cast<AreaID>(v);
 }
@@ -246,7 +246,7 @@ bool smb::InsertNametablePage(SMBDatabase* database, const db::nametable_page& n
             &stmt);
 
     sqliteext::BindIntOrThrow(stmt, 1, static_cast<int>(nt.area_id));
-    sqliteext::BindIntOrThrow(stmt, 2, static_cast<int>(nt.page));
+    sqliteext::BindIntOrThrow(stmt, 2, nt.page);
     sqliteext::BindBlbOrThrow(stmt, 3, nt.frame_palette.data(), nt.frame_palette.size());
     sqliteext::BindBlbOrThrow(stmt, 4, nt.nametable.data(), nt.nametable.size());
     sqliteext::StepAndFinalizeOrThrow(stmt);
@@ -267,7 +267,7 @@ bool SMBDatabase::GetAllNametablePages(std::vector<db::nametable_page>* nt_pages
         db::nametable_page page;
         page.id = sqlite3_column_int(stmt, 0);
         page.area_id = column_area_id(stmt, 1);
-        page.page = sqliteext::column_uint8_t(stmt, 2);
+        page.page = sqlite3_column_int(stmt, 2);
         nes::column_frame_palette(stmt, 3, &page.frame_palette);
         nes::column_nametable(stmt, 4, &page.nametable);
         nt_pages->push_back(page);
@@ -290,7 +290,7 @@ bool SMBDatabase::GetAllMinimapPages(std::vector<db::minimap_page>* mini_pages)
         db::minimap_page page;
         page.id = sqlite3_column_int(stmt, 0);
         page.area_id = column_area_id(stmt, 1);
-        page.page = sqliteext::column_uint8_t(stmt, 2);
+        page.page = sqlite3_column_int(stmt, 2);
         smb::column_minimap(stmt, 3, &page.minimap);
         mini_pages->push_back(page);
     }
@@ -298,7 +298,7 @@ bool SMBDatabase::GetAllMinimapPages(std::vector<db::minimap_page>* mini_pages)
     return true;
 }
 
-bool SMBDatabase::GetMinimapPage(AreaID area_id, uint8_t page, db::minimap_page* mini_page)
+bool SMBDatabase::GetMinimapPage(AreaID area_id, int page, db::minimap_page* mini_page)
 {
     if (!mini_page) return false;
     throw std::runtime_error("not implemented");
@@ -323,7 +323,7 @@ bool SMBDatabase::GetAllNTExtractRecords(int nes_tas_id, std::vector<db::nt_extr
         records->back().nes_tas_id = sqlite3_column_int(stmt, 1);
         records->back().frame = sqlite3_column_int(stmt, 2);
         records->back().area_id = smb::column_area_id(stmt, 3);
-        records->back().page = sqliteext::column_uint8_t(stmt, 4);
+        records->back().page = sqlite3_column_int(stmt, 4);
         records->back().nt_index = sqlite3_column_int(stmt, 5);
     }
     sqlite3_finalize(stmt);
@@ -412,6 +412,9 @@ bool SMBDatabase::GetRoute(const std::string& name, db::route* route)
         [&](const WorldSection& l, const WorldSection& r){
             return l.XLoc < r.XLoc;
         });
+        for (size_t i = 0; i < route->route.size(); i++) {
+            route->route[i].SectionIndex = i;
+        }
     }
 
     return ret;
@@ -420,6 +423,7 @@ bool SMBDatabase::GetRoute(const std::string& name, db::route* route)
 ////////////////////////////////////////////////////////////////////////////////
 
 SMBNametableCache::SMBNametableCache(SMBDatabase* database)
+    : INametableCache(rom_chr1(database->GetBaseRom()))
 {
     std::vector<db::nametable_page> nametables;
     database->GetAllNametablePages(&nametables);
@@ -446,7 +450,7 @@ SMBNametableCache::~SMBNametableCache()
 {
 }
 
-bool SMBNametableCache::KnownNametable(AreaID id, uint8_t page) const
+bool SMBNametableCache::KnownNametable(AreaID id, int page) const
 {
     auto it = m_nametables.find(id);
     if (it == m_nametables.end()) {
@@ -458,7 +462,7 @@ bool SMBNametableCache::KnownNametable(AreaID id, uint8_t page) const
     return true;
 }
 
-const db::nametable_page& SMBNametableCache::GetNametable(AreaID id, uint8_t page) const
+const db::nametable_page& SMBNametableCache::GetNametable(AreaID id, int page) const
 {
     auto it = m_nametables.find(id);
     if (it == m_nametables.end()) {
@@ -474,7 +478,7 @@ const db::nametable_page& SMBNametableCache::GetNametable(AreaID id, uint8_t pag
     return it->second[page];
 }
 
-const db::nametable_page* SMBNametableCache::MaybeGetNametable(AreaID id, uint8_t page) const
+const db::nametable_page* SMBNametableCache::MaybeGetNametable(AreaID id, int page) const
 {
     if (!KnownNametable(id, page)) {
         return nullptr;
@@ -482,7 +486,7 @@ const db::nametable_page* SMBNametableCache::MaybeGetNametable(AreaID id, uint8_
     return &GetNametable(id, page);
 }
 
-bool SMBNametableCache::KnownMinimap(AreaID id, uint8_t page) const
+bool SMBNametableCache::KnownMinimap(AreaID id, int page) const
 {
     auto it = m_minimaps.find(id);
     if (it == m_minimaps.end()) {
@@ -494,7 +498,7 @@ bool SMBNametableCache::KnownMinimap(AreaID id, uint8_t page) const
     return true;
 }
 
-const db::minimap_page& SMBNametableCache::GetMinimap(AreaID id, uint8_t page) const
+const db::minimap_page& SMBNametableCache::GetMinimap(AreaID id, int page) const
 {
     auto it = m_minimaps.find(id);
     if (it == m_minimaps.end()) {
@@ -510,12 +514,30 @@ const db::minimap_page& SMBNametableCache::GetMinimap(AreaID id, uint8_t page) c
     return it->second[page];
 }
 
-const db::minimap_page* SMBNametableCache::MaybeGetMinimap(AreaID id, uint8_t page) const
+const db::minimap_page* SMBNametableCache::MaybeGetMinimap(AreaID id, int page) const
 {
     if (!KnownMinimap(id, page)) {
         return nullptr;
     }
     return &GetMinimap(id, page);
+}
+
+const nes::NameTable* SMBNametableCache::Nametable(AreaID id, int page) const
+{
+    auto* p = MaybeGetNametable(id, page);
+    if (p) {
+        return &p->nametable;
+    }
+    return nullptr;
+}
+
+const MinimapImage* SMBNametableCache::Minimap(AreaID id, int page) const
+{
+    auto* p = MaybeGetMinimap(id, page);
+    if (p) {
+        return &p->minimap;
+    }
+    return nullptr;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

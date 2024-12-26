@@ -197,7 +197,7 @@ static int DoWatch(int argc, char** argv, const argos::RuntimeConfig* config)
 
             std::string ttyPath;
             int baud = 4000000;
-            bool console = false;
+            bool console = true;
 
             std::string arg;
             while (util::ArgReadString(&argc, &argv, &arg)) {

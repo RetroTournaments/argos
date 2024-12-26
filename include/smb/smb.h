@@ -114,6 +114,8 @@ enum class AreaID : uint16_t
 const std::vector<AreaID>& KnownAreaIDs();
 AreaID AreaIDFromRAM(uint8_t area_data_low, uint8_t area_data_high);
 std::string ToString(AreaID area_id);
+// TODO bruh
+bool AreaIDEnd(AreaID area_id, int* end);
 
 // Sound effects
 //  From queues (SQUARE1_SOUND_QUEUE, SQUARE2_SOUND_QUEUE, NOISE_SOUND_QUEUE, PAUSE_SOUND_QUEUE)
@@ -175,6 +177,50 @@ std::string ToString(MusicTrack track);
 // Game end state
 //  OPER_MODE == 2, OPER_MODE_TASK == 0x00, PLAYER_X_SPEED == 0x18
 
+// Minimap is just a 2bpp image of the same size as a normal nes frame
+inline constexpr int MINIMAP_NUM_BYTES = nes::FRAME_SIZE / 4;
+inline constexpr int MINIMAP_RGB_PALETTE_SIZE = 4 * nes::BYTES_PER_PALETTE_ENTRY;
+typedef std::array<uint8_t, 4> MinimapPalette; // palette entries into a nes palette
+typedef std::array<uint8_t, MINIMAP_RGB_PALETTE_SIZE> MinimapPaletteBGR;
+
+const MinimapPalette& DefaultMinimapPalette(); // indices
+const MinimapPaletteBGR& DefaultMinimapPaletteBGR(); // bgr
+
+typedef std::array<uint8_t, MINIMAP_NUM_BYTES> MinimapImage;
+
+
+// For background stuff
+struct SMBNametableDiff
+{
+    int NametablePage;
+    int Offset;
+    uint8_t Value;
+};
+
+class INametableCache
+{
+public:
+    INametableCache(const uint8_t* smb_chr1)
+        : m_smb_chr1(smb_chr1) {}
+    ~INametableCache() = default;
+
+    virtual const nes::NameTable* Nametable(AreaID id, int page) const = 0;
+    virtual const MinimapImage* Minimap(AreaID id, int page) const = 0;
+
+    // TODO fix api (leaving same as rgms for now)
+    void RenderTo(AreaID id, int apx, int width, nes::PPUx* ppux, int x,
+            const nes::Palette& pal = nes::DefaultPaletteBGR(),
+            const uint8_t* pt = nullptr, // IGNORED
+            const MinimapPalette* minimap = nullptr, // make nonnull to render minimap instead
+            const uint8_t* fpal = nullptr, // make nonnull to overwrite found nametable
+            const std::vector<SMBNametableDiff>* diffs = nullptr) const; // first diffs is priority
+
+private:
+    const uint8_t* m_smb_chr1;
+    mutable nes::NameTable BufferTable;
+};
+
+
 // Part of the world
 struct WorldSection
 {
@@ -190,20 +236,20 @@ struct WorldSection
     int Width() const {
         return Right - Left;
     }
-    uint8_t LeftPage() const {
-        return static_cast<uint8_t>(Left / 256);
+    int LeftPage() const {
+        return Left / 256;
     }
-    uint8_t RightPage() const {
-        return static_cast<uint8_t>(Right / 256) + 1;
+    int RightPage() const {
+        return Right / 256 + 1;
     }
-    int PageLeft(uint8_t p) {
+    int PageLeft(int p) {
         int pxl = static_cast<int>(p) * 256;
         if (pxl < Left) {
             return std::min(Left - pxl, 256);
         }
         return 0;
     }
-    int PageRight(uint8_t p) {
+    int PageRight(int p) {
         int pxl = static_cast<int>(p) * 256;
         int pxr = static_cast<int>(p) * 256 + 256;
         if (pxr > Right) {
@@ -214,7 +260,11 @@ struct WorldSection
 
     // Location from farthest left (or relative to ppux)
     int XLoc;
+    size_t SectionIndex;
 };
+inline bool operator==(const WorldSection& a, const WorldSection& b) {
+    return a.AID == b.AID && a.World == b.World && a.Level == b.Level;
+}
 
 class Route
 {
@@ -249,40 +299,60 @@ public:
     const_iterator end() const {
         return m_Route.end();
     }
-    int total_width() const {
+    WorldSection& operator[](size_t i) {
+        return m_Route[i];
+    }
+    const WorldSection& operator[](size_t i) const {
+        return m_Route[i];
+    }
+    WorldSection& at(size_t i) {
+        return m_Route.at(i);
+    }
+    const WorldSection& at(size_t i) const {
+        return m_Route.at(i);
+    }
+    size_t size() const {
+        return m_Route.size();
+    }
+
+
+    int TotalWidth() const {
         if (m_Route.empty()) {
             return 0;
         }
         return m_Route.back().XLoc + m_Route.back().Width();
     }
     int last_x(int width) const {
-        return std::max(total_width() - width, 0);
+        return std::max(TotalWidth() - width, 0);
     }
 
     void GetVisibleSections(int xloc, int width,
-            std::vector<WorldSection>* sections);
+            std::vector<WorldSection>* sections) const;
 
+    // TODO rgms...
+    void RenderMinimapTo(nes::PPUx* ppux, int categoryX,
+            const MinimapPalette& minimapPalette,
+            const INametableCache* nametables,
+            std::vector<WorldSection>* visibleSections) const;
+    bool InCategory(AreaID id, int apx, int world, int level,
+            int* categoryX, int* sectionIndex) const;
+
+    const std::vector<WorldSection>& Sections() const {
+        return m_Route;
+    }
 private:
     std::vector<WorldSection> m_Route;
 };
 
 
-// Minimap is just a 2bpp image of the same size as a normal nes frame
-inline constexpr int MINIMAP_NUM_BYTES = nes::FRAME_SIZE / 4;
-inline constexpr int MINIMAP_RGB_PALETTE_SIZE = 4 * nes::BYTES_PER_PALETTE_ENTRY;
-typedef std::array<uint8_t, 4> MinimapPalette; // palette entries into a nes palette
-typedef std::array<uint8_t, MINIMAP_RGB_PALETTE_SIZE> MinimapPaletteBGR;
-
-const MinimapPalette& DefaultMinimapPalette(); // indices
-const MinimapPaletteBGR& DefaultMinimapPaletteBGR(); // bgr
-
-typedef std::array<uint8_t, MINIMAP_NUM_BYTES> MinimapImage;
-
-
-// TODO These should be somewhere else?
+// TODO These should be somewhere else? and fix (rgms...)
 void RenderMinimapToPPUx(int x, int y, int sx, int ex,
         const MinimapImage& img, const MinimapPalette& miniPal,
         const nes::Palette& nesPal, nes::PPUx* ppux);
+void RenderMinimapToPPUx(int x, int y, const nes::EffectInfo& effects,
+        const MinimapImage& img, const MinimapPalette& miniPal,
+        const nes::Palette& nesPal, nes::PPUx* ppux);
+bool IsMarioTile(uint8_t tile_index);
 
 }
 

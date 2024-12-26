@@ -206,13 +206,6 @@ namespace argos::rgms {
 int AreaPointerXFromData(uint8_t screenedge_pageloc, uint8_t screenedge_x_pos,
         smb::AreaID ap, uint8_t block_buffer_84_disc);
 
-struct SMBNametableDiff
-{
-    int NametablePage;
-    int Offset;
-    uint8_t Value;
-};
-
 inline constexpr int TITLESCREEN_SCORE_X = 0x02;
 inline constexpr int TITLESCREEN_SCORE_Y = 0x03;
 inline constexpr int TITLESCREEN_COIN_X = 0x0d;
@@ -239,7 +232,7 @@ struct SMBFrameInfo
     uint8_t OperMode;
     uint8_t IntervalTimerControl;
     std::vector<nes::OAMxEntry> OAMX;
-    std::vector<SMBNametableDiff> NTDiffs;
+    std::vector<smb::SMBNametableDiff> NTDiffs;
 
     std::vector<uint8_t> TopRows; // 32 * 4 bytes of nametable info, then 32 bytes of attributes.. GOD
 
@@ -884,17 +877,17 @@ class SMBCompConfigurationPlayersComponent : public ISMBCompSimpleWindowComponen
 {
 public:
     SMBCompConfigurationPlayersComponent(argos::RuntimeConfig* info, SMBCompPlayers* players,
-            const SMBCompVisuals* visuals);
+            const SMBCompVisuals* visuals, const SMBCompStaticData* data);
     ~SMBCompConfigurationPlayersComponent();
 
     void DoControls() override;
 
     static bool PlayerNamesEditingControls(SMBCompPlayerNames* names);
-    static bool PlayerColorsEditingPopup(argos::rgms::PlayerColors* colors, const SMBCompVisuals* visuals);
+    static bool PlayerColorsEditingPopup(argos::rgms::PlayerColors* colors, const SMBCompVisuals* visuals, const SMBCompStaticData* staticData);
     typedef std::function<void(std::vector<NamedAreaOfInterest>*, bool)> GetAOIcback;
     static bool PlayerInputsVideoEditingPopup(SMBCompPlayer* player, GetAOIcback cback);
     static bool PlayerInputsEditingControls(SMBCompPlayer* player, GetAOIcback cback = nullptr);
-    static bool PlayerEditingControls(const char* label, SMBCompPlayer* player, const SMBCompVisuals* visuals, GetAOIcback cback = nullptr);
+    static bool PlayerEditingControls(const char* label, SMBCompPlayer* player, const SMBCompVisuals* visuals, GetAOIcback cback = nullptr, const SMBCompStaticData* staticData = nullptr);
 
 private:
     argos::RuntimeConfig* m_Info;
@@ -905,6 +898,7 @@ private:
 private:
     SMBCompPlayers* m_Players;
     const SMBCompVisuals* m_Visuals;
+    const SMBCompStaticData* m_StaticData;
 
     SMBCompPlayer m_PendingPlayer;
 };
@@ -942,7 +936,7 @@ struct SMBCompTournament
     std::string ScoreName;
     std::string FileName;
 
-    //argos::rgms::RaceCategory Category;
+    std::string Category;
 
     std::vector<SMBCompPlayerSerialInput> Seats;
     std::vector<SMBCompPlayer> Players;
@@ -957,8 +951,7 @@ struct SMBCompTournament
     int CurrentRound;
 };
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SMBCompTournament,
-    DisplayName, ScoreName, FileName,
-    //Category,
+    DisplayName, ScoreName, FileName, Category,
     Seats, Players, PointIncrements, DNFInc, DNSInc, Schedule
 );
 void InitializeSMBCompTournament(SMBCompTournament* tournament);
@@ -1176,22 +1169,6 @@ struct SMBCompSounds
 };
 void InitializeSMBCompSounds(const argos::RuntimeConfig* info, SMBCompSounds* sounds);
 
-//struct AreaPointerSection
-//{
-//    //AreaPointer AP;
-//    argos::smb::AreaID AID;
-//    int Left; // >=
-//    int Right; // <
-//    int World;
-//    int Level;
-//};
-//
-//struct VisibleSection
-//{
-//    const AreaPointerSection* Section;
-//    int PPUxLoc;
-//};
-//
 //struct SMBRaceCategoryInfo
 //{
 //    RaceCategory Category;
@@ -1208,18 +1185,22 @@ void InitializeSMBCompSounds(const argos::RuntimeConfig* info, SMBCompSounds* so
 //    //bool InCategory(AreaPointer ap, int apx, int world, int level, int* categoryX, int* sectionIndex) const;
 //};
 //
-//struct SMBRaceCategories
-//{
-//    std::vector<SMBRaceCategoryInfo> Categories;
-//
-//    const SMBRaceCategoryInfo* FindCategory(RaceCategory category) const;
-//};
-//void InitializeSMBRaceCategories(SMBRaceCategories* cats);
+struct SMBRaceCategories
+{
+    // "any_percent"
+    // "warpless"
+    std::vector<std::string> CategoryNames;
+    std::unordered_map<std::string, std::shared_ptr<smb::Route>> Routes;
+
+
+    //const SMBRaceCategoryInfo* FindCategory(RaceCategory category) const;
+};
+void InitializeSMBRaceCategories(smb::SMBDatabase* db, SMBRaceCategories* cats);
 
 struct SMBCompStaticData
 {
     argos::smb::SMBNametableCachePtr Nametables;
-    //SMBRaceCategories Categories;
+    SMBRaceCategories Categories;
     //SMBCompControllerData Controllers;
     SMBCompROMData ROM;
     nes::PatternTable Font;
@@ -1384,8 +1365,8 @@ struct SMBCompTimingTower
 };
 void InitializeSMBCompTimingTower(SMBCompTimingTower* tower);
 void ResetSMBCompTimingTower(SMBCompTimingTower* tower);
-//void StepSMBCompPlayerTimings(SMBCompPlayerTimings* timings, SMBMessageProcessorOutputPtr out,
-//        const SMBRaceCategoryInfo* catinfo);
+void StepSMBCompPlayerTimings(SMBCompPlayerTimings* timings, SMBMessageProcessorOutputPtr out,
+        const smb::Route* route);
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -1506,7 +1487,7 @@ public:
 private:
     void DoControls(const SMBCompPlayer* player);
 
-    void DoVideoControls(const SMBCompPlayer* player, SMBCompFeeds* feeds);
+    //void DoVideoControls(const SMBCompPlayer* player, SMBCompFeeds* feeds);
 
     void UpdateRecordings();
 
@@ -1931,32 +1912,32 @@ private:
 //    cv::Mat m_Mat;
 //    cv::Mat m_ThanksMat;
 //};
-//
-//class SMBCompTxtDisplay : public ISMBCompSingleWindowComponent
-//{
-//public:
-//    SMBCompTxtDisplay(argos::RuntimeConfig* info, SMBComp* comp);
-//    ~SMBCompTxtDisplay();
-//
-//    virtual void DoControls() override final;
-//
-//    void DoDisplay(cv::Mat m);
-//    void SetStem(const std::string& stem);
-//
-//private:
-//    void UpdateStems();
-//
-//private:
-//    argos::RuntimeConfig* m_Info;
-//    SMBComp* m_Comp;
-//
-//    std::string m_Stem;
-//    std::string m_Text;
-//
-//    bool m_FirstTime;
-//    std::vector<std::string> m_Stems;
-//    cv::Mat m_Mat;
-//};
+
+class SMBCompTxtDisplay : public ISMBCompSingleWindowComponent
+{
+public:
+    SMBCompTxtDisplay(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompTxtDisplay();
+
+    virtual void DoControls() override final;
+
+    void DoDisplay(cv::Mat m);
+    void SetStem(const std::string& stem);
+
+private:
+    void UpdateStems();
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Comp;
+
+    std::string m_Stem;
+    std::string m_Text;
+
+    bool m_FirstTime;
+    std::vector<std::string> m_Stems;
+    cv::Mat m_Mat;
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -1994,24 +1975,24 @@ private:
     bool m_ShowTimer;
 
     // Components
-    //SMBCompConfigurationComponent m_CompConfigurationComponent;
-    //SMBCompPlayerWindowsComponent m_CompPlayerWindowsComponent;
-    //SMBCompCombinedViewComponent m_CompCombinedViewComponent;
+    SMBCompConfigurationComponent m_CompConfigurationComponent;
+    SMBCompPlayerWindowsComponent m_CompPlayerWindowsComponent;
+    SMBCompCombinedViewComponent m_CompCombinedViewComponent;
     //SMBCompIndividualViewsComponent m_CompIndividualViewsComponent;
     //SMBCompPointsComponent m_CompPointsComponent;
-    //SMBCompMinimapViewComponent m_CompMinimapViewComponent;
+    SMBCompMinimapViewComponent m_CompMinimapViewComponent;
     //SMBCompRecordingsHelperComponent m_CompRecordingsHelperComponent;
-    //SMBCompTimingTowerViewComponent m_CompTimingTowerViewComponent;
-    //SMBCompCompetitionComponent m_CompCompetitionComponent;
+    SMBCompTimingTowerViewComponent m_CompTimingTowerViewComponent;
+    SMBCompCompetitionComponent m_CompCompetitionComponent;
     //SMBCompGhostViewComponent m_CompGhostViewComponent;
     //SMBCompPointTransitionComponent m_CompPointTransitionComponent;
     ////SMBCompRecreateComponent m_CompRecreateComponent;
     //SMBCompCreditsComponent m_CompCreditsComponent;
-    //SMBCompSoundComponent m_CompSoundComponent;
-    //SMBCompReplayComponent m_CompReplayComponent;
-    ////SMBCompFixedOverlay m_CompFixedOverlay;
-    ////SMBCompTxtDisplay m_CompTxtDisplay;
-    //SMBCompTournamentComponent m_CompTournamentComponent;
+    SMBCompSoundComponent m_CompSoundComponent;
+    SMBCompReplayComponent m_CompReplayComponent;
+    //SMBCompFixedOverlay m_CompFixedOverlay;
+    //SMBCompTxtDisplay m_CompTxtDisplay;
+    SMBCompTournamentComponent m_CompTournamentComponent;
 };
 
 class SMBCompAppAux : public rgmui::IApplication
@@ -2035,6 +2016,25 @@ bool MarioInOutput(SMBMessageProcessorOutputPtr out, int* mariox, int* marioy);
 //        const nes::NestopiaNESEmulator& emu, SMBMessageProcessorOutput* out,
 //        const smb::SMBBackgroundNametables& nametables);
 
+enum class ColorMapType {
+    BREWER_RDBU, // Diverging
+    BREWER_YLORBR, // Sequential
+    BREWER_BLUES, // Sequential
+    BREWER_REDS, // Sequential
+    BREWER_GREENS, // Sequential
+};
+const std::vector<std::array<uint8_t, 3>>& GetColorMapColors(ColorMapType cmap);
+std::array<uint8_t, 3> ColorMapColor(ColorMapType cmap, double v);
+
+// 12 classes, wraps around
+std::array<uint8_t, 3> ColorBrewerQualitative(int i);
+
+void RenderSMBToPPUX(
+        const SMBFrameInfo& frame,
+        const nes::FramePalette& fpal,
+        smb::SMBNametableCachePtr nametables,
+        nes::PPUx* ppux,
+        nes::NESDatabase::RomSPtr rom);
 
 }
 

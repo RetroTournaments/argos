@@ -118,6 +118,47 @@ std::string argos::smb::ToString(smb::AreaID area_id)
     return it->second;
 }
 
+bool argos::smb::AreaIDEnd(AreaID area_id, int* end) {
+    static std::unordered_map<uint16_t, int> s_KnownEnds = {
+        {0xAE47, 3072},
+        {0xA46D, 2608},
+        {0xA4D0, 3664},
+        {0xA539, 3808},
+        {0xA58C, 3664},
+        {0xA61B, 3408},
+        {0xA690, 3376},
+        {0xA6F5, 2624},
+        {0xA74A, 3792},
+        {0xA7CF, 3408},
+        {0xA83D, 3392},
+        {0xA891, 2544},
+        {0xA8F8, 2864},
+        {0xA95D, 3216},
+        {0xA9D0, 1024},
+        {0xAA01, 6224},
+        {0xAA94, 3408},
+        {0xAB07, 3664},
+        {0xAB80, 3072},
+        {0xAC04, 3552},
+        {0xACDA, 3136},
+        {0xAC37, 3056},
+        {0xAEC2, 1136},
+        {0xA1B1, 2560},
+        {0xA212, 3072},
+        {0xA291, 2560},
+        {0xA304, 2560},
+        {0xA371, 3584},
+    };
+    auto it = s_KnownEnds.find(static_cast<uint16_t>(area_id));
+    if (it != s_KnownEnds.end()) {
+        if (end) {
+            *end = it->second;
+        }
+        return true;
+    }
+    return false;
+}
+
 const std::vector<SoundEffect>& argos::smb::AudibleSoundEffects()
 {
     static std::vector<SoundEffect> s_Effects = {
@@ -242,10 +283,20 @@ void argos::smb::RenderMinimapToPPUx(int x, int y, int sx, int ex,
 {
     if (!ppux) return;
 
+    nes::EffectInfo effects = nes::EffectInfo::Defaults();
+    effects.CropWithin = true;
+    effects.Crop = util::Rect2I(x + sx, 0, ex - sx, 240);
+
+    RenderMinimapToPPUx(x, y, effects, img, miniPal, nesPal, ppux);
+}
+
+void argos::smb::RenderMinimapToPPUx(int x, int y, const nes::EffectInfo& effects,
+        const MinimapImage& img, const MinimapPalette& miniPal,
+        const nes::Palette& nesPal, nes::PPUx* ppux)
+{
+    if (!ppux) return;
     int rem = 0;
     uint8_t v = 0x00;
-
-    nes::EffectInfo effects = nes::EffectInfo::Defaults();
 
     const uint8_t* in = img.data();
     for (int iny = 0; iny < nes::FRAME_HEIGHT; iny++) {
@@ -258,11 +309,9 @@ void argos::smb::RenderMinimapToPPUx(int x, int y, int sx, int ex,
 
             uint8_t q = v & 0b11;
             if (q) {
-                if (inx >= sx && inx < ex) {
-                    ppux->RenderPaletteData(x + inx, y + iny, 1, 1,
-                            &miniPal[q], nesPal.data(),
-                            nes::PPUx::RPD_AS_NAMETABLE, effects);
-                }
+                ppux->RenderPaletteData(x + inx, y + iny, 1, 1,
+                        &miniPal[q], nesPal.data(),
+                        nes::PPUx::RPD_AS_NAMETABLE, effects);
             }
 
             v >>= 2;
@@ -271,7 +320,7 @@ void argos::smb::RenderMinimapToPPUx(int x, int y, int sx, int ex,
     }
 }
 
-void Route::GetVisibleSections(int xloc, int width, std::vector<WorldSection>* sections)
+void Route::GetVisibleSections(int xloc, int width, std::vector<WorldSection>* sections) const
 {
     if (!sections || width <= 0) {
         return;
@@ -286,6 +335,7 @@ void Route::GetVisibleSections(int xloc, int width, std::vector<WorldSection>* s
         if (!(rx < xloc || sec.XLoc > rxloc)) {
             WorldSection vsec = sec;
             vsec.XLoc = sec.XLoc - xloc;
+            vsec.SectionIndex = sections->size();
             sections->push_back(vsec);
         }
         if (sec.XLoc > rxloc) {
@@ -294,3 +344,143 @@ void Route::GetVisibleSections(int xloc, int width, std::vector<WorldSection>* s
     }
 }
 
+void Route::RenderMinimapTo(nes::PPUx* ppux, int categoryX,
+        const MinimapPalette& minimapPalette,
+        const INametableCache* nametables,
+        std::vector<WorldSection>* visibleSections) const
+{
+    GetVisibleSections(categoryX, ppux->GetWidth(), visibleSections);
+
+    int tlx = categoryX;
+    int trx = tlx + ppux->GetWidth();
+    int lx = 0;
+
+    for (auto & sec : m_Route) {
+        int qw = sec.Right - sec.Left - 1;
+        int rx = lx + qw;
+
+        if (!(rx < tlx || lx > trx)) {
+            int ttx = lx - tlx;
+            nametables->RenderTo(sec.AID,
+                    sec.Left, qw, ppux, ttx, nes::DefaultPaletteBGR(), nullptr, &minimapPalette);
+        }
+
+        lx = rx + 16;
+    }
+
+}
+
+bool Route::InCategory(AreaID id, int apx, int world, int level, int* categoryX, int* sectionIndex) const
+{
+    int lx = 0;
+    int i = 0;
+    for (auto & sec : m_Route) {
+        int qw = sec.Right - sec.Left - 1;
+        int rx = lx + qw;
+
+        if (sec.AID == id) {
+            bool skipWorldCheck = false;
+            if (sec.AID == AreaID::UNDERGROUND_AREA_1 || sec.AID == AreaID::GROUND_AREA_16) {
+                skipWorldCheck = true;
+            }
+            if (skipWorldCheck || (sec.World == world && sec.Level == level)) {
+                if (apx >= sec.Left && apx < sec.Right) {
+                    if (categoryX) *categoryX = lx + apx - sec.Left;
+                    if (sectionIndex) *sectionIndex = i;
+                    return true;
+                }
+            }
+        }
+
+        lx = rx + 16;
+        i++;
+    }
+    return false;
+
+}
+
+bool argos::smb::IsMarioTile(uint8_t tileIndex)
+{
+    return (tileIndex >= 0x00 && tileIndex <= 0x4f ||
+            tileIndex >= 0x58 && tileIndex <= 0x5a ||
+            tileIndex >= 0x5c && tileIndex <= 0x5f ||
+            tileIndex >= 0x90 && tileIndex <= 0x93 ||
+            tileIndex == 0x9e || tileIndex == 0x9f);
+}
+
+
+void INametableCache::RenderTo(AreaID id, int apx, int width, nes::PPUx* ppux,
+        int x, const nes::Palette& pal, const uint8_t* pt,
+        const MinimapPalette* minimap, const uint8_t* fpal,
+        const std::vector<SMBNametableDiff>* diffs) const
+{
+    if (apx < 0) {
+        width += apx;
+        x -= apx;
+        apx = 0;
+    }
+    if (width <= 0) return;
+    if ((!pt && !minimap) || !ppux) return;
+
+    nes::RenderInfo render;
+    render.OffX = 0;
+    render.OffY = 0;
+    render.Scale = 1;
+    render.PatternTables.push_back(pt);
+    render.PaletteBGR = pal.data();
+
+    nes::EffectInfo effects = nes::EffectInfo::Defaults();
+    effects.CropWithin = true;
+    effects.Crop = util::Rect2I(x, 0, width, 240);
+
+    int page = apx / 256;
+    int xoff = apx % 256;
+
+    int sx = x - xoff;
+    int wr = -xoff;
+
+    while (wr < width) {
+        auto* nt = Nametable(id, page);
+        if (nt) {
+            if (minimap) {
+                auto* mp = Minimap(id, page);
+                if (mp) {
+                    RenderMinimapToPPUx(sx, 0, effects,
+                            *mp, *minimap, pal, ppux);
+                }
+            } else {
+                nes::Nametablex ntx;
+                ntx.X = sx;
+                ntx.Y = 0;
+                ntx.NametableP = nt;
+                if (fpal) {
+                    for (int i = 0; i < nes::FRAMEPALETTE_SIZE; i++) {
+                        ntx.FramePalette[i] = fpal[i];
+                    }
+                } else {
+                    throw std::runtime_error("not supported anymore");
+                }
+                ntx.PatternTableIndex = 0;
+
+                if (diffs) {
+                    for (auto & diff : *diffs) {
+                        if (diff.NametablePage == page) {
+                            if (ntx.NametableP != &BufferTable) {
+                                ntx.NametableP = &BufferTable;
+                                BufferTable = *nt;
+                            }
+
+                            BufferTable[diff.Offset] = diff.Value;
+                        }
+                    }
+                }
+
+                ppux->RenderNametableX(ntx, render, effects);
+            }
+        }
+
+        page++;
+        wr += 256;
+        sx += 256;
+    }
+}
