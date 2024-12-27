@@ -246,3 +246,4 @@ So then we can parse dmesg with this information so long as we are consistent in
 Or I suppose I could swap them via some config after checking.
 
 
+git clone --recurse-submodules matthew@nesrack:/home/matthew/repos/argos
