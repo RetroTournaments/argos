@@ -23,7 +23,7 @@
 
 #include <string>
 
-#include "SDL.h" 
+#include "SDL.h"
 #include "GL/gl.h"
 
 #include "util/rect.h"
@@ -35,11 +35,13 @@ class Window
 {
 public:
     Window(const std::string& name, const util::Rect2I& extents, int display = 0,
-            std::string* iniPath = nullptr, std::string* iniData = nullptr);
-    Window(const std::string& name, int width = 1920, int height = 1080, 
-            int winx = SDL_WINDOWPOS_CENTERED_DISPLAY(0), 
-            int winy = SDL_WINDOWPOS_CENTERED_DISPLAY(0), 
-            int display = 0, std::string* iniPath = nullptr, std::string* iniData = nullptr);
+            std::string* iniPath = nullptr, std::string* iniData = nullptr,
+            Uint32 flags = 0);
+    Window(const std::string& name, int width = 1920, int height = 1080,
+            int winx = SDL_WINDOWPOS_CENTERED_DISPLAY(0),
+            int winy = SDL_WINDOWPOS_CENTERED_DISPLAY(0),
+            int display = 0, std::string* iniPath = nullptr, std::string* iniData = nullptr,
+            Uint32 flags = 0);
     ~Window();
 
     int ScreenWidth() const;

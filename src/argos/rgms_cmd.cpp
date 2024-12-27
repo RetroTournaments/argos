@@ -18,18 +18,22 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/mman.h>
+
 #include "fmt/bundled/color.h"
 #include "zmq.hpp"
 #include "zmq_addon.hpp"
 
 #include "argos/main.h"
-
 #include "util/arg.h"
 #include "util/serial.h"
 #include "util/clock.h"
 #include "util/file.h"
 #include "util/string.h"
-
+#include "rgmui/rgmuimain.h"
 #include "smb/rgms.h"
 
 using namespace argos;
@@ -413,25 +417,27 @@ static int DoSMBComp(int argc, char** argv, argos::RuntimeConfig* config)
     }
 
     if (dno != -1) {
-    //    sharedMem = mmap(NULL, SHARED_MEM_SIZE, PROT_READ | PROT_WRITE,
-    //            MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-    //    uint8_t* b = reinterpret_cast<uint8_t*>(sharedMem);
-    //    b[0] = 0x00;
-    //    b[SHARED_MEM_QUIT] = 0x00;
+        sharedMem = mmap(NULL, SHARED_MEM_SIZE, PROT_READ | PROT_WRITE,
+                MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        uint8_t* b = reinterpret_cast<uint8_t*>(sharedMem);
+        b[0] = 0x00;
+        b[SHARED_MEM_QUIT] = 0x00;
 
-    //    int pid = fork();
-    //    if (pid == 0) {
-    //        SMBCompAppAux app2(sharedMem);
-    //        DoApp(config, "RGMS SMB Comp 2", &app2, -1, -1, dno);
-    //    } else {
-    //        SMBCompApp app(config);
-    //        if (name != "") {
-    //            app.LoadNamedConfig(name);
-    //        }
+        int pid = fork();
+        if (pid == 0) {
+            argos::rgms::SMBCompAppAux app2(sharedMem);
 
-    //        app.SetSharedMemory(sharedMem);
-    //        DoApp(config, "RGMS SMB Comp", &app, 2400, 1180, pdno);
-    //    }
+            rgmui::Window window("RGMS SMB Comp 2", 1920, 1080, -1, -1, dno, nullptr, nullptr, SDL_WINDOW_BORDERLESS);
+            rgmui::WindowAppMainLoop(&window, &app2, std::chrono::microseconds(15000));
+        } else {
+            argos::rgms::SMBCompApp app(config);
+            if (name != "") {
+                app.LoadNamedConfig(name);
+            }
+
+            app.SetSharedMemory(sharedMem);
+            RunIApplication(config, "RGMS SMB Comp", &app);
+        }
     } else {
         argos::rgms::SMBCompApp app(config);
         if (name != "") {
@@ -473,6 +479,11 @@ OPTIONS:
         return DoReceive(argc, argv);
     } else if (action == "smbcomp") {
         return DoSMBComp(argc, argv, config);
+    } else if (action == "recreview") {
+
+    } else {
+        Error("unknown action. '{}' expected 'list', 'watch', 'transmit', 'receive', 'smbcomp', or 'recreview'", action);
+        return 1;
     }
 
     return 0;

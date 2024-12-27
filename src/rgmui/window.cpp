@@ -28,16 +28,16 @@ using namespace argos::rgmui;
 using namespace argos::util;
 
 Window::Window(const std::string& name, const util::Rect2I& extents, int display,
-            std::string* iniPath, std::string* iniData)
+            std::string* iniPath, std::string* iniData, Uint32 flags)
     : Window(name, extents.Width, extents.Height, extents.X, extents.Y, display,
-            iniPath, iniData)
+            iniPath, iniData, flags)
 {
 }
 
-Window::Window(const std::string& name, int width, int height, int winx, int winy, int display, 
-        std::string* iniPath, std::string* inidata) 
+Window::Window(const std::string& name, int width, int height, int winx, int winy, int display,
+        std::string* iniPath, std::string* inidata, Uint32 flags)
     : m_Window(nullptr)
-    , m_Context(nullptr) 
+    , m_Context(nullptr)
 {
     if (iniPath && inidata) {
         throw std::runtime_error("invalid parameters for ini handling");
@@ -50,6 +50,11 @@ Window::Window(const std::string& name, int width, int height, int winx, int win
     int x = SDL_WINDOWPOS_UNDEFINED;
     int y = SDL_WINDOWPOS_UNDEFINED;
 
+    if (flags == 0) {
+        flags = SDL_WINDOW_RESIZABLE;
+    }
+    flags |= SDL_WINDOW_OPENGL;
+
     if (display && winx == -1) {
         int nd = SDL_GetNumVideoDisplays();
         if (display <= nd) {
@@ -59,24 +64,26 @@ Window::Window(const std::string& name, int width, int height, int winx, int win
             x = r.x;
             y = r.y;
 
-            if (width > 0) {
-                x = r.x + (r.w - width) / 2;
-                y = r.y + (r.h - height) / 2;
-            }
+            //if (width > 0) {
+            //    x = r.x + (r.w - width) / 2;
+            //    y = r.y + (r.h - height) / 2;
+            //}
         }
     }
+
     if (winx != -1) {
         x = winx;
         y = winy;
     }
 
-    m_Window = SDL_CreateWindow(name.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
-            width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    m_Window = SDL_CreateWindow(name.c_str(),
+            x, y,
+            width, height, flags);
     //m_Window = SDL_CreateWindowWithProperties(
-    //    name.c_str(), 
+    //    name.c_str(),
     //    x, y,
-    //    width, 
-    //    height, 
+    //    width,
+    //    height,
     //    SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
     //);
     if (m_Window == nullptr) {
@@ -95,9 +102,9 @@ Window::Window(const std::string& name, int width, int height, int winx, int win
     if (SDL_GL_MakeCurrent(m_Window, m_Context) != 0) {
         throw std::runtime_error(SDL_GetError());
     }
-    
-    //  -1 for adaptive 
-    //   0 for immediate 
+
+    //  -1 for adaptive
+    //   0 for immediate
     //   1 for synchronized
     int swpInterval = 0;
     SDL_GL_SetSwapInterval(swpInterval);

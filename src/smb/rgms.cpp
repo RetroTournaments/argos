@@ -46,21 +46,6 @@
 #include "util/string.h"
 #include "util/lerp.h"
 
-//#include <fstream>
-//#include <unordered_set>
-//
-//#include "SDL3_mixer/SDL_mixer.h"
-//
-//#include "rgm/nes/ppux.h"
-//#include "rgm/rgms/smbcomp.h"
-//#include "rgm/rgms/rgmty.h"
-//#include "rgm/smb/rom/rom.h"
-//#include "rgm/ext/opencvext/opencvext.h"
-//#include "rgm/video/v4l2impl.h"
-//
-//using namespace rgms;
-//
-
 using namespace argos::internesceptor;
 using namespace argos::rgms;
 using namespace argos;

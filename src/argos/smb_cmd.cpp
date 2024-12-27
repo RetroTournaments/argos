@@ -150,6 +150,8 @@ bool SMBDBInit(const argos::RuntimeConfig* config, smb::SMBDatabase* smbdb) {
 // 'argos smb db'
 int DoSMBDB(const argos::RuntimeConfig* config, smb::SMBDatabase* smbdb, int argc, char** argv)
 {
+    EnsureArgosDirectoryWriteable(*config);
+
     std::string arg;
     if (!ArgReadString(&argc, &argv, &arg)) {
         return smbdb->SystemLaunchSQLite3WithExamples();
