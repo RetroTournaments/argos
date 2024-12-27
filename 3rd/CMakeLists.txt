@@ -30,10 +30,10 @@ set(SDL_INCLUDE_DIRS
 
 ################################################################################
 # SDL_mixer is used for all of the audio stuff
-set(SDL2MIXER_OPUS OFF)
-set(SDL2MIXER_MOD OFF)
-set(SDL2MIXER_MIDI_FLUIDSYNTH OFF)
-set(SDL2MIXER_WAVPACK OFF)
+set(SDL2MIXER_OPUS OFF CACHE BOOL "sdl2mixer_opus off" FORCE)
+set(SDL2MIXER_MOD OFF CACHE BOOL "sdl2mixer_mod off" FORCE)
+set(SDL2MIXER_MIDI_FLUIDSYNTH OFF CACHE BOOL "sdl2mixer_midi_fluidsynth off" FORCE)
+set(SDL2MIXER_WAVPACK OFF CACHE BOOL "sdl2mixer_wavpack off" FORCE)
 add_subdirectory(SDL_mixer)
 set(SDL_mixer_INCLUDE_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/SDL_mixer/include/"
@@ -77,9 +77,10 @@ set(cppzmq_INCLUDE_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/cppzmq/"
     PARENT_SCOPE
 )
-set(ZMQ_BUILD_TESTS OFF)
+set(ZMQ_BUILD_TESTS OFF CACHE BOOL "zmq_build_tests off" FORCE)
+set(ENABLE_WS OFF CACHE BOOL "zmq_build_tests off" FORCE)
 add_subdirectory(libzmq)
-set(CPPZMQ_BUILD_TESTS OFF)
+set(CPPZMQ_BUILD_TESTS OFF CACHE BOOL "cppzmq_build_tests off" FORCE)
 add_subdirectory(cppzmq)
 
 ################################################################################
