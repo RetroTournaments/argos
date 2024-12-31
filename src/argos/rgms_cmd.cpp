@@ -449,11 +449,22 @@ static int DoSMBComp(int argc, char** argv, argos::RuntimeConfig* config)
     return 0;
 }
 
+static int DoRecReview(int argc, char** argv, argos::RuntimeConfig* config)
+{
+    argos::rgms::RecReviewApp app(config);
+    RunIApplication(config, "RGMS Rec Review", &app); //, 2400, 1180, pdno);
+    return 0;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // The 'rgms' command is for bad original code that needs to be moved eventually
 REGISTER_COMMAND(rgms, "RGMS",
 R"(
 EXAMPLES:
+    argos rgms smbcomp --name /home/matthew/.argos/anyp.cfg --aux-display 1
+    argos rgms list serial
+    argos rgms watch serial --tty /dev/ttyUSB1
+    argos rgms transmit serial /dev/ttyUSB1 tcp://0.0.0.0:5555 seat1
 
 USAGE:
 
@@ -480,7 +491,7 @@ OPTIONS:
     } else if (action == "smbcomp") {
         return DoSMBComp(argc, argv, config);
     } else if (action == "recreview") {
-
+        return DoRecReview(argc, argv, config);
     } else {
         Error("unknown action. '{}' expected 'list', 'watch', 'transmit', 'receive', 'smbcomp', or 'recreview'", action);
         return 1;

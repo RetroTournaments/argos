@@ -135,7 +135,6 @@ public:
     const db::minimap_page& GetMinimap(AreaID id, int page) const;
     const db::minimap_page* MaybeGetMinimap(AreaID id, int page) const;
 
-
 private:
     std::unordered_map<AreaID, std::vector<db::nametable_page>> m_nametables;
     std::unordered_map<AreaID, std::vector<db::minimap_page>> m_minimaps;

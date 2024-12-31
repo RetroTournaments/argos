@@ -54,6 +54,14 @@ void argos::sqliteext::BindIntOrThrow(sqlite3_stmt* stmt, int pos, int value)
     }
 }
 
+void argos::sqliteext::BindInt64OrThrow(sqlite3_stmt* stmt, int pos, int64_t value)
+{
+    if (sqlite3_bind_int64(stmt, pos, value)) {
+        sqlite3* db = sqlite3_db_handle(stmt);
+        throw std::runtime_error("bind failed: " + std::string(sqlite3_errmsg(db)));
+    }
+}
+
 void argos::sqliteext::BindBlbOrThrow(sqlite3_stmt* stmt, int pos, const void* data, size_t size)
 {
     if (sqlite3_bind_blob(stmt, pos, data, size, SQLITE_STATIC)) {

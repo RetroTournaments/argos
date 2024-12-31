@@ -442,6 +442,8 @@ public:
 
     std::string GetPath() const;
     size_t GetNumBytes() const;
+    int64_t GetCurrentElapsedMillis() const;
+    int64_t GetTotalElapsedMillis() const;
 
     virtual SMBMessageProcessorOutputPtr GetLatestProcessorOutput() override;
     virtual SMBMessageProcessorOutputPtr GetNextProcessorOutput() override;
@@ -449,6 +451,7 @@ public:
     void GetAllOutputs(std::vector<SMBMessageProcessorOutputPtr>* outputs);
 
     void SeekFromStartTo(int64_t millis);
+    void StartAt(int64_t millis);
     bool Done() const;
 
 private:
@@ -464,6 +467,7 @@ private:
 
     bool m_IsPaused;
     util::mclock::time_point m_Start;
+    int64_t m_LastSeek;
     int64_t m_AddToSeek;
     int64_t m_StartMillis;
 
@@ -1164,10 +1168,12 @@ void InitializeSMBCompROMData(argos::smb::SMBDatabase* db, SMBCompROMData* rom);
 
 struct SMBCompSounds
 {
-    std::unordered_map<smb::SoundEffect, Mix_Chunk*> SoundEffects;
-    std::unordered_map<smb::MusicTrack, Mix_Music*> Musics;
+    std::unordered_map<smb::SoundEffect,
+        std::shared_ptr<argos::sdlext::SDLExtMixChunk>> SoundEffects;
+    std::unordered_map<smb::MusicTrack,
+        std::shared_ptr<argos::sdlext::SDLExtMixMusic>> Musics;
 };
-void InitializeSMBCompSounds(const argos::RuntimeConfig* info, SMBCompSounds* sounds);
+void InitializeSMBCompSounds(smb::SMBDatabase* db, SMBCompSounds* sounds);
 
 //struct SMBRaceCategoryInfo
 //{
@@ -2035,6 +2041,106 @@ void RenderSMBToPPUX(
         smb::SMBNametableCachePtr nametables,
         nes::PPUx* ppux,
         nes::NESDatabase::RomSPtr rom);
+
+////////////////////////////////////////////////////////////////////////////////
+
+namespace db
+{
+
+struct rec_recording
+{
+    int id;
+
+    std::string import_path;
+
+    std::string iso_timestamp;
+    int64_t unix_timestamp;
+    int64_t offset_millis;
+    int64_t elapsed_millis;
+};
+
+//struct rec_run
+//{
+//    int id;
+//    int rec_recording_id;
+//    int64_t on_millis;
+//    int64_t off_millis;
+//};
+
+}
+
+class RecReviewDB : public sqliteext::SQLiteExtDB
+{
+public:
+    RecReviewDB(const std::string& path);
+    ~RecReviewDB();
+
+    void GetAllRecordings(std::vector<db::rec_recording>* recordings);
+    void InsertRecording(const db::rec_recording& recording);
+
+    static const char* RecRecordingSchema();
+};
+
+class RecRecordingsComponent : public rgmui::IApplicationComponent
+{
+public:
+    RecRecordingsComponent(argos::RuntimeConfig* config, RecReviewDB* db);
+    ~RecRecordingsComponent() = default;
+
+    void OnFrame() override;
+
+private:
+    void Init();
+    void ScanArgosDirectory();
+
+private:
+    const argos::RuntimeConfig* m_Config;
+    RecReviewDB* m_Database;
+    smb::SMBDatabase m_SMBDatabase;
+    std::vector<db::rec_recording> m_Recordings;
+
+    int m_StartTime;
+    int m_EndTime;
+
+    int m_ReplayStartTime;
+    int m_InCount;
+
+    struct LoadedRecording {
+        std::string Path;
+        std::shared_ptr<SMBSerialRecording> Recording;
+        int64_t Start;
+        std::shared_ptr<zmq::socket_t> Socket;
+        std::string Target;
+        std::string Name;
+    };
+    zmq::context_t m_Context;
+
+
+    std::vector<LoadedRecording> m_LoadedRecordings;
+
+
+    //cv::Mat m_Timeline;
+    //cv::Mat m_TimelineInfoIndex;
+    //struct TimeLineInfo {
+    //    size_t m_RecordingIndex;
+    //};
+    //std::vector<int64_t> m_Time;
+    //std::vector<TimeLineInfo> m_TimelineInfo;
+};
+
+
+class RecReviewApp : public rgmui::IApplication
+{
+public:
+    RecReviewApp(argos::RuntimeConfig* config);
+    ~RecReviewApp();
+
+    bool OnFrame() override;
+
+private:
+    const argos::RuntimeConfig* m_Config;
+    RecReviewDB m_Database;
+};
 
 }
 

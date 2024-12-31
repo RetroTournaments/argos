@@ -994,6 +994,7 @@ SMBSerialRecording::SMBSerialRecording(const std::string& path,
     , m_StartMillis(-1)
     , m_Nametables(nametables)
     , m_SerialProcessor(nametables, 128) // todo, more frames?
+    , m_LastSeek(0)
 {
     util::ReadFileToVector(path, &m_Data);
 }
@@ -1012,12 +1013,31 @@ size_t SMBSerialRecording::GetNumBytes() const
     return m_Data.size();
 }
 
+int64_t SMBSerialRecording::GetCurrentElapsedMillis() const
+{
+    return m_LastSeek;
+}
+
+int64_t SMBSerialRecording::GetTotalElapsedMillis() const
+{
+    size_t data_index = 0;
+    int64_t elapsed = 0;
+    size_t read = 0;
+    const uint8_t* bytes;
+    while ((data_index + sizeof(elapsed) + sizeof(read) + 1) < m_Data.size()) {
+        PreStep(m_Data.data(), data_index, &elapsed, &read, &bytes);
+        data_index += sizeof(elapsed) + sizeof(read) + read;
+    }
+    return elapsed;
+}
+
 void SMBSerialRecording::Reset()
 {
     m_SerialProcessor.Reset();
     m_Start = util::Now();
     m_DataIndex = 0;
     m_AddToSeek = 0;
+    m_LastSeek = 0;
 }
 
 void SMBSerialRecording::ResetToStartAndPause()
@@ -1057,6 +1077,12 @@ bool SMBSerialRecording::GetPaused()
     return m_IsPaused;
 }
 
+void SMBSerialRecording::StartAt(int64_t millis)
+{
+    m_AddToSeek = millis;
+    SeekTo(millis);
+}
+
 void SMBSerialRecording::SeekFromStartTo(int64_t millis)
 {
     if (m_StartMillis < 0) throw std::runtime_error("not ok time to use this garbage");
@@ -1085,7 +1111,8 @@ bool SMBSerialRecording::Done() const
 void SMBSerialRecording::Seek()
 {
     if (!m_IsPaused) {
-        SeekTo(util::ElapsedMillisFrom(m_Start) + m_AddToSeek);
+        int64_t to = util::ElapsedMillisFrom(m_Start) + m_AddToSeek;
+        SeekTo(to);
     }
 }
 
@@ -1111,6 +1138,7 @@ void SMBSerialRecording::DoStep(const uint8_t* data, size_t* dataIndex, SMBSeria
 }
 
 void SMBSerialRecording::SeekTo(int64_t millis) {
+    m_LastSeek = millis;
     if (m_Data.empty()) return;
 
     if (m_DataIndex >= m_Data.size()) {
@@ -1936,50 +1964,35 @@ void argos::rgms::InitializeSMBCompROMData(argos::smb::SMBDatabase* db,
     rom->CHR1 = rom->rom->data() + 0x9010;
 }
 
-//void argos::rgms::InitializeSMBCompSounds(const argos::RuntimeConfig* info, SMBCompSounds* sounds)
-//{
-//    if (SDL_WasInit(SDL_INIT_AUDIO) == 0) {
-//        if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-//            throw std::runtime_error(SDL_GetError());
-//        }
-//    }
-//    if (Mix_OpenAudio(SDL_AUDIO_DEVICE_DEFAULT_OUTPUT, nullptr) < 0) {
-//        throw std::runtime_error(Mix_GetError());
-//    }
-//
-//    for (auto effect : smb::AudibleSoundEffects()) {
-//        std::ostringstream os;
-//        os << info->ArgosDirectory << "data/snd/" << static_cast<int>(effect) << ".wav";
-//        std::string path = os.str();
-//        if (!util::FileExists(path)) {
-//            throw std::runtime_error("no : " + path);
-//        }
-//        Mix_Chunk* chnk = Mix_LoadWAV(os.str().c_str());
-//        if (!chnk) {
-//            throw std::runtime_error(Mix_GetError());
-//        }
-//        sounds->SoundEffects[effect] = chnk;
-//    }
-//
-//    for (auto & track : smb::AllMusicTracks()) {
-//        std::ostringstream os;
-//        os << info->ArgosDirectory << "data/music/" << static_cast<int>(track) << ".wav";
-//        std::string path = os.str();
-//        if (!util::FileExists(path)) {
-//            throw std::runtime_error("no : " + path);
-//        }
-//        //std::cout << static_cast<int>(track) << " " << ToString(track) << std::endl;
-//        Mix_Music* music = Mix_LoadMUS(os.str().c_str());
-//        if (!music) {
-//            throw std::runtime_error(Mix_GetError());
-//        }
-//        sounds->Musics[track] = music;
-//    }
-//}
+void argos::rgms::InitializeSMBCompSounds(smb::SMBDatabase* db, SMBCompSounds* sounds)
+{
+    argos::sdlext::SDLExtMixInit init;
+
+    for (auto effect : smb::AudibleSoundEffects()) {
+        std::vector<uint8_t> data;
+        if (db->GetSoundEffectWav(effect, &data)) {
+            sounds->SoundEffects[effect] = std::make_shared<argos::sdlext::SDLExtMixChunk>(data);
+        } else {
+            std::cout << smb::ToString(effect) << std::endl;
+        }
+    }
+
+    for (auto & track : smb::AudibleMusicTracks()) {
+        std::vector<uint8_t> data;
+        if (db->GetMusicTrackWav(track, &data)) {
+            sounds->Musics[track] = std::make_shared<argos::sdlext::SDLExtMixMusic>(data);
+        } else {
+            std::cout << smb::ToString(track) << std::endl;
+        }
+    }
+}
 
 void argos::rgms::InitializeSMBCompStaticData(const argos::RuntimeConfig* info, SMBCompStaticData* staticData)
 {
     smb::SMBDatabase db(info->ArgosPathTo("smb.db"));
+    if (!db.IsInit()) {
+        throw std::runtime_error("SMB Database is not initialized. Run 'argos smb db init'");
+    }
 
     staticData->Nametables = db.GetNametableCache();
     InitializeSMBRaceCategories(&db, &staticData->Categories);
@@ -1990,7 +2003,7 @@ void argos::rgms::InitializeSMBCompStaticData(const argos::RuntimeConfig* info, 
         throw std::runtime_error("no font?");
     }
 
-    //InitializeSMBCompSounds(info, &staticData->Sounds);
+    InitializeSMBCompSounds(&db, &staticData->Sounds);
 }
 
 
@@ -3314,7 +3327,7 @@ bool SMBCompCombinedViewComponent::MakeImageIndividual(SMBComp* comp, nes::PPUx*
             *doingOwnOAMx = out->Frame.APX - view.APX + left;
         } else {
             if (applyVisuals) {
-                ppux->BeginOutline();
+//                ppux->BeginOutline();
             }
 
             nes::EffectInfo effects = nes::EffectInfo::Defaults();
@@ -3324,7 +3337,7 @@ bool SMBCompCombinedViewComponent::MakeImageIndividual(SMBComp* comp, nes::PPUx*
             }
 
             if (applyVisuals) {
-                ppux->StrokeOutlineO(1.0f, player->Colors.RepresentativeColor, render.PaletteBGR);
+//                ppux->StrokeOutlineO(1.0f, player->Colors.RepresentativeColor, render.PaletteBGR);
             }
         }
 
@@ -3546,17 +3559,22 @@ void SMBCompCombinedViewComponent::MakeImage(SMBComp* comp, nes::PPUx* ppux)
         }
 
         // todo playernames render them all? Maybe too busy. :(
-        // too busy
 
-        //std::array<uint8_t, 4> tpal = {0x00, nes::PALETTE_ENTRY_WHITE, 0x20, 0x20};
-        //for (auto & name : playerNames) {
-        //    ppux->RenderString(name.x, name.y, name.name,
-        //            comp->StaticData.Font.data(), tpal.data(), render.PaletteBGR, 2,
-        //            nes::EffectInfo::Defaults());
-
-        //}
-
-
+        //ppux->SetPriorityStatus(nes::PPUxPriorityStatus::DISABLED);
+        std::array<uint8_t, 4> tpal = {0x00, nes::PALETTE_ENTRY_WHITE, 0x20, 0x20};
+        for (auto & name : playerNames) {
+            int offset = 0;
+            if (name.name.size() > 2) {
+                offset += ((name.name.size() - 2) * 8) / 2;
+            } else if (name.name.size() == 1) {
+                offset = -4;
+            }
+            nes::EffectInfo effects = nes::EffectInfo::Defaults();
+            effects.Opacity = 1.0f;
+            ppux->RenderString(name.x - offset, name.y - 10, name.name,
+                    comp->StaticData.Font.data(), tpal.data(), render.PaletteBGR, 1,
+                    effects);
+        }
     }
 }
 
@@ -3586,6 +3604,7 @@ void SMBCompCombinedViewComponent::DoControls()
     }
     nes::PPUx ppux(WIDTH, 240, view.Img.data, nes::PPUxPriorityStatus::ENABLED);
     MakeImage(m_Competition, &ppux);
+
     cv::Mat m(ppux.GetHeight(), ppux.GetWidth(), CV_8UC3, ppux.GetBGROut());
     rgmui::Mat("m3", m);
 }
@@ -3985,7 +4004,7 @@ void SMBCompMinimapViewComponent::DoControls()
                 outline = 0x2c;
             }
 
-            ppux.StrokeOutlineO(1.0f, outline, render.PaletteBGR);
+            //ppux.StrokeOutlineO(1.0f, outline, render.PaletteBGR);
 
             // update target mariox
 
@@ -5560,7 +5579,7 @@ void SMBCompPointsComponent::DoControls()
                 m_Competition->StaticData.Font, m_Competition);
 
         cv::Mat m(ppux.GetHeight(), ppux.GetWidth(), CV_8UC3, ppux.GetBGROut());
-        cv::resize(m, m, {}, 2.0, 4.0, cv::INTER_NEAREST);
+        //cv::resize(m, m, {}, 2.0, 4.0, cv::INTER_NEAREST);
         rgmui::MatAnnotator anno("pp", m);
     }
 }
@@ -7939,7 +7958,7 @@ SMBCompSoundComponent::SMBCompSoundComponent(argos::RuntimeConfig* info, SMBComp
 
 SMBCompSoundComponent::~SMBCompSoundComponent()
 {
-    Mix_Quit();
+    //Mix_Quit();
 }
 
 void SMBCompSoundComponent::MusicFinished()
@@ -7969,7 +7988,7 @@ void SMBCompSoundComponent::StartMusic(smb::MusicTrack t)
     auto it = m_Competition->StaticData.Sounds.Musics.find(t);
 
     if (it == m_Competition->StaticData.Sounds.Musics.end()) return;
-    Mix_Music* mus = it->second;
+    Mix_Music* mus = it->second->Music;
 
     m_CurrentMusic = t;
     Mix_PlayMusic(mus, MusicLoops(t));
@@ -7993,7 +8012,7 @@ void SMBCompSoundComponent::PlaySoundEffect(uint32_t playerId, smb::SoundEffect 
     auto it = m_Competition->StaticData.Sounds.SoundEffects.find(effect);
     if (it == m_Competition->StaticData.Sounds.SoundEffects.end()) return;
 
-    Mix_PlayChannel(-1, it->second, 0);
+    Mix_PlayChannel(-1, it->second->Chunk, 0);
 }
 
 static smb::MusicTrack ToMusic(char typ, uint8_t val) {
@@ -8022,53 +8041,52 @@ static smb::SoundEffect ToEffect(char typ, uint8_t val) {
 }
 void SMBCompSoundComponent::OnFrameAlways()
 {
-    bool any_on = false;
-    for (auto & player : m_Competition->Config.Players.Players) {
-        if (auto out = GetLatestPlayerOutput(*m_Competition, player)) {
-            if (!out->ConsolePoweredOn) {
-                m_PlayerToMusic[player.UniquePlayerID] = smb::MusicTrack::SILENCE;
-            } else {
-                any_on = true;
-            }
-        }
-    }
-    if (!any_on) {
-        StopMusic();
-        return;
-    }
-    uint32_t target_player = m_Competition->CombinedView.PlayerID;
-
-    auto it = m_PlayerToMusic.find(target_player);
-    if (it == m_PlayerToMusic.end()) {
-        //StopMusic();
-        return;
-    }
-    auto& requested_music = it->second;
-
-    if (m_CurrentMusic == smb::MusicTrack::SILENCE) {
-        StartMusic(requested_music);
-        return;
-    }
-
-    if (requested_music == smb::MusicTrack::SILENCE) {
-
-        bool continue_music = false;
-        for (auto & [player, music] : m_PlayerToMusic) {
-            if (player != target_player && music == m_CurrentMusic) {
-                continue_music = true;
-            }
-        }
-        if (!continue_music && MusicLoops(m_CurrentMusic) != 0) {
-            StartMusic(requested_music);
-        }
-    } else if (requested_music != m_CurrentMusic) {
-        StartMusic(requested_music);
-    }
+//    bool any_on = false;
+//    for (auto & player : m_Competition->Config.Players.Players) {
+//        if (auto out = GetLatestPlayerOutput(*m_Competition, player)) {
+//            if (!out->ConsolePoweredOn) {
+//                m_PlayerToMusic[player.UniquePlayerID] = smb::MusicTrack::SILENCE;
+//            } else {
+//                any_on = true;
+//            }
+//        }
+//    }
+//    if (!any_on) {
+//        StopMusic();
+//        return;
+//    }
+//    uint32_t target_player = m_Competition->CombinedView.PlayerID;
+//
+//    auto it = m_PlayerToMusic.find(target_player);
+//    if (it == m_PlayerToMusic.end()) {
+//        //StopMusic();
+//        return;
+//    }
+//    auto& requested_music = it->second;
+//
+//    if (m_CurrentMusic == smb::MusicTrack::SILENCE) {
+//        StartMusic(requested_music);
+//        return;
+//    }
+//
+//    if (requested_music == smb::MusicTrack::SILENCE) {
+//
+//        bool continue_music = false;
+//        for (auto & [player, music] : m_PlayerToMusic) {
+//            if (player != target_player && music == m_CurrentMusic) {
+//                continue_music = true;
+//            }
+//        }
+//        if (!continue_music && MusicLoops(m_CurrentMusic) != 0) {
+//            StartMusic(requested_music);
+//        }
+//    } else if (requested_music != m_CurrentMusic) {
+//        StartMusic(requested_music);
+//    }
 }
 
 void SMBCompSoundComponent::NoteOutput(const SMBCompPlayer& player, SMBMessageProcessorOutputPtr out)
 {
-    return; // TODO
     if (out->ConsolePoweredOn == false) {
         m_PlayerToMusic[player.UniquePlayerID] = smb::MusicTrack::SILENCE;
         return;
@@ -8185,8 +8203,8 @@ void SMBCompSoundComponent::DoControls()
 
     if (ImGui::CollapsingHeader("sounds")) {
         for (auto & [effect, chnk] : m_Competition->StaticData.Sounds.SoundEffects) {
-            if (ImGui::Button(ToString(effect).c_str())) {
-                Mix_PlayChannel(-1, chnk, 0);
+            if (ImGui::Button(smb::ToString(effect).c_str())) {
+                Mix_PlayChannel(-1, chnk->Chunk, 0);
             }
         }
     }
@@ -8196,9 +8214,9 @@ void SMBCompSoundComponent::DoControls()
             Mix_HaltMusic();
         }
         for (auto & [track, mus] : m_Competition->StaticData.Sounds.Musics) {
-            if (ImGui::Button(ToString(track).c_str())) {
+            if (ImGui::Button(smb::ToString(track).c_str())) {
                 Mix_HaltMusic();
-                Mix_PlayMusic(mus, 0);
+                Mix_PlayMusic(mus->Music, 0);
             }
         }
     }
@@ -9518,3 +9536,304 @@ void argos::rgms::RenderSMBToPPUX(const SMBFrameInfo& frame, const nes::FramePal
         }
     }
 }
+
+RecReviewDB::RecReviewDB(const std::string& path)
+    : SQLiteExtDB(path)
+{
+    ExecOrThrow(RecRecordingSchema());
+}
+
+const char* RecReviewDB::RecRecordingSchema()
+{
+    return R"(CREATE TABLE IF NOT EXISTS rec_recording (
+    id                  INTEGER,
+    import_path         TEXT NOT NULL,
+    iso_timestamp       TEXT NOT NULL,
+    unix_timestamp      INTEGER NOT NULL,
+    offset_millis       INTEGER NOT NULL,
+    elapsed_millis      INTEGER NOT NULL
+);)";
+}
+
+RecReviewDB::~RecReviewDB()
+{
+}
+
+void RecReviewDB::GetAllRecordings(std::vector<db::rec_recording>* recordings)
+{
+    sqlite3_stmt* stmt;
+    sqliteext::PrepareOrThrow(m_Database, R"(
+        SELECT * FROM rec_recording;
+    )", &stmt);
+
+    recordings->clear();
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        db::rec_recording recording;
+        recording.id = sqlite3_column_int(stmt, 0);
+        recording.import_path = sqliteext::column_str(stmt, 1);
+        recording.iso_timestamp = sqliteext::column_str(stmt, 2);
+        recording.unix_timestamp = sqlite3_column_int(stmt, 3);
+        recording.offset_millis = sqlite3_column_int(stmt, 4);
+        recording.elapsed_millis = sqlite3_column_int(stmt, 5);
+        recordings->push_back(recording);
+    }
+    sqlite3_finalize(stmt);
+}
+
+void RecReviewDB::InsertRecording(const db::rec_recording& recording)
+{
+    sqlite3_stmt* stmt;
+    sqliteext::PrepareOrThrow(m_Database, R"(
+        INSERT INTO rec_recording (import_path, iso_timestamp, unix_timestamp, offset_millis, elapsed_millis) VALUES (?, ?, ?, ?, ?);
+    )", &stmt);
+    sqliteext::BindStrOrThrow(stmt, 1, recording.import_path);
+    sqliteext::BindStrOrThrow(stmt, 2, recording.iso_timestamp);
+    sqliteext::BindInt64OrThrow(stmt, 3, recording.unix_timestamp);
+    sqliteext::BindInt64OrThrow(stmt, 4, recording.offset_millis);
+    sqliteext::BindInt64OrThrow(stmt, 5, recording.elapsed_millis);
+    sqliteext::StepAndFinalizeOrThrow(stmt);
+}
+
+RecReviewApp::RecReviewApp(argos::RuntimeConfig* config)
+    : m_Config(config)
+    , m_Database(config->ArgosPathTo("argos.db"))
+{
+    RegisterComponent(std::make_shared<RecRecordingsComponent>(config, &m_Database));
+}
+
+RecReviewApp::~RecReviewApp()
+{
+}
+
+bool RecReviewApp::OnFrame()
+{
+    return true;
+}
+
+
+RecRecordingsComponent::RecRecordingsComponent(argos::RuntimeConfig* config, RecReviewDB* db)
+    : m_Config(config)
+    , m_Database(db)
+    , m_SMBDatabase(config->ArgosPathTo("smb.db"))
+    , m_ReplayStartTime(1667673985)
+    , m_InCount(0)
+    , m_Context(2)
+{
+    if (!m_SMBDatabase.IsInit()) {
+        throw std::runtime_error("SMB Database is not initialized. Run 'argos smb db init'");
+    }
+    Init();
+}
+
+void RecRecordingsComponent::Init()
+{
+    m_Database->GetAllRecordings(&m_Recordings);
+    //m_Timeline = cv::Mat::zeros(0, 0, CV_8UC3);
+    //m_TimelineInfoIndex = cv::Mat::zeros(0, 0, CV_32SC1);
+    //m_TimelineInfo.clear();
+    //if (m_Recordings.empty()) {
+    //    return;
+    //}
+
+
+    struct event {
+        int64_t time;
+        size_t recording_index;
+        bool is_start;
+    };
+    std::vector<event> events(m_Recordings.size() * 2);
+    {
+        size_t i = 0;
+        for (auto rec : m_Recordings) {
+            auto& start = events[i];
+            auto& end = events[i + 1];
+            start.time = rec.unix_timestamp * 1000 + rec.offset_millis;
+            end.time = rec.unix_timestamp * 1000 + rec.offset_millis + rec.elapsed_millis;
+            start.recording_index = i / 2;
+            end.recording_index = i / 2;
+            start.is_start = true;
+            end.is_start = false;
+            i += 2;
+        }
+    }
+    std::sort(events.begin(), events.end(), [&](const auto& a, const auto& b){
+            if (a.time == b.time) {
+            return a.is_start < b.is_start;
+            }
+        return a.time < b.time;
+    });
+
+    m_StartTime = static_cast<int>(events.front().time / 1000);
+    m_EndTime = static_cast<int>(events.back().time / 1000);
+
+    //size_t max_slots = 0;
+    //size_t current_slots = 0;
+    //int64_t empty_time = 0;
+    //int64_t this_time = 0;
+    //std::vector<int64_t> start_times;
+    //for (auto & event : events) {
+    //    if (event.is_start) {
+    //        if (current_slots == 0 && this_time) {
+    //            empty_time += (event.time - this_time);
+    //        }
+    //        current_slots++;
+    //        if (current_slots > max_slots) {
+    //            max_slots = current_slots;
+    //        }
+    //    } else {
+    //        if (current_slots == 0) {
+    //            throw std::runtime_error("?");
+    //        }
+    //        current_slots--;
+    //        if (current_slots == 0) {
+    //            this_time = event.time;
+    //        }
+    //    }
+    //}
+
+    //int64_t total_time = events.back().time - events.front().time;
+    //total_time -= empty_time;
+
+    //int64_t scale = 4000;
+
+    //size_t nx = total_time / scale + 1;
+    //std::cout << nx << std::endl;
+    //std::vector<size_t> slots(max_slots, events.size());
+
+    //m_Time.resize(nx, 0);
+
+    //int64_t current_time = events[0].time;
+    //for (auto & event : events) {
+
+
+    //}
+}
+
+void RecRecordingsComponent::ScanArgosDirectory()
+{
+    std::vector<std::string> paths;
+    util::ForFileOfExtensionInDirectory(
+            fmt::format("{}rec/", m_Config->ArgosDirectory),
+            "rec", [&](util::fs::path p){
+        paths.push_back(p.string());
+        return true;
+    });
+    std::cout << "in directory: " << paths.size() << std::endl;
+    std::unordered_set<std::string> already;
+    for (auto & rec : m_Recordings) {
+        already.emplace(rec.import_path);
+    }
+    paths.erase(std::remove_if(paths.begin(), paths.end(),
+                [&](const std::string& p){
+                return already.find(p) != already.end();
+                }), paths.end());
+    std::cout << "new ones    : " << paths.size() << std::endl;
+
+    for (auto & path : paths) {
+        std::cout << "+ " << path << std::endl;
+        SMBSerialRecording recording(path, m_SMBDatabase.GetNametableCache());
+
+        db::rec_recording rec;
+        rec.import_path = path;
+        rec.iso_timestamp = util::fs::path(path).stem().string().substr(0, 15);
+
+        std::istringstream iss(rec.iso_timestamp);
+        std::tm tm = {};
+        iss >> std::get_time(&tm, "%Y%m%dT%H%M%S");
+        std::time_t unixTime = std::mktime(&tm);
+
+        rec.unix_timestamp = static_cast<int64_t>(unixTime);
+        rec.offset_millis = 0;
+        rec.elapsed_millis = recording.GetTotalElapsedMillis();
+
+        std::cout << "   > " << rec.iso_timestamp << " [" << rec.unix_timestamp << "]" << std::endl;
+        std::cout << "   > " << rec.elapsed_millis << " (" <<
+            util::SimpleMillisFormat(rec.elapsed_millis, util::SimpleTimeFormatFlags::HMS) << ")" << std::endl;
+
+        if (rec.elapsed_millis) {
+            m_Database->InsertRecording(rec);
+        } else {
+            std::cout << "skipped..." << std::endl;
+        }
+    }
+    std::cout << "done" << std::endl;
+}
+
+void RecRecordingsComponent::OnFrame()
+{
+    if (ImGui::Begin("recordings")) {
+        if (ImGui::Button("scan argos directory")) {
+            ScanArgosDirectory();
+            Init();
+        }
+        if (rgmui::SliderIntExt("replay start", &m_ReplayStartTime, m_StartTime, m_EndTime)) {
+            int64_t timems = static_cast<int64_t>(m_ReplayStartTime) * 1000;
+            m_InCount = 0;
+            for (auto & rec : m_Recordings) {
+                int64_t start = rec.unix_timestamp * 1000 + rec.offset_millis;
+                int64_t end = start + rec.elapsed_millis;
+                if (timems >= start && timems <= end) {
+                    m_InCount++;
+                }
+            }
+        }
+        rgmui::TextFmt("{}", m_InCount);
+        if (ImGui::Button("load")) {
+            int64_t timems = static_cast<int64_t>(m_ReplayStartTime) * 1000;
+            m_LoadedRecordings.clear();
+            for (auto & rec : m_Recordings) {
+                int64_t start = rec.unix_timestamp * 1000 + rec.offset_millis;
+                int64_t end = start + rec.elapsed_millis;
+                if (timems >= start && timems <= end) {
+                    LoadedRecording lrec;
+                    lrec.Path = rec.import_path;
+                    lrec.Recording = std::make_shared<SMBSerialRecording>(
+                            rec.import_path, m_SMBDatabase.GetNametableCache());
+                    lrec.Start = timems - start;
+                    lrec.Recording->StartAt(lrec.Start);
+                    lrec.Recording->SetPaused(true);
+                    lrec.Target = fmt::format("tcp://localhost:{}",
+                            5555 + m_LoadedRecordings.size());
+
+                    lrec.Socket = std::make_shared<zmq::socket_t>(m_Context,
+                            zmq::socket_type::pub);
+                    lrec.Name = fmt::format("seat{}", m_LoadedRecordings.size() + 1);
+                    lrec.Socket->bind(lrec.Target);
+                    m_LoadedRecordings.push_back(lrec);
+                }
+            }
+        }
+        bool ispaused = false;
+        for (auto & rec : m_LoadedRecordings) {
+            ispaused = rec.Recording->GetPaused();
+            rgmui::TextFmt("{} - {} {} {}", rec.Path, rec.Start,
+                    rec.Recording->GetCurrentElapsedMillis(),
+                    rec.Recording->GetPaused());
+        }
+        if (m_LoadedRecordings.size() > 0) {
+            if ((ispaused && ImGui::Button("start")) || (!ispaused && ImGui::Button("stop"))) {
+                for (auto & rec : m_LoadedRecordings) {
+                    rec.Recording->SetPaused(!ispaused);
+                }
+            }
+        }
+    }
+    ImGui::End();
+
+    std::vector<uint8_t> buffer;
+    for (auto & rec : m_LoadedRecordings) {
+        bool sent_one = false;
+        while (auto p = rec.Recording->GetNextProcessorOutput()) {
+            if (p->Frame.NTDiffs.size() > 5000) {
+                p->Frame.NTDiffs.resize(5000);
+            }
+            OutputToBytes(p, &buffer);
+            rec.Socket->send(zmq::str_buffer("smb"), zmq::send_flags::sndmore);
+            rec.Socket->send(zmq::message_t(rec.Name.data(), rec.Name.size()), zmq::send_flags::sndmore);
+            rec.Socket->send(zmq::message_t(buffer.data(), buffer.size()), zmq::send_flags::none);
+            //std::cout << rec.Path << std::endl;
+        }
+    }
+}
+
+

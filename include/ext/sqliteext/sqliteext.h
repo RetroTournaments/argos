@@ -36,6 +36,7 @@ bool SimpleSQLitePrint(int argc, char** data, char** columns);
 int ExecPrintOrThrow(sqlite3* db, const std::string& query);
 void PrepareOrThrow(sqlite3* db, const std::string& query, sqlite3_stmt** stmt);
 void BindIntOrThrow(sqlite3_stmt* stmt, int pos, int value);
+void BindInt64OrThrow(sqlite3_stmt* stmt, int pos, int64_t value);
 void BindStrOrThrow(sqlite3_stmt* stmt, int pos, const std::string& str);
 void BindBlbOrThrow(sqlite3_stmt* stmt, int pos, const void* data, size_t size); // SQLITE_STATIC only
 void StepAndFinalizeOrThrow(sqlite3_stmt* stmt);

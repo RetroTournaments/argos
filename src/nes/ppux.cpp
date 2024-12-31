@@ -153,7 +153,7 @@ void PPUx::RenderTile88(int x, int y, Render88Flags flags,
                 if ((flags & Render88Flags::R88_IS_SPRITE)) {
                     if (paletteIndex == 0) {
                         skipThis = true;
-                    } 
+                    }
                 }
 
                 if (skipThis) {
@@ -215,8 +215,16 @@ void PPUx::FillBackground(uint8_t paletteIndex, const RenderInfo& render)
 void PPUx::FillBackground(uint8_t paletteIndex, const uint8_t* paletteBGR)
 {
     ResetPriority();
-
+    size_t n = m_Height * m_Width * 3;
     uint8_t* out = m_BGROut;
+    if (paletteIndex == nes::PALETTE_ENTRY_BLACK) {
+        std::fill(out, out + n, 0x00);
+        return;
+    } else if (paletteIndex == nes::PALETTE_ENTRY_WHITE) {
+        std::fill(out, out + n, 0xff);
+        return;
+    }
+
     const uint8_t* in = paletteBGR + paletteIndex * 3;
     for (int y = 0; y < m_Height; y++) {
         for (int x = 0; x < m_Width; x++) {
@@ -268,7 +276,7 @@ void PPUx::RenderOAMEntry(int x, int y, uint8_t tileIndex, uint8_t attributes,
 void PPUx::ResetPriority()
 {
     if (m_PriorityStatus == PPUxPriorityStatus::ENABLED) {
-        m_PriorityInfo.assign(RequiredPriorityInfoDataSize(m_Width, m_Height), 
+        m_PriorityInfo.assign(RequiredPriorityInfoDataSize(m_Width, m_Height),
                 PPUxPriorityInfoEntry::PPUPRI_NONE);
     }
 }
@@ -308,7 +316,7 @@ void PPUx::RenderOAMxEntry(
     int tx = oamx.X * render.Scale + render.OffX;
     int ty = oamx.Y * render.Scale + render.OffY;
 
-    const uint8_t* tileData = 
+    const uint8_t* tileData =
         render.PatternTables.at(oamx.PatternTableIndex) + static_cast<int>(oamx.TileIndex) * 16;
 
     RenderTile88(tx, ty, GetSpriteRenderFlags(oamx.Attributes),
@@ -330,7 +338,7 @@ void PPUx::RenderNametableX(
 
 void PPUx::RenderNametable(int x, int y, int width, int height,
         const uint8_t* tileStart, const uint8_t* attrStart,
-        const uint8_t* patternTable, 
+        const uint8_t* patternTable,
         const uint8_t* framePalette,
         const uint8_t* paletteBGR,
         int scale, const EffectInfo& effects)
@@ -364,7 +372,7 @@ void PPUx::RenderNametable(int x, int y, int width, int height,
 //            if (overrides) {
 //                auto attrOversIt = overrides->find(tileOffset + nes::NAMETABLE_ATTRIBUTE_OFFSET);
 //                if (attrOversIt != overrides->end()) {
-//                    auto it = std::max_element(attrOversIt->begin(), attrOversIt->end(), 
+//                    auto it = std::max_element(attrOversIt->begin(), attrOversIt->end(),
 //                        [&](const std::pair<uint8_t, float>& l, const std::pair<uint8_t, float>& r){
 //                            return l.second < r.second;
 //                        });
@@ -460,7 +468,7 @@ void PPUx::StrokeOutlineO(float outlineRadius, uint8_t paletteIndex, const uint8
 {
     int mr = std::max(static_cast<int>(outlineRadius) + 1, 1);
     std::vector<Offset> offsets;
-    
+
     float f = outlineRadius * outlineRadius;
     for (int dy = -mr; dy <= mr; dy++) {
         float yf = static_cast<float>(dy) * static_cast<float>(dy);
@@ -534,16 +542,20 @@ void PPUx::PutPixel(int x, int y, const uint8_t* bgr,
         if (x > (crop.X + crop.Width)) return;
     }
 
+    size_t i = static_cast<size_t>(y) * m_Width + static_cast<size_t>(x);
     if (!overridePriority) {
-        if (PriorityEnabled()) {
-            auto entry = GetPriority(x, y);
-
+        bool priorityenabled = PriorityEnabled();
+        if (priorityenabled) {
+            if (m_PriorityInfo.size() != RequiredPriorityInfoDataSize(m_Width, m_Height)) {
+                ResetPriority();
+            }
             if (isSprite) {
+                auto entry = m_PriorityInfo[i];
                 if (effects.Opacity == 1.0f) {
                     if (!m_SpritePriorityGlitch && spritePriority && entry != PPUPRI_NONE) {
                         return;
                     } else {
-                        SetPriority(x, y, PPUPRI_SPR);
+                        m_PriorityInfo[i] = PPUPRI_SPR;
                     }
                 }
 
@@ -558,28 +570,32 @@ void PPUx::PutPixel(int x, int y, const uint8_t* bgr,
                 }
             } else {
                 if (isBackground) {
-                    SetPriority(x, y, PPUPRI_BG);
+                    m_PriorityInfo[i] = PPUPRI_BG;
                 }
             }
         }
 
-        if (m_Outlining && PriorityEnabled()) {
-            int it = y * m_Width + x;
-            m_PriorityInfo[it] |= PPUPRI_TO_OUTLINE;
+        if (m_Outlining && priorityenabled) {
+            m_PriorityInfo[i] |= PPUPRI_TO_OUTLINE;
         }
     }
 
     if (effects.Opacity != 1.0f) {
-        throw std::invalid_argument("not handled yet");
-    }
-    const uint8_t* t = bgr;
-    uint8_t* dat = m_BGROut + (y * m_Width * 3) + (x * 3);
-    for (int v = 0; v < 3; v++) {
-        *(dat + v) = *(t + v);
+        uint8_t* dat = m_BGROut + (y * m_Width * 3) + (x * 3);
+        for (int v = 0; v < 3; v++) {
+            *(dat + v) = static_cast<uint8_t>(
+                    static_cast<float>(*(dat + v)) * 1.0f - effects.Opacity +
+                    static_cast<float>(*(bgr + v)) * effects.Opacity);
+        }
+    } else {
+        uint8_t* dat = m_BGROut + (y * m_Width * 3) + (x * 3);
+        for (int v = 0; v < 3; v++) {
+            *(dat + v) = *(bgr + v);
+        }
     }
 }
 
-void PPUx::RenderString(int x, int y, 
+void PPUx::RenderString(int x, int y,
         const std::string& str, const uint8_t* patternTable, const uint8_t* tilePalette,
         const uint8_t* paletteBGR, int scale, const EffectInfo& effects)
 {
@@ -593,7 +609,7 @@ void PPUx::RenderString(int x, int y,
     }
 }
 
-void PPUx::RenderStringX(int x, int y, 
+void PPUx::RenderStringX(int x, int y,
         const std::string& strx, const uint8_t* patternTable, const uint8_t* tilePalette,
         const uint8_t* paletteBGR, int scalx, int scaly, const EffectInfo& effects)
 {
@@ -623,11 +639,11 @@ void PPUx::RenderStringX(int x, int y,
             };
             RenderTile88(x, y, flags, tilePalette, dat.data(), paletteBGR, scalx, scaly, effects);
             x += 8 * scalx;
-        } 
+        }
         if (static_cast<int>(c) < 0) {
             continue;
         }
-        
+
         if (c == '\n') {
             y += 8 * scaly;
             x = sx;
@@ -697,3 +713,9 @@ void PPUx::CopyPriorityTo(PPUx* other)
     other->GetPriorityInfo() = GetPriorityInfo();
 }
 
+PPUxPriorityStatus PPUx::GetPriorityStatus() const {
+    return m_PriorityStatus;
+}
+void PPUx::SetPriorityStatus(PPUxPriorityStatus status) {
+    m_PriorityStatus = status;
+}

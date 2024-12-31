@@ -22,6 +22,8 @@ project(3rd)
 
 ################################################################################
 # SDL is used for making the window and for certain rendering tasks
+set(SDL2_DISABLE_SDL2MAIN ON CACHE BOOL "sdl2_disable_sdl2main on" FORCE)
+set(SDL_TESTS OFF CACHE BOOL "sdl_tests off" FORCE)
 add_subdirectory(SDL)
 set(SDL_INCLUDE_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/SDL/include/"
