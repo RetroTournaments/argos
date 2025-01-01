@@ -1390,19 +1390,19 @@ enum class ViewType
 
 struct SMBCompCombinedViewInfo
 {
+    bool Active;
     bool FollowSmart;
     struct {
         int Cnt;
     } SmartInfo;
     uint32_t PlayerID;
+    bool NamesVisible;
 
     cv::Mat Img; // UGH
-
 
     //
     ViewType Type;
 
-    //smb::AreaPointer AP;
     argos::smb::AreaID AID;
     int APX;
     int Width;
@@ -1450,6 +1450,7 @@ struct SMBComp
     SMBCompTimingTower Tower;
     SMBCompPlayerLocations Locations;
     SMBCompCombinedViewInfo CombinedView;
+    SMBCompCombinedViewInfo CombinedView2;
 
     int FrameNumber;
     bool DoingRecordingOfRecordings;
@@ -1559,13 +1560,17 @@ public:
 
     virtual void DoControls() override final;
 
-    static void MakeImage(SMBComp* comp, nes::PPUx* ppux);
+    static void MakeImage(SMBComp* comp, nes::PPUx* ppux, SMBCompCombinedViewInfo* view);
     static bool MakeImageIndividual(SMBComp* comp, nes::PPUx* ppux, const SMBCompPlayer* player,
             bool applyVisuals, bool fullView = false,
             int* screenLeft = nullptr,
             int* screenRight = nullptr,
             int* doingOwnOAMx = nullptr,
-            SMBMessageProcessorOutputPtr* output = nullptr);
+            SMBMessageProcessorOutputPtr* output = nullptr,
+            SMBCompCombinedViewInfo* view = nullptr);
+
+private:
+    void DoViewControls(SMBCompCombinedViewInfo* view);
 
 private:
     argos::RuntimeConfig* m_Info;
@@ -1849,6 +1854,8 @@ private:
     SMBComp* m_Competition;
 
     std::unordered_map<uint32_t, smb::MusicTrack> m_PlayerToMusic;
+
+    smb::AreaID m_MusicAreaID;
     smb::MusicTrack m_CurrentMusic;
 };
 
@@ -1861,7 +1868,7 @@ public:
     virtual void DoControls() override final;
     void NoteOutput(const SMBCompPlayer& player, SMBMessageProcessorOutputPtr out);
 
-    void DoReplay(cv::Mat aux);
+    bool DoReplay(cv::Mat aux);
 
 private:
     void DoPlayerDeck(const SMBCompPlayer& player, const std::deque<SMBMessageProcessorOutputPtr>& deck);
@@ -2092,6 +2099,7 @@ public:
 private:
     void Init();
     void ScanArgosDirectory();
+    void NewTime();
 
 private:
     const argos::RuntimeConfig* m_Config;
@@ -2101,6 +2109,9 @@ private:
 
     int m_StartTime;
     int m_EndTime;
+
+    size_t m_TimesWithStuffIndex;
+    std::vector<std::pair<int, int>> m_TimesWithStuff;
 
     int m_ReplayStartTime;
     int m_InCount;

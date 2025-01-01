@@ -1910,6 +1910,7 @@ void argos::rgms::InitializeSMBCompConfiguration(SMBCompConfiguration* config)
 
 void argos::rgms::InitializeSMBCompCombinedViewInfo(SMBCompCombinedViewInfo* view)
 {
+    view->Active = true;
     view->FollowSmart = true;
     view->SmartInfo.Cnt = 60;
     view->PlayerID = 0;
@@ -1917,6 +1918,7 @@ void argos::rgms::InitializeSMBCompCombinedViewInfo(SMBCompCombinedViewInfo* vie
     view->AID = smb::AreaID::GROUND_AREA_6;
     view->APX = 0;
     view->Width = 1024;
+    view->NamesVisible = true;
 }
 
 void argos::rgms::InitializeSMBCompPoints(SMBCompPoints* points)
@@ -1935,6 +1937,7 @@ void argos::rgms::InitializeSMBComp(const argos::RuntimeConfig* info, SMBComp* c
     InitializeSMBCompMinimap(&comp->Minimap);
     InitializeSMBCompTimingTower(&comp->Tower);
     InitializeSMBCompCombinedViewInfo(&comp->CombinedView);
+    InitializeSMBCompCombinedViewInfo(&comp->CombinedView2);
 
     comp->FrameNumber = 0;
     comp->DoingRecordingOfRecordings = false;
@@ -3224,6 +3227,8 @@ SMBCompCombinedViewComponent::SMBCompCombinedViewComponent(argos::RuntimeConfig*
     , m_Info(info)
     , m_Competition(comp)
 {
+    m_Competition->CombinedView2.Active = false;
+    m_Competition->CombinedView2.FollowSmart = false;
 }
 
 SMBCompCombinedViewComponent::~SMBCompCombinedViewComponent()
@@ -3233,11 +3238,11 @@ SMBCompCombinedViewComponent::~SMBCompCombinedViewComponent()
 bool SMBCompCombinedViewComponent::MakeImageIndividual(SMBComp* comp, nes::PPUx* ppux, const SMBCompPlayer* player,
         bool applyVisuals, bool fullView,
         int* screenLeft, int* screenRight,
-        int* doingOwnOAMx, SMBMessageProcessorOutputPtr* output)
+        int* doingOwnOAMx, SMBMessageProcessorOutputPtr* output,
+        SMBCompCombinedViewInfo* view)
 {
     if (output) *output = nullptr;
     nes::RenderInfo render = DefaultSMBCompRenderInfo(*comp);
-    auto& view = comp->CombinedView;
 
     ppux->FillBackground(nes::PALETTE_ENTRY_BLACK, render.PaletteBGR);
     int WIDTH = ppux->GetWidth();
@@ -3253,7 +3258,7 @@ bool SMBCompCombinedViewComponent::MakeImageIndividual(SMBComp* comp, nes::PPUx*
         ppux->StrokeOutlineO(2.0f, nes::PALETTE_ENTRY_BLACK, render.PaletteBGR);
     };
 
-    int left = std::max(ppux->GetWidth() - view.Width, 0) / 2;
+    int left = std::max(ppux->GetWidth() - view->Width, 0) / 2;
 
 
     if (!player) {
@@ -3281,12 +3286,12 @@ bool SMBCompCombinedViewComponent::MakeImageIndividual(SMBComp* comp, nes::PPUx*
     if (output) *output = out;
 
     if (out->ConsolePoweredOn && out->Frame.GameEngineSubroutine != 0x00 &&
-        out->Frame.AID == view.AID &&
-        out->Frame.APX >= view.APX - view.Width &&
-        out->Frame.APX <= (view.APX + view.Width)) {
+        out->Frame.AID == view->AID &&
+        out->Frame.APX >= view->APX - view->Width &&
+        out->Frame.APX <= (view->APX + view->Width)) {
 
         // TODO put left to zero and include previous diffs
-        int lx = left + out->Frame.APX - view.APX;
+        int lx = left + out->Frame.APX - view->APX;
         int rx = lx + 256;
         if (rx <= 0) return false;
         if (lx > WIDTH) return false;
@@ -3304,27 +3309,27 @@ bool SMBCompCombinedViewComponent::MakeImageIndividual(SMBComp* comp, nes::PPUx*
         if (screenRight) *screenRight = rx;
 
         if (fullView) {
-            comp->StaticData.Nametables->RenderTo(view.AID, view.APX, ppux->GetWidth(),
+            comp->StaticData.Nametables->RenderTo(view->AID, view->APX, ppux->GetWidth(),
                     ppux,
                     left,
                     comp->Config.Visuals.Palette,
                     comp->StaticData.ROM.CHR1,
                     nullptr,
-                    view.FramePalette.data(),
+                    view->FramePalette.data(),
                     &out->Frame.NTDiffs);
         } else {
-            comp->StaticData.Nametables->RenderTo(view.AID, out->Frame.APX, 256,
+            comp->StaticData.Nametables->RenderTo(view->AID, out->Frame.APX, 256,
                     ppux,
                     lx,
                     comp->Config.Visuals.Palette,
                     comp->StaticData.ROM.CHR1,
                     nullptr,
-                    view.FramePalette.data(),
+                    view->FramePalette.data(),
                     &out->Frame.NTDiffs);
         }
 
         if (doingOwnOAMx) {
-            *doingOwnOAMx = out->Frame.APX - view.APX + left;
+            *doingOwnOAMx = out->Frame.APX - view->APX + left;
         } else {
             if (applyVisuals) {
 //                ppux->BeginOutline();
@@ -3332,7 +3337,7 @@ bool SMBCompCombinedViewComponent::MakeImageIndividual(SMBComp* comp, nes::PPUx*
 
             nes::EffectInfo effects = nes::EffectInfo::Defaults();
             for (auto oamx : out->Frame.OAMX) {
-                oamx.X += out->Frame.APX - view.APX + left;
+                oamx.X += out->Frame.APX - view->APX + left;
                 ppux->RenderOAMxEntry(oamx, render, effects);
             }
 
@@ -3343,14 +3348,13 @@ bool SMBCompCombinedViewComponent::MakeImageIndividual(SMBComp* comp, nes::PPUx*
 
         return true;
     } else if (fullView) {
-        comp->StaticData.Nametables->RenderTo(view.AID, view.APX, ppux->GetWidth(),
+        comp->StaticData.Nametables->RenderTo(view->AID, view->APX, ppux->GetWidth(),
                 ppux,
                 left,
                 comp->Config.Visuals.Palette,
                 comp->StaticData.ROM.CHR1,
                 nullptr,
-
-                view.FramePalette.data(),
+                view->FramePalette.data(),
                 nullptr);
         return true;
     }
@@ -3378,15 +3382,14 @@ void ApplyPlayerColors(nes::OAMxEntry* oamx, const SMBCompPlayer* player)
     }
 }
 
-void SMBCompCombinedViewComponent::MakeImage(SMBComp* comp, nes::PPUx* ppux)
+void SMBCompCombinedViewComponent::MakeImage(SMBComp* comp, nes::PPUx* ppux, SMBCompCombinedViewInfo* view)
 {
     nes::RenderInfo render = DefaultSMBCompRenderInfo(*comp);
-    auto& view = comp->CombinedView;
 
     int w = ppux->GetWidth();
     int h = ppux->GetHeight();
 
-    const SMBCompPlayer* mainPlayer = FindPlayer(comp->Config.Players, view.PlayerID);
+    const SMBCompPlayer* mainPlayer = FindPlayer(comp->Config.Players, view->PlayerID);
     int mainOAMXOffset = 0;
     SMBMessageProcessorOutputPtr mainOutput;
 
@@ -3398,8 +3401,7 @@ void SMBCompCombinedViewComponent::MakeImage(SMBComp* comp, nes::PPUx* ppux)
     };
     std::vector<PlayerNameInfo> playerNames;
 
-    if (MakeImageIndividual(comp, ppux, mainPlayer, false, true, nullptr, nullptr, &mainOAMXOffset, &mainOutput)) {
-
+    if (MakeImageIndividual(comp, ppux, mainPlayer, false, true, nullptr, nullptr, &mainOAMXOffset, &mainOutput, view)) {
         cv::Mat denom = cv::Mat::zeros(h, w, CV_32FC3);
         denom += cv::Scalar(1.0f, 1.0f, 1.0f);
         cv::Mat numer;
@@ -3423,7 +3425,7 @@ void SMBCompCombinedViewComponent::MakeImage(SMBComp* comp, nes::PPUx* ppux)
                 int tl, tr;
                 OtherPlayerInfo info;
 
-                if (MakeImageIndividual(comp, &ppux2, &player, true, false, &tl, &tr, &info.Offset, &info.Out)) {
+                if (MakeImageIndividual(comp, &ppux2, &player, true, false, &tl, &tr, &info.Offset, &info.Out, view)) {
                     cv::Rect r(tl, 0, tr - tl, 240);
                     if (r.width > 0 && tl < w) {
                         denom(r) += cv::Scalar(1.0f, 1.0f, 1.0f);
@@ -3578,35 +3580,48 @@ void SMBCompCombinedViewComponent::MakeImage(SMBComp* comp, nes::PPUx* ppux)
     }
 }
 
+
 void SMBCompCombinedViewComponent::DoControls()
 {
+    auto* view1 = &m_Competition->CombinedView;
+    ImGui::PushID(1);
+    DoViewControls(view1);
+    ImGui::PopID();
+    if (ImGui::CollapsingHeader("picture in picture")) {
+        ImGui::PushID(2);
+        auto* view2 = &m_Competition->CombinedView2;
+        DoViewControls(view2);
+        ImGui::PopID();
+    }
+}
 
-    auto& view = m_Competition->CombinedView;
-
-    ImGui::Checkbox("follow smart", &view.FollowSmart);
-    const SMBCompPlayer* followPlayer = FindPlayer(m_Competition->Config.Players, view.PlayerID);
+void SMBCompCombinedViewComponent::DoViewControls(SMBCompCombinedViewInfo* view)
+{
+    ImGui::Checkbox("active", &view->Active);
+    ImGui::Checkbox("follow smart", &view->FollowSmart);
+    ImGui::Checkbox("names visible", &view->NamesVisible);
+    const SMBCompPlayer* followPlayer = FindPlayer(m_Competition->Config.Players, view->PlayerID);
     std::string v = (followPlayer) ? followPlayer->Names.ShortName : "";
     const std::vector<SMBCompPlayer>& players = m_Competition->Config.Players.Players;
-    if (ImGui::BeginCombo("focus", v.c_str())) {
-        for (auto & player : players) {
-            if (ImGui::Selectable(player.Names.ShortName.c_str(), player.UniquePlayerID == view.PlayerID)) {
-                view.PlayerID = player.UniquePlayerID;
-                view.FollowSmart = false;
-            }
+    for (auto & player : players) {
+        if (ImGui::Selectable(player.Names.ShortName.c_str(), player.UniquePlayerID == view->PlayerID)) {
+            view->PlayerID = player.UniquePlayerID;
+            view->FollowSmart = false;
         }
-
-        ImGui::EndCombo();
     }
 
     int WIDTH = 480;
-    if (view.Img.cols != WIDTH || view.Img.rows != 240) {
-        view.Img = cv::Mat::zeros(240, WIDTH, CV_8UC3);
+    if (view->Img.cols != WIDTH || view->Img.rows != 240) {
+        view->Img = cv::Mat::zeros(240, WIDTH, CV_8UC3);
     }
-    nes::PPUx ppux(WIDTH, 240, view.Img.data, nes::PPUxPriorityStatus::ENABLED);
-    MakeImage(m_Competition, &ppux);
 
-    cv::Mat m(ppux.GetHeight(), ppux.GetWidth(), CV_8UC3, ppux.GetBGROut());
-    rgmui::Mat("m3", m);
+    if (view->Active) {
+        nes::PPUx ppux(WIDTH, 240, view->Img.data, nes::PPUxPriorityStatus::ENABLED);
+        MakeImage(m_Competition, &ppux, view);
+
+        cv::Mat m(ppux.GetHeight(), ppux.GetWidth(), CV_8UC3, ppux.GetBGROut());
+        rgmui::Mat("m3", m);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3633,7 +3648,8 @@ void SMBCompIndividualViewsComponent::DoControls()
         for (auto & player : players) {
             nes::PPUx ppux(WIDTH, 240, nes::PPUxPriorityStatus::ENABLED);
 
-            SMBCompCombinedViewComponent::MakeImageIndividual(m_Competition, &ppux, &player, true);
+            SMBCompCombinedViewComponent::MakeImageIndividual(m_Competition, &ppux, &player, true,
+                    false, nullptr, nullptr, nullptr, nullptr, &m_Competition->CombinedView);
 
             ImGui::TableNextColumn();
             cv::Mat m(ppux.GetHeight(), ppux.GetWidth(), CV_8UC3, ppux.GetBGROut());
@@ -4417,7 +4433,6 @@ void argos::rgms::StepTimingTower(SMBComp* comp, SMBCompTimingTower* tower, SMBC
 
                 replay->NoteOutput(player, out);
                 sound->NoteOutput(player, out);
-
             }
         }
     }
@@ -4960,7 +4975,13 @@ bool SMBCompApp::OnFrame()
                 };
             }
 
-            cv::Mat m = opencvext::ResizePrefNearest(m_AuxDisplay, m_AuxVisibleScale);
+            //cv::Mat m = opencvext::ResizePrefNearest(m_AuxDisplay, m_AuxVisibleScale);
+            cv::Mat m(m_AuxDisplay.rows / 4, m_AuxDisplay.cols / 4, m_AuxDisplay.type());
+            for (int y = 0; y < m.rows; y++) {
+                for (int x = 0; x < m.cols; x++) {
+                    m.at<cv::Vec3b>(y, x) = m_AuxDisplay.at<cv::Vec3b>(y * 4, x * 4);
+                }
+            }
             rgmui::MatAnnotator anno("ax", m);
         }
         ImGui::End();
@@ -4969,6 +4990,7 @@ bool SMBCompApp::OnFrame()
     StepTimingTower(&m_Competition, &m_Competition.Tower, &m_Competition.Locations, &m_CompReplayComponent, &m_CompSoundComponent);
     // TODO: Step Minimap
     StepCombinedView(&m_Competition, &m_Competition.CombinedView);
+    StepCombinedView(&m_Competition, &m_Competition.CombinedView2);
     StepSMBCompPoints(&m_Competition, &m_Competition.Points);
 
     if (m_Competition.BeginCountdown && !m_CountingDown) {
@@ -5007,7 +5029,22 @@ bool SMBCompApp::OnFrame()
         } else if (m_AuxDisplayType == 3) {
         }
 
-        m_CompReplayComponent.DoReplay(m_AuxDisplay);
+        if (!m_CompReplayComponent.DoReplay(m_AuxDisplay))
+        {
+            if (m_Competition.CombinedView2.Active) {
+                auto& img = m_Competition.CombinedView2.Img;
+                if (img.cols && img.rows) {
+                    nes::PPUx ppux2(m_AuxDisplay.cols, m_AuxDisplay.rows, m_AuxDisplay.data,
+                            nes::PPUxPriorityStatus::ENABLED);
+                    auto& nesPalette = nes::DefaultPaletteBGR();
+                    int y = 1080 - 480 - 32;
+                    ppux2.DrawBorderedBox(16, y - 16, 480 + 32, 240 + 32, {0x36, 0x36, 0x36,  0x36, 0x17, 0x0f,  0x0f, 0x0f, 0x0f}, nesPalette.data(), 2);
+
+                    img.copyTo(
+                            m_AuxDisplay(cv::Rect(32, y, img.cols, img.rows)));
+                }
+            }
+        }
 
         if (m_SharedMemory) {
             memcpy(m_SharedMemory, m_AuxDisplay.data, SHARED_MEM_MAT);
@@ -8041,16 +8078,20 @@ static smb::SoundEffect ToEffect(char typ, uint8_t val) {
 }
 void SMBCompSoundComponent::OnFrameAlways()
 {
-//    bool any_on = false;
-//    for (auto & player : m_Competition->Config.Players.Players) {
-//        if (auto out = GetLatestPlayerOutput(*m_Competition, player)) {
-//            if (!out->ConsolePoweredOn) {
-//                m_PlayerToMusic[player.UniquePlayerID] = smb::MusicTrack::SILENCE;
-//            } else {
-//                any_on = true;
-//            }
-//        }
-//    }
+    bool any_on = false;
+    for (auto & player : m_Competition->Config.Players.Players) {
+        if (auto out = GetLatestPlayerOutput(*m_Competition, player)) {
+            if (!out->ConsolePoweredOn) {
+                m_PlayerToMusic[player.UniquePlayerID] = smb::MusicTrack::SILENCE;
+            } else {
+                any_on = true;
+            }
+        }
+    }
+
+
+
+
 //    if (!any_on) {
 //        StopMusic();
 //        return;
@@ -8087,7 +8128,9 @@ void SMBCompSoundComponent::OnFrameAlways()
 
 void SMBCompSoundComponent::NoteOutput(const SMBCompPlayer& player, SMBMessageProcessorOutputPtr out)
 {
+    //std::cout << player.Names.ShortName << std::endl;
     if (out->ConsolePoweredOn == false) {
+        std::cout << player.Names.ShortName << "silence" << std::endl;
         m_PlayerToMusic[player.UniquePlayerID] = smb::MusicTrack::SILENCE;
         return;
     }
@@ -8097,10 +8140,12 @@ void SMBCompSoundComponent::NoteOutput(const SMBCompPlayer& player, SMBMessagePr
     }
 
     if (out->Frame.AreaMusicQueue) {
+        std::cout << player.Names.ShortName << "hello?" << std::endl;
         m_PlayerToMusic[player.UniquePlayerID] = ToMusic('a', out->Frame.AreaMusicQueue);
         //std::cout << player.Names.ShortName << " " << static_cast<int>(out->Frame.IntervalTimerControl) << "AreaMusicQueue: " << static_cast<int>(out->Frame.AreaMusicQueue) << std::endl;
     }
     if (out->Frame.EventMusicQueue) {
+        std::cout << player.Names.ShortName << "hello2" << std::endl;
         m_PlayerToMusic[player.UniquePlayerID] = ToMusic('e', out->Frame.EventMusicQueue);
         //std::cout << player.Names.ShortName << " " << static_cast<int>(out->Frame.IntervalTimerControl) << "EventMusicQueue: " << static_cast<int>(out->Frame.EventMusicQueue) << std::endl;
     }
@@ -8530,7 +8575,7 @@ void SMBCompReplayComponent::DoControls()
     }
 }
 
-void SMBCompReplayComponent::DoReplay(cv::Mat aux)
+bool SMBCompReplayComponent::DoReplay(cv::Mat aux)
 {
     if (!m_OngoingReplay.empty()) {
         auto out = m_OngoingReplay.front();
@@ -8542,7 +8587,7 @@ void SMBCompReplayComponent::DoReplay(cv::Mat aux)
         ppux.BeginOutline();
         nes::RenderInfo render = DefaultSMBCompRenderInfo(*m_Competition);
         std::array<uint8_t, 4> tpal = {0x00, nes::PALETTE_ENTRY_WHITE, 0x20, 0x20};
-        ppux.RenderString(2, 2, m_OngoingName,
+        ppux.RenderString(2, 2, m_OngoingName + " replay",
                 m_Competition->StaticData.Font.data(), tpal.data(), render.PaletteBGR, 2,
                 nes::EffectInfo::Defaults());
         ppux.StrokeOutlineO(1.0f, nes::PALETTE_ENTRY_BLACK, render.PaletteBGR);
@@ -8556,12 +8601,16 @@ void SMBCompReplayComponent::DoReplay(cv::Mat aux)
         cv::resize(q, q, {}, 2, 2, cv::INTER_NEAREST);
         q.copyTo(aux(cv::Rect(32, y, 512, 480)));
 
+        //ppux2.DrawBorderedBox(16, y - 16, 256 + 32, 240 + 32, {0x36, 0x36, 0x36,  0x36, 0x17, 0x0f,  0x0f, 0x0f, 0x0f}, nesPalette.data(), 2);
+        //q.copyTo(aux(cv::Rect(32, y, 256, 240)));
+
         if (!m_HalfSpeed || (m_HalfSpeed && m_Counter)) {
             m_OngoingReplay.pop_front();
         }
         m_Counter = !m_Counter;
+        return true;
     }
-
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -9615,9 +9664,11 @@ RecRecordingsComponent::RecRecordingsComponent(argos::RuntimeConfig* config, Rec
     : m_Config(config)
     , m_Database(db)
     , m_SMBDatabase(config->ArgosPathTo("smb.db"))
-    , m_ReplayStartTime(1667673985)
+    //, m_ReplayStartTime(1667673985)
+    , m_ReplayStartTime(1688620844)
     , m_InCount(0)
     , m_Context(2)
+    , m_TimesWithStuffIndex(0)
 {
     if (!m_SMBDatabase.IsInit()) {
         throw std::runtime_error("SMB Database is not initialized. Run 'argos smb db init'");
@@ -9666,30 +9717,36 @@ void RecRecordingsComponent::Init()
     m_StartTime = static_cast<int>(events.front().time / 1000);
     m_EndTime = static_cast<int>(events.back().time / 1000);
 
-    //size_t max_slots = 0;
-    //size_t current_slots = 0;
-    //int64_t empty_time = 0;
-    //int64_t this_time = 0;
-    //std::vector<int64_t> start_times;
-    //for (auto & event : events) {
-    //    if (event.is_start) {
-    //        if (current_slots == 0 && this_time) {
-    //            empty_time += (event.time - this_time);
-    //        }
-    //        current_slots++;
-    //        if (current_slots > max_slots) {
-    //            max_slots = current_slots;
-    //        }
-    //    } else {
-    //        if (current_slots == 0) {
-    //            throw std::runtime_error("?");
-    //        }
-    //        current_slots--;
-    //        if (current_slots == 0) {
-    //            this_time = event.time;
-    //        }
-    //    }
-    //}
+    m_TimesWithStuff.clear();
+
+    size_t max_slots = 0;
+    size_t current_slots = 0;
+    int64_t empty_time = 0;
+    int64_t this_time = 0;
+    int64_t orig_time = 0;
+    std::vector<int64_t> start_times;
+    for (auto & event : events) {
+        if (event.is_start) {
+            if (current_slots == 0 && this_time) {
+                orig_time = event.time;
+                empty_time += (event.time - this_time);
+            }
+            current_slots++;
+            if (current_slots > max_slots) {
+                max_slots = current_slots;
+            }
+        } else {
+            if (current_slots == 0) {
+                throw std::runtime_error("?");
+            }
+            current_slots--;
+            if (current_slots == 0) {
+                this_time = event.time;
+                //std::cout << orig_time << " " << event.time << std::endl;
+                m_TimesWithStuff.emplace_back(orig_time / 1000, event.time / 1000);
+            }
+        }
+    }
 
     //int64_t total_time = events.back().time - events.front().time;
     //total_time -= empty_time;
@@ -9759,6 +9816,19 @@ void RecRecordingsComponent::ScanArgosDirectory()
     std::cout << "done" << std::endl;
 }
 
+void RecRecordingsComponent::NewTime()
+{
+    int64_t timems = static_cast<int64_t>(m_ReplayStartTime) * 1000;
+    m_InCount = 0;
+    for (auto & rec : m_Recordings) {
+        int64_t start = rec.unix_timestamp * 1000 + rec.offset_millis;
+        int64_t end = start + rec.elapsed_millis;
+        if (timems >= start && timems <= end) {
+            m_InCount++;
+        }
+    }
+}
+
 void RecRecordingsComponent::OnFrame()
 {
     if (ImGui::Begin("recordings")) {
@@ -9767,16 +9837,18 @@ void RecRecordingsComponent::OnFrame()
             Init();
         }
         if (rgmui::SliderIntExt("replay start", &m_ReplayStartTime, m_StartTime, m_EndTime)) {
-            int64_t timems = static_cast<int64_t>(m_ReplayStartTime) * 1000;
-            m_InCount = 0;
-            for (auto & rec : m_Recordings) {
-                int64_t start = rec.unix_timestamp * 1000 + rec.offset_millis;
-                int64_t end = start + rec.elapsed_millis;
-                if (timems >= start && timems <= end) {
-                    m_InCount++;
+            NewTime();
+        }
+        if (ImGui::CollapsingHeader("stuff times")) {
+            for (auto & [from, to] : m_TimesWithStuff) {
+                ImGui::PushID(from);
+                if (rgmui::SliderIntExt("replay start", &m_ReplayStartTime, from, to)) {
+                    NewTime();
                 }
+                ImGui::PopID();
             }
         }
+
         rgmui::TextFmt("{}", m_InCount);
         if (ImGui::Button("load")) {
             int64_t timems = static_cast<int64_t>(m_ReplayStartTime) * 1000;
