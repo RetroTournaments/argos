@@ -7979,6 +7979,10 @@ SMBCompSoundComponent::SMBCompSoundComponent(argos::RuntimeConfig* info, SMBComp
     , m_Info(info)
     , m_Competition(comp)
     , m_CurrentMusic(smb::MusicTrack::SILENCE)
+    , m_AutoMusic(true)
+    , m_MusicAreaID(static_cast<smb::AreaID>(0))
+    , m_PlayedEndThing(false)
+    , m_PlayedVictory(false)
 {
     if (SDL_WasInit(SDL_INIT_AUDIO) == 0) {
         if (SDL_Init(SDL_INIT_AUDIO) < 0) {
@@ -7986,8 +7990,8 @@ SMBCompSoundComponent::SMBCompSoundComponent(argos::RuntimeConfig* info, SMBComp
         }
     }
 
-    Mix_MasterVolume(80);
-    Mix_VolumeMusic(80);
+    Mix_MasterVolume(30);
+    Mix_VolumeMusic(125);
 
     s_SoundComponent = this;
     Mix_HookMusicFinished(MyMusicFinished);
@@ -8000,12 +8004,12 @@ SMBCompSoundComponent::~SMBCompSoundComponent()
 
 void SMBCompSoundComponent::MusicFinished()
 {
-    m_CurrentMusic = smb::MusicTrack::SILENCE;
+    //m_CurrentMusic = smb::MusicTrack::SILENCE;
 }
 
 static int MusicLoops(smb::MusicTrack t)
 {
-    int loops = 0;
+    int loops = 10;
     if (t == smb::MusicTrack::PIPE_INTRO ||
         t == smb::MusicTrack::TIME_RUNNING_OUT ||
         t == smb::MusicTrack::ALT_GAME_OVER ||
@@ -8089,6 +8093,64 @@ void SMBCompSoundComponent::OnFrameAlways()
         }
     }
 
+    if (m_AutoMusic) {
+        auto& view = m_Competition->CombinedView;
+        bool someone_actually_going = false;
+        for (auto & [player_id, timing] : m_Competition->Tower.Timings) {
+            if (timing.State == TimingState::RUNNING) {
+                someone_actually_going = true;
+            }
+        }
+        if (!someone_actually_going) {
+            StopMusic();
+            m_MusicAreaID = static_cast<smb::AreaID>(0);
+            return;
+        }
+
+        if (view.AID != m_MusicAreaID) {
+            //std::cout << "change to: " << smb::ToString(view.AID) << std::endl;
+            smb::MusicTrack t;
+            if (smb::AreaIDMusic(view.AID, &t)) {
+                StartMusic(t);
+                m_MusicAreaID = view.AID;
+                m_PlayedEndThing = false;
+                m_PlayedVictory = false;
+            }
+        } else {
+            uint32_t target_player = m_Competition->CombinedView.PlayerID;
+            auto it = m_PlayerToMusic.find(target_player);
+            if (it != m_PlayerToMusic.end() &&
+                    it->second == smb::MusicTrack::END_OF_LEVEL) {
+                if (m_CurrentMusic != smb::MusicTrack::END_OF_LEVEL) {
+                    //std::cout << "end of level" << std::endl;
+                    if (!m_PlayedEndThing) {
+                        StartMusic(smb::MusicTrack::END_OF_LEVEL);
+                        m_PlayedEndThing = true;
+                    }
+                }
+            }
+            if (it != m_PlayerToMusic.end() &&
+                    it->second == smb::MusicTrack::END_OF_CASTLE) {
+                if (m_CurrentMusic != smb::MusicTrack::END_OF_CASTLE) {
+                    //std::cout << "end of castle" << std::endl;
+                    if (!m_PlayedEndThing) {
+                        StartMusic(smb::MusicTrack::END_OF_CASTLE);
+                        m_PlayedEndThing = true;
+                    }
+                }
+            }
+            if (it != m_PlayerToMusic.end() &&
+                    it->second == smb::MusicTrack::VICTORY) {
+                if (m_CurrentMusic != smb::MusicTrack::VICTORY) {
+                    //std::cout << "victory" << std::endl;
+                    if (!m_PlayedVictory) {
+                        StartMusic(smb::MusicTrack::VICTORY);
+                        m_PlayedVictory = true;
+                    }
+                }
+            }
+        }
+    }
 
 
 
@@ -8130,7 +8192,6 @@ void SMBCompSoundComponent::NoteOutput(const SMBCompPlayer& player, SMBMessagePr
 {
     //std::cout << player.Names.ShortName << std::endl;
     if (out->ConsolePoweredOn == false) {
-        std::cout << player.Names.ShortName << "silence" << std::endl;
         m_PlayerToMusic[player.UniquePlayerID] = smb::MusicTrack::SILENCE;
         return;
     }
@@ -8140,13 +8201,15 @@ void SMBCompSoundComponent::NoteOutput(const SMBCompPlayer& player, SMBMessagePr
     }
 
     if (out->Frame.AreaMusicQueue) {
-        std::cout << player.Names.ShortName << "hello?" << std::endl;
         m_PlayerToMusic[player.UniquePlayerID] = ToMusic('a', out->Frame.AreaMusicQueue);
         //std::cout << player.Names.ShortName << " " << static_cast<int>(out->Frame.IntervalTimerControl) << "AreaMusicQueue: " << static_cast<int>(out->Frame.AreaMusicQueue) << std::endl;
     }
     if (out->Frame.EventMusicQueue) {
-        std::cout << player.Names.ShortName << "hello2" << std::endl;
-        m_PlayerToMusic[player.UniquePlayerID] = ToMusic('e', out->Frame.EventMusicQueue);
+        auto mus = ToMusic('e', out->Frame.EventMusicQueue);
+        if (mus == smb::MusicTrack::DEATH_MUSIC) {
+            PlaySoundEffect(player.UniquePlayerID, smb::SoundEffect::DEATH_SOUND);
+        }
+        m_PlayerToMusic[player.UniquePlayerID] = mus;
         //std::cout << player.Names.ShortName << " " << static_cast<int>(out->Frame.IntervalTimerControl) << "EventMusicQueue: " << static_cast<int>(out->Frame.EventMusicQueue) << std::endl;
     }
 
@@ -8207,6 +8270,7 @@ void SMBCompSoundComponent::NoteOutput(const SMBCompPlayer& player, SMBMessagePr
 
 void SMBCompSoundComponent::DoControls()
 {
+    ImGui::Checkbox("auto music", &m_AutoMusic);
     rgmui::TextFmt("{}", ToString(m_CurrentMusic));
 
     int vol = Mix_MasterVolume(-1);
@@ -8256,10 +8320,12 @@ void SMBCompSoundComponent::DoControls()
 
     if (ImGui::CollapsingHeader("music")) {
         if (ImGui::Button("Mix_HaltMusic()")) {
+            m_AutoMusic = false;
             Mix_HaltMusic();
         }
         for (auto & [track, mus] : m_Competition->StaticData.Sounds.Musics) {
             if (ImGui::Button(smb::ToString(track).c_str())) {
+                m_AutoMusic = false;
                 Mix_HaltMusic();
                 Mix_PlayMusic(mus->Music, 0);
             }
@@ -9665,7 +9731,7 @@ RecRecordingsComponent::RecRecordingsComponent(argos::RuntimeConfig* config, Rec
     , m_Database(db)
     , m_SMBDatabase(config->ArgosPathTo("smb.db"))
     //, m_ReplayStartTime(1667673985)
-    , m_ReplayStartTime(1688620844)
+    , m_ReplayStartTime(1688620861)
     , m_InCount(0)
     , m_Context(2)
     , m_TimesWithStuffIndex(0)

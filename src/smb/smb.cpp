@@ -159,6 +159,53 @@ bool argos::smb::AreaIDEnd(AreaID area_id, int* end) {
     return false;
 }
 
+bool argos::smb::AreaIDMusic(AreaID area_id, MusicTrack* track) {
+    static std::unordered_map<smb::AreaID, MusicTrack> s_KnownMusic = {
+        {smb::AreaID::WATER_AREA_1        , smb::MusicTrack::WATER},
+        {smb::AreaID::WATER_AREA_2        , smb::MusicTrack::WATER},
+        {smb::AreaID::WATER_AREA_3        , smb::MusicTrack::WATER},
+        {smb::AreaID::GROUND_AREA_1       , smb::MusicTrack::GROUND},
+        {smb::AreaID::GROUND_AREA_2       , smb::MusicTrack::GROUND},
+        {smb::AreaID::GROUND_AREA_3       , smb::MusicTrack::GROUND},
+        {smb::AreaID::GROUND_AREA_4       , smb::MusicTrack::GROUND},
+        {smb::AreaID::GROUND_AREA_5       , smb::MusicTrack::GROUND},
+        {smb::AreaID::GROUND_AREA_6       , smb::MusicTrack::GROUND},
+        {smb::AreaID::GROUND_AREA_7       , smb::MusicTrack::GROUND},
+        {smb::AreaID::GROUND_AREA_8       , smb::MusicTrack::GROUND},
+        {smb::AreaID::GROUND_AREA_9       , smb::MusicTrack::GROUND},
+        {smb::AreaID::GROUND_AREA_10      , smb::MusicTrack::PIPE_INTRO},
+        {smb::AreaID::GROUND_AREA_11      , smb::MusicTrack::GROUND},
+        {smb::AreaID::GROUND_AREA_12      , smb::MusicTrack::CLOUD},
+        {smb::AreaID::GROUND_AREA_13      , smb::MusicTrack::GROUND},
+        {smb::AreaID::GROUND_AREA_14      , smb::MusicTrack::GROUND},
+        {smb::AreaID::GROUND_AREA_15      , smb::MusicTrack::GROUND},
+        {smb::AreaID::GROUND_AREA_16      , smb::MusicTrack::GROUND},
+        {smb::AreaID::GROUND_AREA_17      , smb::MusicTrack::GROUND},
+        {smb::AreaID::GROUND_AREA_18      , smb::MusicTrack::GROUND},
+        {smb::AreaID::GROUND_AREA_19      , smb::MusicTrack::GROUND},
+        {smb::AreaID::GROUND_AREA_20      , smb::MusicTrack::GROUND},
+        {smb::AreaID::GROUND_AREA_21      , smb::MusicTrack::CLOUD},
+        {smb::AreaID::GROUND_AREA_22      , smb::MusicTrack::GROUND},
+        {smb::AreaID::UNDERGROUND_AREA_1  , smb::MusicTrack::UNDERGROUND},
+        {smb::AreaID::UNDERGROUND_AREA_2  , smb::MusicTrack::UNDERGROUND},
+        {smb::AreaID::UNDERGROUND_AREA_3  , smb::MusicTrack::UNDERGROUND},
+        {smb::AreaID::CASTLE_AREA_1       , smb::MusicTrack::CASTLE},
+        {smb::AreaID::CASTLE_AREA_2       , smb::MusicTrack::CASTLE},
+        {smb::AreaID::CASTLE_AREA_3       , smb::MusicTrack::CASTLE},
+        {smb::AreaID::CASTLE_AREA_4       , smb::MusicTrack::CASTLE},
+        {smb::AreaID::CASTLE_AREA_5       , smb::MusicTrack::CASTLE},
+        {smb::AreaID::CASTLE_AREA_6       , smb::MusicTrack::CASTLE},
+    };
+    auto it = s_KnownMusic.find(area_id);
+    if (it != s_KnownMusic.end()) {
+        if (track) {
+            *track = it->second;
+        }
+        return true;
+    }
+    return false;
+}
+
 const std::vector<SoundEffect>& argos::smb::AudibleSoundEffects()
 {
     static std::vector<SoundEffect> s_Effects = {
@@ -180,6 +227,7 @@ const std::vector<SoundEffect>& argos::smb::AudibleSoundEffects()
         SoundEffect::GRAB_COIN,
         SoundEffect::BOWSER_FLAME,
         SoundEffect::BRICK_SHATTER,
+        SoundEffect::DEATH_SOUND,
     };
     return s_Effects;
 }
@@ -206,6 +254,7 @@ std::string argos::smb::ToString(SoundEffect effect)
         case(SoundEffect::GRAB_COIN): return "SoundEffect::GRAB_COIN";
         case(SoundEffect::BOWSER_FLAME): return "SoundEffect::BOWSER_FLAME";
         case(SoundEffect::BRICK_SHATTER): return "SoundEffect::BRICK_SHATTER";
+        case(SoundEffect::DEATH_SOUND): return "SoundEffect::DEATH_SOUND";
         default: break;
     };
 

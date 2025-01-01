@@ -1855,6 +1855,9 @@ private:
 
     std::unordered_map<uint32_t, smb::MusicTrack> m_PlayerToMusic;
 
+    bool m_AutoMusic;
+    bool m_PlayedEndThing;
+    bool m_PlayedVictory;
     smb::AreaID m_MusicAreaID;
     smb::MusicTrack m_CurrentMusic;
 };

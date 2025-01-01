@@ -654,6 +654,9 @@ bool argos::smb::InitializeSMBDatabase(SMBDatabase* database,
     util::fs::path base(smb_data_path);
 
     for (auto & sound_effect : smb::AudibleSoundEffects()) {
+        if (sound_effect == smb::SoundEffect::DEATH_SOUND) {
+            continue;
+        }
         std::string path = base / util::fs::path(fmt::format("SMB_SOUND_{:06x}.flac",
                 static_cast<uint32_t>(sound_effect)));
         std::cout << "insert sound effect: " << smb::ToString(sound_effect) << " " << path << std::endl;
@@ -670,6 +673,14 @@ bool argos::smb::InitializeSMBDatabase(SMBDatabase* database,
         if (!InsertMusicTrack(database, music_track, path)) {
             std::cerr << "Failed adding music track?\n";
             return false;
+        }
+        if (music_track == smb::MusicTrack::DEATH_MUSIC) {
+            auto sound_effect = smb::SoundEffect::DEATH_SOUND;
+            std::cout << "insert sound effect: " << smb::ToString(sound_effect) << " " << path << std::endl;
+            if (!InsertSoundEffect(database, sound_effect, path)) {
+                std::cerr << "Failed adding sound effect?\n";
+                return false;
+            }
         }
     }
 

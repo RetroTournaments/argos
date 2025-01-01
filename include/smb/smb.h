@@ -114,8 +114,6 @@ enum class AreaID : uint16_t
 const std::vector<AreaID>& KnownAreaIDs();
 AreaID AreaIDFromRAM(uint8_t area_data_low, uint8_t area_data_high);
 std::string ToString(AreaID area_id);
-// TODO bruh
-bool AreaIDEnd(AreaID area_id, int* end);
 
 // Sound effects
 //  From queues (SQUARE1_SOUND_QUEUE, SQUARE2_SOUND_QUEUE, NOISE_SOUND_QUEUE, PAUSE_SOUND_QUEUE)
@@ -143,6 +141,8 @@ enum class SoundEffect : uint32_t
 
     BOWSER_FLAME        = 0b00000000100000000000000000000000,
     BRICK_SHATTER       = 0b00000000010000000000000000000000,
+
+    DEATH_SOUND         = 0b00000001000000000000000000000000,
 };
 const std::vector<SoundEffect>& AudibleSoundEffects();
 std::string ToString(SoundEffect effect);
@@ -173,6 +173,11 @@ enum class MusicTrack : uint32_t
 };
 const std::vector<MusicTrack>& AudibleMusicTracks();
 std::string ToString(MusicTrack track);
+
+// TODO bruh
+bool AreaIDEnd(AreaID area_id, int* end);
+bool AreaIDMusic(AreaID area_id, MusicTrack* track);
+
 
 // Game end state
 //  OPER_MODE == 2, OPER_MODE_TASK == 0x00, PLAYER_X_SPEED == 0x18
