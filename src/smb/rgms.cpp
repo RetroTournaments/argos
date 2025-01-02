@@ -529,6 +529,7 @@ bool SMBMessageProcessor::OnMessage(const internesceptor::MessageParseInfo& mess
     if ((t == internesceptor::MessageType::CONTROLLER_INFO && m_NESState.ControllerState.Latch == 0) ||
         (t == internesceptor::MessageType::RST_LOW)) {
         m_Output.Elapsed = elapsed;
+        m_Output.ConstructionTime = util::Now();
         SetOutputFromNESMessageState(m_NESState, &m_Output, m_BackgroundNametables, m_SoundQueues);
         m_SoundQueues.fill(0x00);
         if (m_Output.ConsolePoweredOn && m_Output.M2Count == m_LastOutM2) {
@@ -897,7 +898,6 @@ void SMBSerialProcessorThread::GetInfo(SMBSerialProcessorThreadInfo* info)
 void SMBSerialProcessorThread::SerialThread()
 {
     while (!m_ShouldStop) {
-        //t_SerialPort.SetLatency(m_Latency);
         size_t read = t_SerialPort.Read(t_Buffer.data(), t_Buffer.size());
         if (read) {
             int64_t elapsed = util::ElapsedMillisFrom(t_RecStart);
@@ -914,8 +914,8 @@ void SMBSerialProcessorThread::SerialThread()
 
             if (obtainedNewOutput) {
                 std::lock_guard<std::mutex> lock(m_OutputMutex);
-                m_OutputLatest = t_SerialProcessor.GetLatestProcessorOutput();
                 while (auto p = t_SerialProcessor.GetNextProcessorOutput()) {
+                    m_OutputLatest.push_back(p);
                     m_OutputNext.push_back(p);
                 }
             }
@@ -936,7 +936,13 @@ void SMBSerialProcessorThread::SerialThread()
 SMBMessageProcessorOutputPtr SMBSerialProcessorThread::GetLatestProcessorOutput()
 {
     std::lock_guard<std::mutex> lock(m_OutputMutex);
-    return m_OutputLatest;
+    if (m_OutputLatest.empty()) {
+        return nullptr;
+    }
+    auto p = m_OutputLatest.back();
+    m_OutputLatest.front() = p;
+    m_OutputLatest.resize(1);
+    return p;
 }
 
 SMBMessageProcessorOutputPtr SMBSerialProcessorThread::GetNextProcessorOutput()
@@ -1213,12 +1219,6 @@ void SMBSerialRecording::GetAllOutputs(std::vector<SMBMessageProcessorOutputPtr>
     //    }
     //}
 }
-
-void SMBSerialProcessorThread::SetLatency(int millis)
-{
-    m_Latency = std::max(millis, 0);
-}
-
 
 template <typename T>
 size_t out_t(uint8_t* to, const T& v)
@@ -1551,6 +1551,7 @@ void SMBZMQContext::pump()
         if (it != m_p2_to_tag.end()) {
             size_t tag = it->second;
             auto p = BytesToOutput(reinterpret_cast<const uint8_t*>(recv_msgs[2].data()), recv_msgs[2].size());
+            p->ConstructionTime = util::Now();
             m_lasts[tag] = p;
             m_decks[tag].push_back(p);
         }
@@ -1918,6 +1919,8 @@ void argos::rgms::InitializeSMBCompCombinedViewInfo(SMBCompCombinedViewInfo* vie
     view->AID = smb::AreaID::GROUND_AREA_6;
     view->APX = 0;
     view->Width = 1024;
+    view->World = 1;
+    view->Level = 1;
     view->NamesVisible = true;
 }
 
@@ -2871,6 +2874,7 @@ void SMBCompPlayerWindow::DoSerialControls(const SMBCompPlayer* player, SMBCompF
 
         if (ImGui::Button("close")) {
             feed->MySMBSerialProcessorThread.reset();
+            feed->MyLatencySource.reset();
             feed->Source = nullptr;
         }
     }
@@ -3211,6 +3215,8 @@ void argos::rgms::StepCombinedView(SMBComp* comp, SMBCompCombinedViewInfo* view)
         view->Width = WIDTH;
 
         view->APX = out->Frame.APX - (WIDTH-256)/2 - 64;
+        view->World = out->Frame.World;
+        view->Level = out->Frame.Level;
         view->APX = std::max(view->APX, 0);
 
         int end = 0;
@@ -3737,6 +3743,7 @@ SMBCompMinimapViewComponent::SMBCompMinimapViewComponent(argos::RuntimeConfig* i
     : ISMBCompSingleWindowComponent("Minimap", "minimap", true)
     , m_Info(info)
     , m_Competition(comp)
+    , m_DrawRects(true)
 {
 }
 
@@ -3749,6 +3756,8 @@ void SMBCompMinimapViewComponent::DoMinimapEditControls()
     SMBCompMinimap* minimap = &m_Competition->Minimap;
     const auto& route = m_Competition->StaticData.Categories.Routes.at(
         m_Competition->Config.Tournament.Category);
+
+    //ImGui::Checkbox("draw rects", &m_DrawRects);
 
     if (rgmui::SliderIntExt("x", &minimap->LeftX, 0, route->TotalWidth() - minimap->Width)) {
         minimap->FollowMethod = MinimapFollowMethod::FOLLOW_NONE;
@@ -4033,6 +4042,19 @@ void SMBCompMinimapViewComponent::DoControls()
     }
 
     cv::Mat m(ppux.GetHeight(), ppux.GetWidth(), CV_8UC3, ppux.GetBGROut());
+    if (m_DrawRects) {
+        // nope
+        //auto& view = m_Competition->CombinedView;
+        //int left, right;
+        //if (route->InCategory(view.AID, view.APX, view.World, view.Level, &left, nullptr)) {
+        //    cv::line(m, cv::Point(left, 0), cv::Point(left, m.rows), cv::Scalar(0, 0, 0), 1);
+        //}
+        //if (route->InCategory(view.AID, view.APX + view.Width, view.World, view.Level, &right, nullptr)) {
+        //    cv::line(m, cv::Point(right, 0), cv::Point(right, m.rows), cv::Scalar(0, 0, 0), 1);
+        //}
+
+    }
+
     rgmui::Mat("minimap", m);
 
     if (minimap->FollowMethod != MinimapFollowMethod::FOLLOW_NONE) {
@@ -4132,6 +4154,7 @@ void argos::rgms::StepSMBCompPlayerTimings(SMBCompPlayerTimings* timings, SMBMes
                 (out->Frame.Time <= 400 && out->Frame.Time >= 399)) {
 
                 timings->State = TimingState::RUNNING;
+                timings->StartedAt = util::Now();
                 timings->SplitM2s = {out->M2Count};
                 timings->SplitPageM2s = {{out->M2Count}};
             }
@@ -4739,6 +4762,7 @@ SMBCompApp::SMBCompApp(argos::RuntimeConfig* info)
 //    , m_CompFixedOverlay(info, &m_Competition)
 //    , m_CompTxtDisplay(info, &m_Competition)
     , m_CompTournamentComponent(info, &m_Competition)
+    , m_CompLatencyHandler(info, &m_Competition)
     , m_SharedMemory(nullptr)
     , m_AuxVisibleInPrimary(true)
     , m_AuxVisibleScale(0.24)
@@ -4766,6 +4790,7 @@ SMBCompApp::SMBCompApp(argos::RuntimeConfig* info)
 //    RegisterComponent(&m_CompFixedOverlay);
 //    RegisterComponent(&m_CompTxtDisplay);
     RegisterComponent(&m_CompTournamentComponent);
+    RegisterComponent(&m_CompLatencyHandler);
 
     m_AuxDisplay = cv::Mat::zeros(1080, 1920, CV_8UC3);
 }
@@ -4936,6 +4961,7 @@ bool SMBCompApp::OnFrame()
 //            m_CompFixedOverlay.DoMenuItem();
 //            m_CompTxtDisplay.DoMenuItem();
             m_CompTournamentComponent.DoMenuItem();
+            m_CompLatencyHandler.DoMenuItem();
             bool v = m_AuxVisibleInPrimary;
             if (ImGui::MenuItem("Aux In Primary", NULL, v)) {
                 m_AuxVisibleInPrimary = !m_AuxVisibleInPrimary;
@@ -5090,13 +5116,17 @@ void argos::rgms::InitializeFeedSerialThread(const SMBCompPlayer& player, const 
 
         if (!player.Inputs.Serial.Path.empty() && player.Inputs.Serial.Path[0] == 't') {
             feed->MySMBZMQRef = std::make_unique<rgms::SMBZMQRef>(player.Inputs.Serial.Path, data.Nametables);
-            feed->Source = feed->MySMBZMQRef.get();
+            feed->MyLatencySource = std::make_unique<rgms::LatencySource>(
+                    feed->MySMBZMQRef.get());
+            feed->Source = feed->MyLatencySource.get();
         } else {
             feed->MySMBSerialProcessorThread = std::make_unique<rgms::SMBSerialProcessorThread>(
                     player.Inputs.Serial.Path,
                     data.Nametables,
                     params);
-            feed->Source = feed->MySMBSerialProcessorThread.get();
+            feed->MyLatencySource = std::make_unique<rgms::LatencySource>(
+                    feed->MySMBSerialProcessorThread.get());
+            feed->Source = feed->MyLatencySource.get();
         }
     } catch (std::runtime_error& err) {
         feed->MySMBSerialProcessorThread = nullptr;
@@ -6119,6 +6149,7 @@ void SMBCompCompetitionComponent::DoControls()
                 if (ImGui::Button("close")) {
                     feed->MySMBSerialProcessorThread.reset();
                     feed->MySMBZMQRef.reset();
+                    feed->MyLatencySource.reset();
                     feed->Source = nullptr;
                 }
             }
@@ -6177,6 +6208,7 @@ void SMBCompCompetitionComponent::DoControls()
             SMBCompFeed* feed = GetPlayerFeed(player, &m_Competition->Feeds);
             feed->MySMBSerialProcessorThread.reset();
             feed->MySMBZMQRef.reset();
+            feed->MyLatencySource.reset();
             feed->Source = nullptr;
             feed->ErrorMessage = "";
             InitializeFeedSerialThread(player, m_Competition->StaticData, feed);
@@ -9974,4 +10006,148 @@ void RecRecordingsComponent::OnFrame()
     }
 }
 
+LatencySource::LatencySource(ISMBSerialSource* source)
+    : m_Source(source)
+    , m_Latency(0)
+{
+}
 
+LatencySource::~LatencySource()
+{
+}
+
+int64_t LatencySource::GetLatency()
+{
+    return m_Latency;
+}
+
+void LatencySource::SetLatency(int64_t millis)
+{
+    int64_t zero = 0;
+    m_Latency = std::max(millis, zero);
+}
+
+void LatencySource::Get()
+{
+    while (auto p = m_Source->GetNextProcessorOutput()) {
+        m_OutputLatest.push_back(p);
+        m_OutputNext.push_back(p);
+    }
+}
+
+
+SMBMessageProcessorOutputPtr LatencySource::GetLatestProcessorOutput()
+{
+    Get();
+    if (m_OutputLatest.empty()) {
+        return nullptr;
+    }
+    auto now = util::Now();
+    while (m_OutputLatest.size() > 1) {
+        auto p = m_OutputLatest.front();
+        int64_t el = util::ElapsedMillis(p->ConstructionTime, now);
+        if (el >= m_Latency) {
+            m_OutputLatest.pop_front();
+        } else {
+            break;
+        }
+    }
+    return m_OutputLatest.front();
+}
+
+SMBMessageProcessorOutputPtr LatencySource::GetNextProcessorOutput()
+{
+    Get();
+    if (m_OutputNext.empty()) {
+        return nullptr;
+    }
+    auto p = m_OutputNext.front();
+    auto now = util::Now();
+    if (util::ElapsedMillis(p->ConstructionTime, now) > m_Latency) {
+        m_OutputNext.pop_front();
+        return p;
+    }
+    return nullptr;
+}
+
+
+SMBCompLatencyHandler::SMBCompLatencyHandler(argos::RuntimeConfig* info,
+        SMBComp* comp)
+    : ISMBCompSingleWindowComponent("Latency", "latency", true)
+    , m_Info(info)
+    , m_Comp(comp)
+{
+}
+
+SMBCompLatencyHandler::~SMBCompLatencyHandler()
+{
+}
+
+void SMBCompLatencyHandler::DoControls()
+{
+    if (ImGui::Button("setzero")) {
+        for (auto & player : m_Comp->Config.Players.Players) {
+            SMBCompFeed* feed = GetPlayerFeed(player, &m_Comp->Feeds);
+            if (feed && feed->MyLatencySource) {
+                feed->MyLatencySource->SetLatency(0);
+            }
+        }
+    }
+    if (ImGui::Button("set from timings")) {
+        auto& timings = m_Comp->Tower.Timings;
+
+        bool first = true;
+        util::mclock::time_point latest;
+        for (auto & player : m_Comp->Config.Players.Players) {
+            SMBCompFeed* feed = GetPlayerFeed(player, &m_Comp->Feeds);
+            if (feed && feed->MyLatencySource) {
+                auto it = timings.find(player.UniquePlayerID);
+                if (it != timings.end()) {
+                    auto& these = it->second;
+                    if (first || these.StartedAt > latest) {
+                        latest = these.StartedAt;
+                        first = false;
+                    }
+                }
+            }
+        }
+
+        if (!first) {
+            for (auto & player : m_Comp->Config.Players.Players) {
+                SMBCompFeed* feed = GetPlayerFeed(player, &m_Comp->Feeds);
+                if (feed && feed->MyLatencySource) {
+                    auto it = timings.find(player.UniquePlayerID);
+                    if (it != timings.end()) {
+                        auto& these = it->second;
+                        feed->MyLatencySource->SetLatency(
+                            util::ElapsedMillis(these.StartedAt, latest));
+                        //std::cout << player.Names.ShortName << " " <<
+                        //    util::ElapsedMillis(these.StartedAt, latest) << std::endl;
+                    }
+                }
+            }
+        }
+    }
+
+    for (auto & player : m_Comp->Config.Players.Players) {
+        SMBCompFeed* feed = GetPlayerFeed(player, &m_Comp->Feeds);
+        rgmui::TextFmt("{}", player.Names.ShortName);
+        ImGui::SameLine();
+        ImGui::PushID(player.UniquePlayerID);
+        if (feed) {
+            //std::cout << feed->UniquePlayerID << " " << feed->Source << " " << feed->MyLatencySource << std::endl;
+            if (feed->MyLatencySource) {
+                int64_t latency = feed->MyLatencySource->GetLatency();
+                int l = static_cast<int>(latency);
+                if (rgmui::SliderIntExt(" latency", &l, 0, 1000)) {
+                    feed->MyLatencySource->SetLatency(l);
+                }
+            } else {
+                rgmui::TextFmt("no latency");
+            }
+        } else {
+            rgmui::TextFmt("no feed");
+        }
+        ImGui::PopID();
+    }
+}

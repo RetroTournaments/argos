@@ -260,6 +260,7 @@ struct SMBFrameInfo
 struct SMBMessageProcessorOutput
 {
     int64_t Elapsed;
+    util::mclock::time_point ConstructionTime;
 
     bool ConsolePoweredOn;
 
@@ -372,6 +373,29 @@ public:
     virtual SMBMessageProcessorOutputPtr GetNextProcessorOutput() = 0;
 };
 
+class LatencySource : public ISMBSerialSource
+{
+public:
+    LatencySource(ISMBSerialSource* source);
+    ~LatencySource();
+
+    SMBMessageProcessorOutputPtr GetLatestProcessorOutput() final;
+    SMBMessageProcessorOutputPtr GetNextProcessorOutput() final;
+
+    int64_t GetLatency();
+    void SetLatency(int64_t millis);
+
+private:
+    void Get();
+
+private:
+    ISMBSerialSource* m_Source;
+    int64_t m_Latency;
+
+    std::deque<SMBMessageProcessorOutputPtr> m_OutputLatest;
+    std::deque<SMBMessageProcessorOutputPtr> m_OutputNext;
+};
+
 class SMBSerialProcessorThread : public ISMBSerialSource
 {
 public:
@@ -393,14 +417,13 @@ public:
     void StartRecording(const std::string& recordingPath);
     void StopRecording();
 
-    void SetLatency(int milliseconds);
-
 private:
     void SerialThread();
 
     std::string m_InformationString;
     mutable std::mutex m_OutputMutex;
-    SMBMessageProcessorOutputPtr m_OutputLatest;
+    //SMBMessageProcessorOutputPtr m_OutputLatest;
+    mutable std::deque<SMBMessageProcessorOutputPtr> m_OutputLatest;
     mutable std::deque<SMBMessageProcessorOutputPtr> m_OutputNext;
 
     std::atomic<bool> m_IsRecording;
@@ -1225,6 +1248,7 @@ struct SMBCompFeed
 //    std::unique_ptr<video::LiveVideoThread> LiveVideoThread;
     ISMBSerialSource* Source;
 
+    std::unique_ptr<LatencySource> MyLatencySource;
     std::unique_ptr<SMBSerialProcessorThread> MySMBSerialProcessorThread;
     std::unique_ptr<SMBZMQRef> MySMBZMQRef;
     std::unique_ptr<SMBSerialRecording> MySMBSerialRecording;
@@ -1338,6 +1362,7 @@ enum class TimingState
 struct SMBCompPlayerTimings
 {
     TimingState State;
+    util::mclock::time_point StartedAt;
     std::vector<uint64_t> SplitM2s;
     std::vector<std::vector<uint64_t>> SplitPageM2s;
 };
@@ -1404,6 +1429,8 @@ struct SMBCompCombinedViewInfo
     ViewType Type;
 
     argos::smb::AreaID AID;
+    int World;
+    int Level;
     int APX;
     int Width;
     nes::FramePalette FramePalette;
@@ -1608,6 +1635,7 @@ private:
 private:
     argos::RuntimeConfig* m_Info;
     SMBComp* m_Competition;
+    bool m_DrawRects;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1955,6 +1983,19 @@ private:
     cv::Mat m_Mat;
 };
 
+class SMBCompLatencyHandler : public ISMBCompSingleWindowComponent
+{
+public:
+    SMBCompLatencyHandler(argos::RuntimeConfig* info, SMBComp* comp);
+    ~SMBCompLatencyHandler();
+
+    virtual void DoControls() override final;
+
+private:
+    argos::RuntimeConfig* m_Info;
+    SMBComp* m_Comp;
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 
 #define SHARED_MEM_SIZE 6220900
@@ -2009,6 +2050,7 @@ private:
     //SMBCompFixedOverlay m_CompFixedOverlay;
     //SMBCompTxtDisplay m_CompTxtDisplay;
     SMBCompTournamentComponent m_CompTournamentComponent;
+    SMBCompLatencyHandler m_CompLatencyHandler;
 };
 
 class SMBCompAppAux : public rgmui::IApplication
