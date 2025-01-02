@@ -3414,9 +3414,6 @@ void SMBCompCombinedViewComponent::MakeImage(SMBComp* comp, nes::PPUx* ppux, SMB
         cv::Mat m(h, w, CV_8UC3, ppux->GetBGROut());
         m.convertTo(numer, CV_32FC3, 1/255.0f);
 
-
-
-
         struct OtherPlayerInfo {
             int Offset;
             SMBMessageProcessorOutputPtr Out;
@@ -5053,6 +5050,17 @@ bool SMBCompApp::OnFrame()
         } else if (m_AuxDisplayType == 2) {
 //            m_CompTxtDisplay.DoDisplay(m_AuxDisplay);
         } else if (m_AuxDisplayType == 3) {
+        }
+
+        { // draw my name..
+            nes::PPUx ppux2(m_AuxDisplay.cols, m_AuxDisplay.rows, m_AuxDisplay.data,
+                    nes::PPUxPriorityStatus::ENABLED);
+            std::array<uint8_t, 4> tpal = {0x00, nes::PALETTE_ENTRY_WHITE, 0x20, 0x20};
+            nes::EffectInfo effects = nes::EffectInfo::Defaults();
+            nes::RenderInfo render = DefaultSMBCompRenderInfo(m_Competition);
+            ppux2.RenderString(1920 / 2 - 25 * 8, 840-20, "youtube.com/flibidydibidy",
+                    m_Competition.StaticData.Font.data(), tpal.data(), render.PaletteBGR, 2,
+                    effects);
         }
 
         if (!m_CompReplayComponent.DoReplay(m_AuxDisplay))
