@@ -6333,7 +6333,7 @@ void SMBCompCompetitionComponent::DoControls()
             0x0f, 0x16, 0x30, 0x27,
             0x0f, 0x0f, 0x0f, 0x0f,
         };
-        m_Competition->SetToOverlay = true;
+        //m_Competition->SetToOverlay = true;
     }
 
 }
