@@ -2,35 +2,35 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
 // NES Components in the rgmui style
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ARGOS_NES_NESUI_HEADER
-#define ARGOS_NES_NESUI_HEADER
+#ifndef STATIC_NES_NESUI_HEADER
+#define STATIC_NES_NESUI_HEADER
 
 #include "nes/nes.h"
 #include "nes/nesdb.h"
 #include "rgmui/rgmui.h"
 #include "nes/nestopiaimpl.h"
 
-namespace argos::nesui
+namespace sta::nesui
 {
-    
+
 struct NESPaletteComponentOptions
 {
     bool BGROrder;
@@ -43,7 +43,7 @@ class NESPaletteComponent : public rgmui::IApplicationComponent
 {
 public:
     NESPaletteComponent(const std::string& windowName);
-    NESPaletteComponent(const std::string& windowName, 
+    NESPaletteComponent(const std::string& windowName,
                         NESPaletteComponentOptions options,
                         nes::Palette initialPalette);
     ~NESPaletteComponent();
@@ -162,7 +162,7 @@ struct ControllerGeometry
         float Width;
         float AccentRadius;
         struct {
-            float TY; // 
+            float TY; //
             float Height; // Last one special case
             ImDrawFlags Rounding;
         } Accent[NUM_ACCENTS];
@@ -245,14 +245,14 @@ ImVec2 DrawController(
         nes::ControllerState state,
         const ControllerColors& colors,
         const ControllerGeometry& geometry,
-        float x, float y, float scale, 
+        float x, float y, float scale,
         ImDrawList* list,
         ButtonLocations* buttons);
 ImVec2 DrawDogbone(
         nes::ControllerState state,
         const ControllerColors& colors,
         const DogboneGeometry& geometry,
-        float x, float y, float scale, 
+        float x, float y, float scale,
         ImDrawList* list,
         ButtonLocations* buttons);
 
@@ -374,7 +374,7 @@ struct NESInputsComponentScrollState
 struct NESInputsComponentState
 {
     std::function<void(int frameIndex, nes::ControllerState newState)> OnInputChangeCallback;
-    // 
+    //
     int DraggedFromIndex;
     int DraggedToIndex;
 
@@ -398,7 +398,7 @@ struct NESInputsComponentState
     void BeginButtonDrag(int inputIndex, uint8_t button, nes::ControllerState origState);
     void BeginInputRowDrag(int inputIndex, nes::ControllerState origState);
     bool DragTo(int inputIndex, std::vector<nes::ControllerState>* inputs);
-    bool EndDrag(std::vector<nes::ControllerState>* inputs); 
+    bool EndDrag(std::vector<nes::ControllerState>* inputs);
 
     bool HighlightButton(int inputIndex, uint8_t button, bool isHovered);
     bool HighlightInputRow(int inputIndex, bool isHovered);
@@ -409,7 +409,7 @@ struct NESInputsComponentState
 class NESInputsComponent : public rgmui::IApplicationComponent
 {
 public:
-    NESInputsComponent(const std::string& windowName, 
+    NESInputsComponent(const std::string& windowName,
             NESInputsComponentOptions options = NESInputsComponentOptions::Defaults());
     ~NESInputsComponent();
 

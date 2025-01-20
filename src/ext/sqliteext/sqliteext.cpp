@@ -2,18 +2,18 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -26,9 +26,9 @@
 #include "util/file.h"
 #include "ext/sqliteext/sqliteext.h"
 
-using namespace argos::sqliteext;
+using namespace sqliteext;
 
-void argos::sqliteext::OpenOrThrow(const std::string& path, sqlite3** database)
+void sqliteext::OpenOrThrow(const std::string& path, sqlite3** database)
 {
     int ret = sqlite3_open(path.c_str(), database);
     if (ret != SQLITE_OK) {
@@ -39,14 +39,14 @@ void argos::sqliteext::OpenOrThrow(const std::string& path, sqlite3** database)
     }
 }
 
-void argos::sqliteext::PrepareOrThrow(sqlite3* db, const std::string& query, sqlite3_stmt** stmt)
+void sqliteext::PrepareOrThrow(sqlite3* db, const std::string& query, sqlite3_stmt** stmt)
 {
     if (sqlite3_prepare_v2(db, query.c_str(), -1, stmt, nullptr) != SQLITE_OK) {
         throw std::runtime_error("Error preparing statement: " + std::string(sqlite3_errmsg(db)));
     }
 }
 
-void argos::sqliteext::BindIntOrThrow(sqlite3_stmt* stmt, int pos, int value)
+void sqliteext::BindIntOrThrow(sqlite3_stmt* stmt, int pos, int value)
 {
     if (sqlite3_bind_int(stmt, pos, value)) {
         sqlite3* db = sqlite3_db_handle(stmt);
@@ -54,7 +54,7 @@ void argos::sqliteext::BindIntOrThrow(sqlite3_stmt* stmt, int pos, int value)
     }
 }
 
-void argos::sqliteext::BindInt64OrThrow(sqlite3_stmt* stmt, int pos, int64_t value)
+void sqliteext::BindInt64OrThrow(sqlite3_stmt* stmt, int pos, int64_t value)
 {
     if (sqlite3_bind_int64(stmt, pos, value)) {
         sqlite3* db = sqlite3_db_handle(stmt);
@@ -62,7 +62,7 @@ void argos::sqliteext::BindInt64OrThrow(sqlite3_stmt* stmt, int pos, int64_t val
     }
 }
 
-void argos::sqliteext::BindBlbOrThrow(sqlite3_stmt* stmt, int pos, const void* data, size_t size)
+void sqliteext::BindBlbOrThrow(sqlite3_stmt* stmt, int pos, const void* data, size_t size)
 {
     if (sqlite3_bind_blob(stmt, pos, data, size, SQLITE_STATIC)) {
         sqlite3* db = sqlite3_db_handle(stmt);
@@ -70,7 +70,7 @@ void argos::sqliteext::BindBlbOrThrow(sqlite3_stmt* stmt, int pos, const void* d
     }
 }
 
-void argos::sqliteext::BindStrOrThrow(sqlite3_stmt* stmt, int pos, const std::string& str)
+void sqliteext::BindStrOrThrow(sqlite3_stmt* stmt, int pos, const std::string& str)
 {
     if (sqlite3_bind_text(stmt, pos, str.c_str(), str.size(), SQLITE_TRANSIENT)) {
         sqlite3* db = sqlite3_db_handle(stmt);
@@ -89,7 +89,7 @@ static int MyCallback(void* cback, int argc, char** data, char** columns)
     return 0;
 }
 
-int argos::sqliteext::ExecOrThrow(sqlite3* db, const std::string& query,
+int sqliteext::ExecOrThrow(sqlite3* db, const std::string& query,
         std::function<bool(int argc, char** data, char** columns)> cback)
 {
     char* errmsg = nullptr;
@@ -112,7 +112,7 @@ int argos::sqliteext::ExecOrThrow(sqlite3* db, const std::string& query,
     return sqlite3_changes(db);
 }
 
-bool argos::sqliteext::SimpleSQLitePrint(int argc, char** data, char** columns)
+bool sqliteext::SimpleSQLitePrint(int argc, char** data, char** columns)
 {
     for (int i = 0; i < argc; i++) {
         std::string tdat;
@@ -126,13 +126,13 @@ bool argos::sqliteext::SimpleSQLitePrint(int argc, char** data, char** columns)
     return true;
 }
 
-int argos::sqliteext::ExecPrintOrThrow(sqlite3* db, const std::string& query)
+int sqliteext::ExecPrintOrThrow(sqlite3* db, const std::string& query)
 {
     return ExecOrThrow(db, query, SimpleSQLitePrint);
 }
 
 
-bool argos::sqliteext::ExecForSingleNullableString(sqlite3* db, const std::string& query, std::string* str)
+bool sqliteext::ExecForSingleNullableString(sqlite3* db, const std::string& query, std::string* str)
 {
     std::string v;
     bool fnd = false;
@@ -158,7 +158,7 @@ bool argos::sqliteext::ExecForSingleNullableString(sqlite3* db, const std::strin
     return fnd;
 }
 
-std::string argos::sqliteext::ExecForSingleString(sqlite3* db, const std::string& query)
+std::string sqliteext::ExecForSingleString(sqlite3* db, const std::string& query)
 {
     std::string str;
     if (!ExecForSingleNullableString(db, query, &str)) {
@@ -169,13 +169,13 @@ std::string argos::sqliteext::ExecForSingleString(sqlite3* db, const std::string
     return str;
 }
 
-int argos::sqliteext::ExecForSingleInt(sqlite3* db, const std::string& query)
+int sqliteext::ExecForSingleInt(sqlite3* db, const std::string& query)
 {
     std::string v = ExecForSingleString(db, query);
     return std::stoi(v);
 }
 
-bool argos::sqliteext::ExecForSingleNullableInt(sqlite3* db, const std::string& query, int* v)
+bool sqliteext::ExecForSingleNullableInt(sqlite3* db, const std::string& query, int* v)
 {
     std::string str;
     if (ExecForSingleNullableString(db, query, &str)) {
@@ -187,7 +187,7 @@ bool argos::sqliteext::ExecForSingleNullableInt(sqlite3* db, const std::string& 
     return false;
 }
 
-void argos::sqliteext::StepAndFinalizeOrThrow(sqlite3_stmt* stmt)
+void sqliteext::StepAndFinalizeOrThrow(sqlite3_stmt* stmt)
 {
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         sqlite3* db = sqlite3_db_handle(stmt);
@@ -196,7 +196,7 @@ void argos::sqliteext::StepAndFinalizeOrThrow(sqlite3_stmt* stmt)
     sqlite3_finalize(stmt);
 }
 
-std::string argos::sqliteext::column_str(sqlite3_stmt* stmt, int column)
+std::string sqliteext::column_str(sqlite3_stmt* stmt, int column)
 {
     // TODO error handling?
     const char* p = reinterpret_cast<const char*>(sqlite3_column_text(stmt, column));
@@ -206,7 +206,7 @@ std::string argos::sqliteext::column_str(sqlite3_stmt* stmt, int column)
     return std::string(p);
 }
 
-uint8_t argos::sqliteext::column_uint8_t(sqlite3_stmt* stmt, int column)
+uint8_t sqliteext::column_uint8_t(sqlite3_stmt* stmt, int column)
 {
     int v = sqlite3_column_int(stmt, column);
     if (v < 0 || v >= 256) {
@@ -259,7 +259,7 @@ int SQLiteExtDB::ExecOrThrow(const std::string& query,
 
 int SQLiteExtDB::ExecFileOrThrow(const std::string& path)
 {
-    std::string contents = util::ReadFileToString(path);
+    std::string contents = sta::util::ReadFileToString(path);
     return ExecOrThrow(contents);
 }
 

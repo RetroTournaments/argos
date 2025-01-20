@@ -2,18 +2,18 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -22,13 +22,13 @@
 // The database provides a centralized location for all auxiliary data in one
 // single structured file. Consider: 'https://www.sqlite.org/appfileformat.html'
 
-#ifndef ARGOS_GAME_GAMEDB_HEADER
-#define ARGOS_GAME_GAMEDB_HEADER
+#ifndef STATIC_GAME_GAMEDB_HEADER
+#define STATIC_GAME_GAMEDB_HEADER
 
 #include "ext/sqliteext/sqliteext.h"
 #include "ext/opencvext/opencvext.h"
 
-namespace argos::game
+namespace sta::game
 {
 
 class GameDatabase : public sqliteext::SQLiteExtDB
@@ -37,7 +37,7 @@ public:
     GameDatabase(const std::string& path);
     ~GameDatabase();
 
-    // Basic persistent key value storage for the simple data types 
+    // Basic persistent key value storage for the simple data types
     // (throws on unknown key), stored in kv_int
     int GetInt(const char* key);
     int GetInt(const char* key, int default_value);

@@ -2,18 +2,18 @@
 //
 // Copyright (C) 2024 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -46,11 +46,11 @@
 #include "util/string.h"
 #include "util/lerp.h"
 
-using namespace argos::internesceptor;
-using namespace argos::rgms;
-using namespace argos;
+using namespace sta::internesceptor;
+using namespace sta::rgms;
+using namespace sta;
 
-bool argos::internesceptor::IsMessageParseError(MessageParseStatus status)
+bool sta::internesceptor::IsMessageParseError(MessageParseStatus status)
 {
     if (status == MessageParseStatus::WARNING_BYTE_IGNORED_WAITING ||
         status == MessageParseStatus::AGAIN ||
@@ -60,7 +60,7 @@ bool argos::internesceptor::IsMessageParseError(MessageParseStatus status)
     return true;
 }
 
-void argos::internesceptor::DebugPrintMessage(const MessageParseInfo& message, std::ostream& os)
+void sta::internesceptor::DebugPrintMessage(const MessageParseInfo& message, std::ostream& os)
 {
     auto OutByte = [&](uint8_t byte) {
         os << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(byte);
@@ -109,7 +109,7 @@ MessageParseInfo MessageParseInfo::InitialState()
     return message;
 }
 
-MessageParseStatus argos::internesceptor::ProgressMessageParse(MessageParseInfo* message, uint8_t nextByte)
+MessageParseStatus sta::internesceptor::ProgressMessageParse(MessageParseInfo* message, uint8_t nextByte)
 {
     switch (message->state) {
         case MessageParseState::WAITING_FOR_TYPE_BYTE: {
@@ -229,7 +229,7 @@ static void TestProgressMessageParse()
     TestProgressMessageParse4();
 }
 
-void argos::internesceptor::ExtractRamWrite(const MessageParseInfo& message, RamWrite* write)
+void sta::internesceptor::ExtractRamWrite(const MessageParseInfo& message, RamWrite* write)
 {
     if (!write) return;
 
@@ -244,7 +244,7 @@ RAMMessageState RAMMessageState::InitialState()
     return r;
 }
 
-void argos::internesceptor::ProcessMessage(const MessageParseInfo& message, RAMMessageState* ram)
+void sta::internesceptor::ProcessMessage(const MessageParseInfo& message, RAMMessageState* ram)
 {
     auto t = static_cast<MessageType>(message.type);
     if (t != MessageType::RAM_WRITE) {
@@ -275,7 +275,7 @@ PPUMessageState PPUMessageState::InitialState()
     return s;
 }
 
-void argos::internesceptor::ProcessMessage(const MessageParseInfo& message, PPUMessageState* ppu)
+void sta::internesceptor::ProcessMessage(const MessageParseInfo& message, PPUMessageState* ppu)
 {
     auto t = static_cast<MessageType>(message.type);
     switch (t) {
@@ -325,7 +325,7 @@ void argos::internesceptor::ProcessMessage(const MessageParseInfo& message, PPUM
         }
         case MessageType::PPU_DATA_WRITE: {
             if (ppu->PPUAddress >= 0x3F00 && ppu->PPUAddress <= 0x3FFF) {
-                uint16_t a = (ppu->PPUAddress - 0x3F00) % argos::nes::FRAMEPALETTE_SIZE;
+                uint16_t a = (ppu->PPUAddress - 0x3F00) % sta::nes::FRAMEPALETTE_SIZE;
                 ppu->PPUFramePalette[a] = message.data[0];
                 if ((a % 4) == 0) {
                     if (a >= 0x0f) {
@@ -388,7 +388,7 @@ void argos::internesceptor::ProcessMessage(const MessageParseInfo& message, PPUM
 
     //if (message.data[1] == 0x07) {
     //    if (ppu->PPUAddress >= 0x3F00 && ppu->PPUAddress <= 0x3FFF) {
-    //        uint16_t a = (ppu->PPUAddress - 0x3F00) % argos::nes::FRAMEPALETTE_SIZE;
+    //        uint16_t a = (ppu->PPUAddress - 0x3F00) % sta::nes::FRAMEPALETTE_SIZE;
     //        ppu->PPUFramePalette[a] = message.data[0];
     //        if ((a % 4) == 0) {
     //            if (a >= 0x0f) {
@@ -429,7 +429,7 @@ ControllerMessageState ControllerMessageState::InitialState()
     return cont;
 }
 
-void argos::internesceptor::ProcessMessage(const MessageParseInfo& message, ControllerMessageState* controller)
+void sta::internesceptor::ProcessMessage(const MessageParseInfo& message, ControllerMessageState* controller)
 {
     auto t = static_cast<MessageType>(message.type);
     if (t != MessageType::CONTROLLER_INFO) {
@@ -462,7 +462,7 @@ NESMessageState NESMessageState::InitialState()
     return nm;
 }
 
-void argos::internesceptor::ProcessMessage(const MessageParseInfo& message, NESMessageState* nes)
+void sta::internesceptor::ProcessMessage(const MessageParseInfo& message, NESMessageState* nes)
 {
     auto t = static_cast<MessageType>(message.type);
     if (t == MessageType::RST_LOW) {
@@ -549,11 +549,11 @@ SMBMessageProcessorOutputPtr SMBMessageProcessor::GetLatestProcessorOutput() con
     return std::make_shared<SMBMessageProcessorOutput>(m_Output);
 }
 
-void argos::rgms::ClearSMBMessageProcessorOutput(SMBMessageProcessorOutput* output)
+void sta::rgms::ClearSMBMessageProcessorOutput(SMBMessageProcessorOutput* output)
 {
     output->ConsolePoweredOn = false;
     output->M2Count = 0x0000;
-    output->Frame.AID = static_cast<argos::smb::AreaID>(0xffff);
+    output->Frame.AID = static_cast<sta::smb::AreaID>(0xffff);
     output->Frame.PrevAPX = -1;
     output->Frame.APX = -1;
     output->Frame.OAMX.clear();
@@ -579,10 +579,10 @@ void argos::rgms::ClearSMBMessageProcessorOutput(SMBMessageProcessorOutput* outp
     std::fill(output->FramePalette.begin(), output->FramePalette.end(), 0x00);
 }
 
-int argos::rgms::AreaPointerXFromData(uint8_t screenedge_pageloc, uint8_t screenedge_x_pos, argos::smb::AreaID aid, uint8_t block_buffer_84_disc)
+int sta::rgms::AreaPointerXFromData(uint8_t screenedge_pageloc, uint8_t screenedge_x_pos, sta::smb::AreaID aid, uint8_t block_buffer_84_disc)
 {
     int apx = 256 * static_cast<int>(screenedge_pageloc) + static_cast<int>(screenedge_x_pos);
-    if (apx < 512 && aid == argos::smb::AreaID::CASTLE_AREA_6 && block_buffer_84_disc != 0x00) { // #BIG YIKES
+    if (apx < 512 && aid == sta::smb::AreaID::CASTLE_AREA_6 && block_buffer_84_disc != 0x00) { // #BIG YIKES
         apx += 1024;
     }
     return apx;
@@ -602,7 +602,7 @@ void SMBMessageProcessor::SetOutputFromNESMessageState(const internesceptor::NES
     output->Controller = nes.ControllerState.State;
     output->FramePalette = nes.PPUState.PPUFramePalette;
 
-    argos::smb::AreaID aid = smb::AreaIDFromRAM(
+    sta::smb::AreaID aid = smb::AreaIDFromRAM(
             nes.RamState.Ram[smb::RamAddress::AREA_DATA_LOW],
             nes.RamState.Ram[smb::RamAddress::AREA_DATA_HIGH]);
     int apx = rgms::AreaPointerXFromData(
@@ -651,7 +651,7 @@ void SMBMessageProcessor::SetOutputFromNESMessageState(const internesceptor::NES
     output->Frame.NTDiffs.clear();
     output->Frame.TopRows.clear();
     if (backgroundNametables) {
-        std::array<const argos::smb::db::nametable_page*, 2> nts = {nullptr, nullptr};
+        std::array<const sta::smb::db::nametable_page*, 2> nts = {nullptr, nullptr};
         nts[0] = backgroundNametables->MaybeGetNametable(aid, lpage);
         nts[1] = backgroundNametables->MaybeGetNametable(aid, rpage);
 
@@ -1060,7 +1060,7 @@ void SMBSerialRecording::ResetToStartAndPause()
         bool fnd = false;
         while (auto out = m_SerialProcessor.GetNextProcessorOutput()) {
             if (out->ConsolePoweredOn &&
-                out->Frame.AID == argos::smb::AreaID::GROUND_AREA_6 && out->Frame.APX < 15 &&
+                out->Frame.AID == sta::smb::AreaID::GROUND_AREA_6 && out->Frame.APX < 15 &&
                 (out->Frame.Time <= 400 && out->Frame.Time >= 399)) {
 
                 size_t read;
@@ -1197,7 +1197,7 @@ void SMBSerialRecording::GetAllOutputs(std::vector<SMBMessageProcessorOutputPtr>
             out->UserM2 = 0;
             if (waitingForStart &&
                 out->ConsolePoweredOn &&
-                out->Frame.AID == argos::smb::AreaID::GROUND_AREA_6 && out->Frame.APX < 15 &&
+                out->Frame.AID == sta::smb::AreaID::GROUND_AREA_6 && out->Frame.APX < 15 &&
                 (out->Frame.Time <= 400 && out->Frame.Time >= 399)) {
 
                 startM2 = out->M2Count;
@@ -1236,9 +1236,9 @@ size_t in_t(const uint8_t* in, T* v)
     return sizeof(T);
 }
 
-inline constexpr size_t HEADER_SIZE = 4 + sizeof(int64_t) + sizeof(uint64_t) * 2 + sizeof(argos::nes::ControllerState);
-inline constexpr size_t MID_SIZE = sizeof(argos::nes::FramePalette) +
-    sizeof(argos::smb::AreaID) +
+inline constexpr size_t HEADER_SIZE = 4 + sizeof(int64_t) + sizeof(uint64_t) * 2 + sizeof(sta::nes::ControllerState);
+inline constexpr size_t MID_SIZE = sizeof(sta::nes::FramePalette) +
+    sizeof(sta::smb::AreaID) +
     sizeof(int) * 2 +
     sizeof(uint8_t) * 3 +
     sizeof(size_t) * 3 +
@@ -1253,7 +1253,7 @@ inline constexpr size_t NTDIFF_SIZE = sizeof(int) * 2 + sizeof(uint8_t);
 
 
 
-void argos::rgms::OutputToBytes(SMBMessageProcessorOutputPtr ptr, std::vector<uint8_t>* buffer)
+void sta::rgms::OutputToBytes(SMBMessageProcessorOutputPtr ptr, std::vector<uint8_t>* buffer)
 {
     buffer->resize(HEADER_SIZE);
 
@@ -1266,16 +1266,16 @@ void argos::rgms::OutputToBytes(SMBMessageProcessorOutputPtr ptr, std::vector<ui
     v += out_t<int64_t>(&(*buffer)[v], ptr->Elapsed);
     v += out_t<uint64_t>(&(*buffer)[v], ptr->M2Count);
     v += out_t<uint64_t>(&(*buffer)[v], ptr->UserM2);
-    v += out_t<argos::nes::ControllerState>(&(*buffer)[v], ptr->Controller);
+    v += out_t<sta::nes::ControllerState>(&(*buffer)[v], ptr->Controller);
 
     if (ptr->ConsolePoweredOn) {
         buffer->resize(buffer->size() + MID_SIZE);
 
-        for (int i = 0; i < argos::nes::FRAMEPALETTE_SIZE; i++) {
+        for (int i = 0; i < sta::nes::FRAMEPALETTE_SIZE; i++) {
             v += out_t<uint8_t>(&(*buffer)[v], ptr->FramePalette[i]);
         }
 
-        v += out_t<argos::smb::AreaID>(&(*buffer)[v], ptr->Frame.AID);
+        v += out_t<sta::smb::AreaID>(&(*buffer)[v], ptr->Frame.AID);
         v += out_t<int>(&(*buffer)[v], ptr->Frame.PrevAPX);
         v += out_t<int>(&(*buffer)[v], ptr->Frame.APX);
         v += out_t<uint8_t>(&(*buffer)[v], ptr->Frame.GameEngineSubroutine);
@@ -1332,7 +1332,7 @@ void argos::rgms::OutputToBytes(SMBMessageProcessorOutputPtr ptr, std::vector<ui
     }
 }
 
-SMBMessageProcessorOutputPtr argos::rgms::BytesToOutput(const uint8_t* bytes, size_t size)
+SMBMessageProcessorOutputPtr sta::rgms::BytesToOutput(const uint8_t* bytes, size_t size)
 {
     if (size < HEADER_SIZE) {
         std::cout << "bytes to output too small?" << std::endl;
@@ -1351,7 +1351,7 @@ SMBMessageProcessorOutputPtr argos::rgms::BytesToOutput(const uint8_t* bytes, si
     v += in_t<int64_t>(&bytes[v], &p->Elapsed);
     v += in_t<uint64_t>(&bytes[v], &p->M2Count);
     v += in_t<uint64_t>(&bytes[v], &p->UserM2);
-    v += in_t<argos::nes::ControllerState>(&bytes[v], &p->Controller);
+    v += in_t<sta::nes::ControllerState>(&bytes[v], &p->Controller);
 
     if (p->ConsolePoweredOn) {
         if (size < (HEADER_SIZE + MID_SIZE)) {
@@ -1359,11 +1359,11 @@ SMBMessageProcessorOutputPtr argos::rgms::BytesToOutput(const uint8_t* bytes, si
             return nullptr;
         }
 
-        for (int i = 0; i < argos::nes::FRAMEPALETTE_SIZE; i++) {
+        for (int i = 0; i < sta::nes::FRAMEPALETTE_SIZE; i++) {
             v += in_t<uint8_t>(&bytes[v], &p->FramePalette[i]);
         }
 
-        v += in_t<argos::smb::AreaID>(&bytes[v], &p->Frame.AID);
+        v += in_t<sta::smb::AreaID>(&bytes[v], &p->Frame.AID);
         v += in_t<int>(&bytes[v], &p->Frame.PrevAPX);
         v += in_t<int>(&bytes[v], &p->Frame.APX);
         v += in_t<uint8_t>(&bytes[v], &p->Frame.GameEngineSubroutine);
@@ -1428,7 +1428,7 @@ SMBMessageProcessorOutputPtr argos::rgms::BytesToOutput(const uint8_t* bytes, si
     return p;
 }
 
-bool argos::rgms::OutputPtrsEqual(SMBMessageProcessorOutputPtr a, SMBMessageProcessorOutputPtr b)
+bool sta::rgms::OutputPtrsEqual(SMBMessageProcessorOutputPtr a, SMBMessageProcessorOutputPtr b)
 {
     if (!a && !b) return true;
     if (!a || !b) return false;
@@ -1606,15 +1606,15 @@ SMBMessageProcessorOutputPtr SMBZMQRef::GetNextProcessorOutput()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-//static void FromTxt(argos::RuntimeConfig* info, const char* nm, std::string* txt)
+//static void FromTxt(sta::RuntimeConfig* info, const char* nm, std::string* txt)
 //{
-//    std::string path = info->ArgosDirectory + "data/txt/" + std::string(nm) + ".txt";
+//    std::string path = info->StaticDirectory + "data/txt/" + std::string(nm) + ".txt";
 //    *txt = rgms::util::ReadFileToString(path);
 //}
 //
-//static void ToTxt(argos::RuntimeConfig* info, const char* nm, const std::string& txt)
+//static void ToTxt(sta::RuntimeConfig* info, const char* nm, const std::string& txt)
 //{
-//    std::string path = info->ArgosDirectory + "data/txt/" + std::string(nm) + ".txt";
+//    std::string path = info->StaticDirectory + "data/txt/" + std::string(nm) + ".txt";
 //    rgms::util::WriteStringToFile(path, txt);
 //}
 
@@ -1792,7 +1792,7 @@ void ISMBCompSingleWindowComponent::OnFrameAlways()
 ////////////////////////////////////////////////////////////////////////////////
 
 
-void argos::rgms::InitializeSMBCompPlayerInputs(SMBCompPlayerInputs* inputs)
+void sta::rgms::InitializeSMBCompPlayerInputs(SMBCompPlayerInputs* inputs)
 {
     inputs->Video.Path = "/dev/video0";
     inputs->Video.Crop = util::Rect2I(42, 0, 644, 480);
@@ -1806,7 +1806,7 @@ void argos::rgms::InitializeSMBCompPlayerInputs(SMBCompPlayerInputs* inputs)
     inputs->Serial.Baud = 40000000;
 }
 
-nes::RenderInfo argos::rgms::DefaultSMBCompRenderInfo(const SMBComp& comp)
+nes::RenderInfo sta::rgms::DefaultSMBCompRenderInfo(const SMBComp& comp)
 {
     nes::RenderInfo render;
     render.OffX = 0;
@@ -1818,7 +1818,7 @@ nes::RenderInfo argos::rgms::DefaultSMBCompRenderInfo(const SMBComp& comp)
     return render;
 }
 
-SMBMessageProcessorOutputPtr argos::rgms::GetLatestPlayerOutput(SMBComp& comp, const SMBCompPlayer& player)
+SMBMessageProcessorOutputPtr sta::rgms::GetLatestPlayerOutput(SMBComp& comp, const SMBCompPlayer& player)
 {
     SMBCompFeed* feed = GetPlayerFeed(player, &comp.Feeds);
     if (feed && feed->Source) {
@@ -1832,7 +1832,7 @@ SMBMessageProcessorOutputPtr argos::rgms::GetLatestPlayerOutput(SMBComp& comp, c
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void argos::rgms::InitializePlayerColors(PlayerColors* colors, bool mario)
+void sta::rgms::InitializePlayerColors(PlayerColors* colors, bool mario)
 {
     if (mario) {
         colors->RepresentativeColor = 0x16;
@@ -1854,23 +1854,23 @@ void argos::rgms::InitializePlayerColors(PlayerColors* colors, bool mario)
     colors->OutlineColor = 0x0f;
 }
 
-void argos::rgms::InitializeSMBCompPlayer(SMBCompPlayer* player)
+void sta::rgms::InitializeSMBCompPlayer(SMBCompPlayer* player)
 {
     player->UniquePlayerID = 0;
     player->Names.ShortName = "flibidy";
     player->Names.FullName = "flibidydibidy";
     InitializePlayerColors(&player->Colors, true);
     InitializeSMBCompPlayerInputs(&player->Inputs);
-    player->ControllerType = argos::rgms::ControllerType::BRICK;
+    player->ControllerType = sta::rgms::ControllerType::BRICK;
 }
 
-void argos::rgms::InitializeSMBCompPlayers(SMBCompPlayers* players)
+void sta::rgms::InitializeSMBCompPlayers(SMBCompPlayers* players)
 {
     players->Players.clear();
     players->InvalidPlayerIDs.clear();
 }
 
-void argos::rgms::InitializeSMBCompVisuals(SMBCompVisuals* visuals)
+void sta::rgms::InitializeSMBCompVisuals(SMBCompVisuals* visuals)
 {
     visuals->Palette = nes::DefaultPaletteBGR();
     visuals->Scale = 5;
@@ -1881,7 +1881,7 @@ void argos::rgms::InitializeSMBCompVisuals(SMBCompVisuals* visuals)
     visuals->PlayerNameAlpha = 0.3;
 }
 
-void argos::rgms::InitializeSMBCompTournament(SMBCompTournament* tournament)
+void sta::rgms::InitializeSMBCompTournament(SMBCompTournament* tournament)
 {
     tournament->DisplayName = "any%";
     tournament->ScoreName = "any%";
@@ -1902,14 +1902,14 @@ void argos::rgms::InitializeSMBCompTournament(SMBCompTournament* tournament)
     tournament->CurrentRound = 0;
 }
 
-void argos::rgms::InitializeSMBCompConfiguration(SMBCompConfiguration* config)
+void sta::rgms::InitializeSMBCompConfiguration(SMBCompConfiguration* config)
 {
     InitializeSMBCompTournament(&config->Tournament);
     InitializeSMBCompVisuals(&config->Visuals);
     InitializeSMBCompPlayers(&config->Players);
 }
 
-void argos::rgms::InitializeSMBCompCombinedViewInfo(SMBCompCombinedViewInfo* view)
+void sta::rgms::InitializeSMBCompCombinedViewInfo(SMBCompCombinedViewInfo* view)
 {
     view->Active = true;
     view->FollowSmart = true;
@@ -1924,7 +1924,7 @@ void argos::rgms::InitializeSMBCompCombinedViewInfo(SMBCompCombinedViewInfo* vie
     view->NamesVisible = true;
 }
 
-void argos::rgms::InitializeSMBCompPoints(SMBCompPoints* points)
+void sta::rgms::InitializeSMBCompPoints(SMBCompPoints* points)
 {
     points->LastPoints.clear();
     points->Points.clear();
@@ -1932,7 +1932,7 @@ void argos::rgms::InitializeSMBCompPoints(SMBCompPoints* points)
     points->Countdown = 0;
 }
 
-void argos::rgms::InitializeSMBComp(const argos::RuntimeConfig* info, SMBComp* comp)
+void sta::rgms::InitializeSMBComp(const sta::RuntimeConfig* info, SMBComp* comp)
 {
     InitializeSMBCompStaticData(info, &comp->StaticData);
     InitializeSMBCompConfiguration(&comp->Config);
@@ -1951,7 +1951,7 @@ void argos::rgms::InitializeSMBComp(const argos::RuntimeConfig* info, SMBComp* c
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-//void argos::rgms::InitializeSMBCompControllerData(SMBCompControllerData* controllers)
+//void sta::rgms::InitializeSMBCompControllerData(SMBCompControllerData* controllers)
 //{
 //    controllers->ControllerColors = nesui::ControllerColors::Defaults();
 //    controllers->ControllerGeometry = nesui::ControllerGeometry::Defaults();
@@ -1960,7 +1960,7 @@ void argos::rgms::InitializeSMBComp(const argos::RuntimeConfig* info, SMBComp* c
 //    controllers->ControllerScale = 1.45f;
 //}
 //
-void argos::rgms::InitializeSMBCompROMData(argos::smb::SMBDatabase* db,
+void sta::rgms::InitializeSMBCompROMData(sta::smb::SMBDatabase* db,
         SMBCompROMData* rom)
 {
     rom->rom = db->GetBaseRom();
@@ -1970,14 +1970,14 @@ void argos::rgms::InitializeSMBCompROMData(argos::smb::SMBDatabase* db,
     rom->CHR1 = rom->rom->data() + 0x9010;
 }
 
-void argos::rgms::InitializeSMBCompSounds(smb::SMBDatabase* db, SMBCompSounds* sounds)
+void sta::rgms::InitializeSMBCompSounds(smb::SMBDatabase* db, SMBCompSounds* sounds)
 {
-    argos::sdlext::SDLExtMixInit init;
+    sdlext::SDLExtMixInit init;
 
     for (auto effect : smb::AudibleSoundEffects()) {
         std::vector<uint8_t> data;
         if (db->GetSoundEffectWav(effect, &data)) {
-            sounds->SoundEffects[effect] = std::make_shared<argos::sdlext::SDLExtMixChunk>(data);
+            sounds->SoundEffects[effect] = std::make_shared<sdlext::SDLExtMixChunk>(data);
         } else {
             std::cout << smb::ToString(effect) << std::endl;
         }
@@ -1986,18 +1986,18 @@ void argos::rgms::InitializeSMBCompSounds(smb::SMBDatabase* db, SMBCompSounds* s
     for (auto & track : smb::AudibleMusicTracks()) {
         std::vector<uint8_t> data;
         if (db->GetMusicTrackWav(track, &data)) {
-            sounds->Musics[track] = std::make_shared<argos::sdlext::SDLExtMixMusic>(data);
+            sounds->Musics[track] = std::make_shared<sdlext::SDLExtMixMusic>(data);
         } else {
             std::cout << smb::ToString(track) << std::endl;
         }
     }
 }
 
-void argos::rgms::InitializeSMBCompStaticData(const argos::RuntimeConfig* info, SMBCompStaticData* staticData)
+void sta::rgms::InitializeSMBCompStaticData(const sta::RuntimeConfig* info, SMBCompStaticData* staticData)
 {
-    smb::SMBDatabase db(info->ArgosPathTo("smb.db"));
+    smb::SMBDatabase db(info->StaticPathTo("smb.db"));
     if (!db.IsInit()) {
-        throw std::runtime_error("SMB Database is not initialized. Run 'argos smb db init'");
+        throw std::runtime_error("SMB Database is not initialized. Run 'static smb db init'");
     }
 
     staticData->Nametables = db.GetNametableCache();
@@ -2021,7 +2021,7 @@ static std::mt19937 GetGen()
     return gen;
 }
 
-uint32_t argos::rgms::GetNewUniquePlayerID(const SMBCompPlayers& players)
+uint32_t sta::rgms::GetNewUniquePlayerID(const SMBCompPlayers& players)
 {
     static std::mt19937 gen = GetGen();
     std::uniform_int_distribution<uint32_t> dist(10, std::numeric_limits<uint32_t>::max());
@@ -2043,14 +2043,14 @@ uint32_t argos::rgms::GetNewUniquePlayerID(const SMBCompPlayers& players)
     return 0;
 }
 
-void argos::rgms::AddNewPlayer(SMBCompPlayers* players, const SMBCompPlayer& player)
+void sta::rgms::AddNewPlayer(SMBCompPlayers* players, const SMBCompPlayer& player)
 {
     uint32_t id = GetNewUniquePlayerID(*players);
     players->Players.push_back(player);
     players->Players.back().UniquePlayerID = id;
 }
 
-void argos::rgms::RemovePlayer(SMBCompPlayers* players, uint32_t uniqueID)
+void sta::rgms::RemovePlayer(SMBCompPlayers* players, uint32_t uniqueID)
 {
     std::erase_if(players->Players, [=](const SMBCompPlayer& player){
         return player.UniquePlayerID == uniqueID;
@@ -2058,7 +2058,7 @@ void argos::rgms::RemovePlayer(SMBCompPlayers* players, uint32_t uniqueID)
     players->InvalidPlayerIDs.push_back(uniqueID);
 }
 
-const SMBCompPlayer* argos::rgms::FindPlayer(const SMBCompPlayers& players, uint32_t uniqueID)
+const SMBCompPlayer* sta::rgms::FindPlayer(const SMBCompPlayers& players, uint32_t uniqueID)
 {
     for (auto & player : players.Players) {
         if (player.UniquePlayerID == uniqueID) {
@@ -2071,7 +2071,7 @@ const SMBCompPlayer* argos::rgms::FindPlayer(const SMBCompPlayers& players, uint
 
 ////////////////////////////////////////////////////////////////////////////////
 
-SMBCompConfigurationPlayersComponent::SMBCompConfigurationPlayersComponent(argos::RuntimeConfig* info, SMBCompPlayers* players, const SMBCompVisuals* visuals, const SMBCompStaticData* data)
+SMBCompConfigurationPlayersComponent::SMBCompConfigurationPlayersComponent(sta::RuntimeConfig* info, SMBCompPlayers* players, const SMBCompVisuals* visuals, const SMBCompStaticData* data)
     : ISMBCompSimpleWindowComponent("Config Players")
     , m_Info(info)
     , m_Players(players)
@@ -2220,7 +2220,7 @@ bool SMBCompConfigurationPlayersComponent::PlayerInputsVideoEditingPopup(SMBComp
     //    std::vector<NamedAreaOfInterest> naois;
     //    cback(&naois, false);
     //    rgmui::TextFmt("Select from one of the named areas of interest");
-    //    rgmui::TextFmt("(.aoi) in argos::RuntimeConfig->ArgosDirectory");
+    //    rgmui::TextFmt("(.aoi) in sta::RuntimeConfig->StaticDirectory");
     //    if (ImGui::BeginCombo("named areas of interest", "")) {
     //        for (auto & naoi : naois) {
     //            if (ImGui::Selectable(naoi.Name.c_str(), false)) {
@@ -2278,7 +2278,7 @@ void SMBCompConfigurationPlayersComponent::GetNamedAreasOfInterest(std::vector<N
     if (m_FirstInputs || refresh) {
         //m_NamedAreasOfInterest.clear();
 
-        //ScanDirectoryForAOIs(m_Info->ArgosDirectory, &m_NamedAreasOfInterest);
+        //ScanDirectoryForAOIs(m_Info->StaticDirectory, &m_NamedAreasOfInterest);
         //std::erase_if(m_NamedAreasOfInterest, [](const NamedAreaOfInterest& aoi){
         //    return aoi.AOI.Type != AreaOfInterestType::CROP;
         //});
@@ -2408,7 +2408,7 @@ void SMBCompConfigurationVisualsComponent::DoControls()
 
 //////////////////////////////////////////////////////////////////////////////
 
-int argos::rgms::ScanDirectoryForSMBCompConfigurations(const std::string& directory, std::vector<NamedSMBCompConfiguration>* configs)
+int sta::rgms::ScanDirectoryForSMBCompConfigurations(const std::string& directory, std::vector<NamedSMBCompConfiguration>* configs)
 {
     int cnt = 0;
     util::ForFileOfExtensionInDirectory(directory, RGMS_SMB_CONFIG_EXTENSION, [&](util::fs::path p){
@@ -2431,7 +2431,7 @@ int argos::rgms::ScanDirectoryForSMBCompConfigurations(const std::string& direct
 
 //////////////////////////////////////////////////////////////////////////////
 
-SMBCompConfigurationSaveLoadComponent::SMBCompConfigurationSaveLoadComponent(argos::RuntimeConfig* info,
+SMBCompConfigurationSaveLoadComponent::SMBCompConfigurationSaveLoadComponent(sta::RuntimeConfig* info,
         SMBCompConfiguration* config)
     : ISMBCompSimpleWindowComponent("Config SaveLoad")
     , m_Info(info)
@@ -2448,7 +2448,7 @@ void SMBCompConfigurationSaveLoadComponent::DoControls()
 {
     if (ImGui::BeginCombo("Config Name", m_LastName.c_str())) {
         if (m_FirstLoad) {
-            rgms::ScanDirectoryForSMBCompConfigurations(m_Info->ArgosDirectory, &m_KnownConfigs);
+            rgms::ScanDirectoryForSMBCompConfigurations(m_Info->StaticDirectory, &m_KnownConfigs);
             m_FirstLoad = false;
         }
         for (auto & nconfig : m_KnownConfigs) {
@@ -2462,12 +2462,12 @@ void SMBCompConfigurationSaveLoadComponent::DoControls()
 
     if (ImGui::Button("scan root directory")) {
         m_KnownConfigs.clear();
-        rgms::ScanDirectoryForSMBCompConfigurations(m_Info->ArgosDirectory, &m_KnownConfigs);
+        rgms::ScanDirectoryForSMBCompConfigurations(m_Info->StaticDirectory, &m_KnownConfigs);
     }
     ImGui::Separator();
 
     bool s = rgmui::InputText("save as", &m_PendingName, ImGuiInputTextFlags_EnterReturnsTrue);
-    std::string path = fmt::format("{}{}{}", m_Info->ArgosDirectory, m_PendingName, RGMS_SMB_CONFIG_EXTENSION);
+    std::string path = fmt::format("{}{}{}", m_Info->StaticDirectory, m_PendingName, RGMS_SMB_CONFIG_EXTENSION);
     bool pendingValid = !m_PendingName.empty(); // TODO
 
     if (!pendingValid) {
@@ -2491,7 +2491,7 @@ void SMBCompConfigurationSaveLoadComponent::DoControls()
 void SMBCompConfigurationSaveLoadComponent::LoadNamedConfig(const std::string& name)
 {
     if (m_FirstLoad) {
-        rgms::ScanDirectoryForSMBCompConfigurations(m_Info->ArgosDirectory, &m_KnownConfigs);
+        rgms::ScanDirectoryForSMBCompConfigurations(m_Info->StaticDirectory, &m_KnownConfigs);
         m_PendingName = name;
         m_FirstLoad = false;
     }
@@ -2545,7 +2545,7 @@ void SMBCompConfigurationTournamentComponent::DoControls()
 
 //////////////////////////////////////////////////////////////////////////////
 
-SMBCompConfigurationComponent::SMBCompConfigurationComponent(argos::RuntimeConfig* info, SMBComp* comp,
+SMBCompConfigurationComponent::SMBCompConfigurationComponent(sta::RuntimeConfig* info, SMBComp* comp,
         const SMBCompStaticData* staticData)
     : ISMBCompSimpleWindowContainerComponent("Configuration", false)
 {
@@ -2575,7 +2575,7 @@ SMBCompPlayerWindow::SMBCompPlayerWindow(
         const SMBCompVisuals* visuals,
         const SMBCompStaticData* staticData,
         SMBCompFeeds* feeds,
-        argos::RuntimeConfig* info,
+        sta::RuntimeConfig* info,
         std::vector<std::string>* priorRecordings
         )
     : ISMBCompSimpleWindowComponent(fmt::format("{:08X}", id))
@@ -2852,7 +2852,7 @@ void SMBCompPlayerWindow::DoSerialControls(const SMBCompPlayer* player, SMBCompF
                 thread->StopRecording();
             }
         } else {
-            recordingPath = fmt::format("{}rec/{}_{}_{}.rec", m_Info->ArgosDirectory, util::GetTimestampNow(),
+            recordingPath = fmt::format("{}rec/{}_{}_{}.rec", m_Info->StaticDirectory, util::GetTimestampNow(),
                     m_Competition->Config.Tournament.FileName,
                     player->Names.ShortName);
             if (ImGui::Button("record")) {
@@ -2909,10 +2909,10 @@ void SMBCompPlayerWindow::DoControls(const SMBCompPlayer* player)
     }
 }
 
-void SMBCompPlayerWindow::UpdateRecordings2(argos::RuntimeConfig* info, std::vector<std::string>* priorRecordings)
+void SMBCompPlayerWindow::UpdateRecordings2(sta::RuntimeConfig* info, std::vector<std::string>* priorRecordings)
 {
     priorRecordings->clear();
-    util::ForFileOfExtensionInDirectory(fmt::format("{}rec/", info->ArgosDirectory), "rec", [&](util::fs::path p){
+    util::ForFileOfExtensionInDirectory(fmt::format("{}rec/", info->StaticDirectory), "rec", [&](util::fs::path p){
         priorRecordings->push_back(p.string());
         return true;
     });
@@ -2995,7 +2995,7 @@ void SMBCompPlayerWindow::DoRecordingControls(const SMBCompPlayer* player, SMBCo
 
 ////////////////////////////////////////////////////////////////////////////////
 
-SMBCompPlayerWindowsComponent::SMBCompPlayerWindowsComponent(argos::RuntimeConfig* info, SMBComp* comp)
+SMBCompPlayerWindowsComponent::SMBCompPlayerWindowsComponent(sta::RuntimeConfig* info, SMBComp* comp)
     : m_Info(info)
     , m_Competition(comp)
     , m_IsOpen(false)
@@ -3055,7 +3055,7 @@ void SMBCompPlayerWindowsComponent::DoMenuItem()
 
 //////////////////////////////////////////////////////////////////////////////
 
-void argos::rgms::StepCombinedView(SMBComp* comp, SMBCompCombinedViewInfo* view)
+void sta::rgms::StepCombinedView(SMBComp* comp, SMBCompCombinedViewInfo* view)
 {
     if (view->FollowSmart) {
         if (!comp->Locations.ScreenLocations.empty()) {
@@ -3228,7 +3228,7 @@ void argos::rgms::StepCombinedView(SMBComp* comp, SMBCompCombinedViewInfo* view)
     view->FramePalette = out->FramePalette;
 }
 
-SMBCompCombinedViewComponent::SMBCompCombinedViewComponent(argos::RuntimeConfig* info, SMBComp* comp)
+SMBCompCombinedViewComponent::SMBCompCombinedViewComponent(sta::RuntimeConfig* info, SMBComp* comp)
     : ISMBCompSingleWindowComponent("Combined view", "combined view", true)
     , m_Info(info)
     , m_Competition(comp)
@@ -3629,7 +3629,7 @@ void SMBCompCombinedViewComponent::DoViewControls(SMBCompCombinedViewInfo* view)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-SMBCompIndividualViewsComponent::SMBCompIndividualViewsComponent(argos::RuntimeConfig* info, SMBComp* comp)
+SMBCompIndividualViewsComponent::SMBCompIndividualViewsComponent(sta::RuntimeConfig* info, SMBComp* comp)
     : ISMBCompSingleWindowComponent("Individual views", "individual views", false)
     , m_Info(info)
     , m_Competition(comp)
@@ -3664,7 +3664,7 @@ void SMBCompIndividualViewsComponent::DoControls()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void argos::rgms::InitializeLerper(Lerper* lerper)
+void sta::rgms::InitializeLerper(Lerper* lerper)
 {
     lerper->Target = 0.0f;
     lerper->Position = 0.0f;
@@ -3679,7 +3679,7 @@ void argos::rgms::InitializeLerper(Lerper* lerper)
     lerper->MaxVelocity = 10.0f;
 }
 
-void argos::rgms::StepLerper(Lerper* lerper)
+void sta::rgms::StepLerper(Lerper* lerper)
 {
     util::mclock::time_point now = util::Now();
 
@@ -3722,7 +3722,7 @@ void argos::rgms::StepLerper(Lerper* lerper)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void argos::rgms::InitializeSMBCompMinimap(SMBCompMinimap* minimap)
+void sta::rgms::InitializeSMBCompMinimap(SMBCompMinimap* minimap)
 {
     minimap->LeftX = 0;
     minimap->Width = 1920;
@@ -3736,7 +3736,7 @@ void argos::rgms::InitializeSMBCompMinimap(SMBCompMinimap* minimap)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-SMBCompMinimapViewComponent::SMBCompMinimapViewComponent(argos::RuntimeConfig* info, SMBComp* comp)
+SMBCompMinimapViewComponent::SMBCompMinimapViewComponent(sta::RuntimeConfig* info, SMBComp* comp)
     : ISMBCompSingleWindowComponent("Minimap", "minimap", true)
     , m_Info(info)
     , m_Competition(comp)
@@ -4105,31 +4105,31 @@ void SMBCompMinimapViewComponent::DoControls()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void argos::rgms::InitializeSMBCompPlayerTimings(SMBCompPlayerTimings* timings)
+void sta::rgms::InitializeSMBCompPlayerTimings(SMBCompPlayerTimings* timings)
 {
     timings->State = TimingState::WAITING_FOR_1_1;
     timings->SplitM2s.clear();
     timings->SplitPageM2s.clear();
 }
 
-void argos::rgms::ResetSMBCompTimingTower(rgms::SMBCompTimingTower* tower)
+void sta::rgms::ResetSMBCompTimingTower(rgms::SMBCompTimingTower* tower)
 {
     tower->Timings.clear();
 }
-void argos::rgms::InitializeSMBCompTimingTower(rgms::SMBCompTimingTower* tower)
+void sta::rgms::InitializeSMBCompTimingTower(rgms::SMBCompTimingTower* tower)
 {
     ResetSMBCompTimingTower(tower);
     tower->FromLeader = true;
 }
 
-void argos::rgms::TimingsSectionPageIndex(const SMBCompPlayerTimings& timings, int* section, int* page)
+void sta::rgms::TimingsSectionPageIndex(const SMBCompPlayerTimings& timings, int* section, int* page)
 {
     assert(timings.SplitM2s.size() == timings.SplitPageM2s.size());
     *section = timings.SplitM2s.size() - 1;
     *page = timings.SplitPageM2s.back().size() - 1;
 }
 
-void argos::rgms::SplitTimings(SMBCompPlayerTimings* timings, int section, int page, uint64_t m2)
+void sta::rgms::SplitTimings(SMBCompPlayerTimings* timings, int section, int page, uint64_t m2)
 {
     if (!timings || (section == 0 && page == 0)) {
         return;
@@ -4142,7 +4142,7 @@ void argos::rgms::SplitTimings(SMBCompPlayerTimings* timings, int section, int p
 }
 
 
-void argos::rgms::StepSMBCompPlayerTimings(SMBCompPlayerTimings* timings, SMBMessageProcessorOutputPtr out,
+void sta::rgms::StepSMBCompPlayerTimings(SMBCompPlayerTimings* timings, SMBMessageProcessorOutputPtr out,
         const smb::Route* route)
 {
     switch (timings->State) {
@@ -4427,7 +4427,7 @@ static void ReconcileTargetAndDrawState(const TimingTowerState& target, TimingTo
 
 }
 
-void argos::rgms::StepTimingTower(SMBComp* comp, SMBCompTimingTower* tower, SMBCompPlayerLocations* locations,
+void sta::rgms::StepTimingTower(SMBComp* comp, SMBCompTimingTower* tower, SMBCompPlayerLocations* locations,
         SMBCompReplayComponent* replay, SMBCompSoundComponent* sound)
 {
     const std::vector<SMBCompPlayer>& players = comp->Config.Players.Players;
@@ -4619,7 +4619,7 @@ void argos::rgms::StepTimingTower(SMBComp* comp, SMBCompTimingTower* tower, SMBC
 
 ////////////////////////////////////////////////////////////////////////////////
 
-SMBCompTimingTowerViewComponent::SMBCompTimingTowerViewComponent(argos::RuntimeConfig* info, SMBComp* comp)
+SMBCompTimingTowerViewComponent::SMBCompTimingTowerViewComponent(sta::RuntimeConfig* info, SMBComp* comp)
     : ISMBCompSingleWindowComponent("Timing Tower", "timing tower", true)
     , m_Info(info)
     , m_Competition(comp)
@@ -4739,7 +4739,7 @@ void SMBCompTimingTowerViewComponent::DoControls()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-SMBCompApp::SMBCompApp(argos::RuntimeConfig* info)
+SMBCompApp::SMBCompApp(sta::RuntimeConfig* info)
     : m_Info(info)
     , m_CompConfigurationComponent(info, &m_Competition, &m_Competition.StaticData)
     , m_CompPlayerWindowsComponent(info, &m_Competition)
@@ -4922,7 +4922,7 @@ void SMBCompApp::DoAuxDisplay()
     }
 
     if (m_Competition.DoingRecordingOfRecordings) {
-        std::string out = fmt::format("{}rec/{}_{}", m_Info->ArgosDirectory, m_Competition.Config.Tournament.FileName, m_Competition.Config.Tournament.CurrentRound);
+        std::string out = fmt::format("{}rec/{}_{}", m_Info->StaticDirectory, m_Competition.Config.Tournament.FileName, m_Competition.Config.Tournament.CurrentRound);
         std::string dir = out + "/";
         cv::imwrite(fmt::format("{}{:07d}.png", dir, m_Competition.FrameNumber), m_AuxDisplay);
     }
@@ -5101,7 +5101,7 @@ void SMBCompApp::SetSharedMemory(void* sharedMem)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-SMBCompFeed* argos::rgms::GetPlayerFeed(const SMBCompPlayer& player, SMBCompFeeds* feeds)
+SMBCompFeed* sta::rgms::GetPlayerFeed(const SMBCompPlayer& player, SMBCompFeeds* feeds)
 {
     assert(feeds);
     auto it = feeds->Feeds.find(player.UniquePlayerID);
@@ -5114,7 +5114,7 @@ SMBCompFeed* argos::rgms::GetPlayerFeed(const SMBCompPlayer& player, SMBCompFeed
     return it->second.get();
 }
 
-void argos::rgms::InitializeFeedSerialThread(const SMBCompPlayer& player, const SMBCompStaticData& data, SMBCompFeed* feed)
+void sta::rgms::InitializeFeedSerialThread(const SMBCompPlayer& player, const SMBCompStaticData& data, SMBCompFeed* feed)
 {
     try {
         auto params = rgms::SMBSerialProcessorThreadParameters::Defaults();
@@ -5145,7 +5145,7 @@ void argos::rgms::InitializeFeedSerialThread(const SMBCompPlayer& player, const 
     }
 }
 
-//void argos::rgms::InitializeFeedLiveVideoThread(const SMBCompPlayer& player, SMBCompFeed* feed)
+//void sta::rgms::InitializeFeedLiveVideoThread(const SMBCompPlayer& player, SMBCompFeed* feed)
 //{
 //    try {
 //        feed->LiveVideoThread = std::make_unique<rgms::video::LiveVideoThread>(
@@ -5158,7 +5158,7 @@ void argos::rgms::InitializeFeedSerialThread(const SMBCompPlayer& player, const 
 //}
 //
 
-void argos::rgms::InitializeFeedRecording(SMBCompFeed* feed, const SMBCompStaticData& data, const std::string& path)
+void sta::rgms::InitializeFeedRecording(SMBCompFeed* feed, const SMBCompStaticData& data, const std::string& path)
 {
     if (!path.empty() && util::FileExists(path)) {
         feed->ErrorMessage = "";
@@ -5174,7 +5174,7 @@ void argos::rgms::InitializeFeedRecording(SMBCompFeed* feed, const SMBCompStatic
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool argos::rgms::MarioInOutput(SMBMessageProcessorOutputPtr out, int* mariox, int* marioy)
+bool sta::rgms::MarioInOutput(SMBMessageProcessorOutputPtr out, int* mariox, int* marioy)
 {
     if (!out) return false;
 
@@ -5195,7 +5195,7 @@ bool argos::rgms::MarioInOutput(SMBMessageProcessorOutputPtr out, int* mariox, i
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void argos::rgms::DrawTowerStateSize(const TimingTowerState& state, int* w, int* h)
+void sta::rgms::DrawTowerStateSize(const TimingTowerState& state, int* w, int* h)
 {
     if (w) *w = 27 + 10*8 + 6*8 - 4 + 16 + 8;
     if (h) *h = state.Entries.size() * 12 + 24 - 1;
@@ -5257,7 +5257,7 @@ static void ComputeFromLeaderTimes(const std::vector<TimingTowerEntry>& entries,
 
 }
 
-void argos::rgms::DrawTowerState(nes::PPUx* ppux, int x, int y,
+void sta::rgms::DrawTowerState(nes::PPUx* ppux, int x, int y,
         const nes::Palette& palette,
         const nes::PatternTable& font,
         const TimingTowerState& state,
@@ -5371,7 +5371,7 @@ void argos::rgms::DrawTowerState(nes::PPUx* ppux, int x, int y,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-//SMBCompRecordingsHelperComponent::SMBCompRecordingsHelperComponent(argos::RuntimeConfig* info, SMBComp* comp)
+//SMBCompRecordingsHelperComponent::SMBCompRecordingsHelperComponent(sta::RuntimeConfig* info, SMBComp* comp)
 //    : ISMBCompSingleWindowComponent("Recordings", "recordings", true)
 //    , m_Info(info)
 //    , m_Competition(comp)
@@ -5423,7 +5423,7 @@ void argos::rgms::DrawTowerState(nes::PPUx* ppux, int x, int y,
 //
 //    //bool load = rgmui::InputText("file name", &m_FileName, ImGuiInputTextFlags_EnterReturnsTrue);
 //    if (ImGui::Button("load comp")) { // || load) {
-//        util::ForFileOfExtensionInDirectory(m_Info->ArgosDirectory + "rec/", ".rec", [&](util::fs::path p){
+//        util::ForFileOfExtensionInDirectory(m_Info->StaticDirectory + "rec/", ".rec", [&](util::fs::path p){
 //            std::string recname = p.stem();
 //
 //            std::istringstream is(recname);
@@ -5501,7 +5501,7 @@ void argos::rgms::DrawTowerState(nes::PPUx* ppux, int x, int y,
 //
 //    if (!m_Competition->DoingRecordingOfRecordings) {
 //        if (ImGui::Button("do recording of recording")) {
-//            std::string out = fmt::format("{}rec/{}_{}", m_Info->ArgosDirectory, m_Competition->Config.Tournament.FileName, m_Competition->Config.Tournament.CurrentRound);
+//            std::string out = fmt::format("{}rec/{}_{}", m_Info->StaticDirectory, m_Competition->Config.Tournament.FileName, m_Competition->Config.Tournament.CurrentRound);
 //            std::cout << out << std::endl;
 //            std::string dir = out + "/";
 //            util::fs::remove_all(dir);
@@ -5514,7 +5514,7 @@ void argos::rgms::DrawTowerState(nes::PPUx* ppux, int x, int y,
 //    } else {
 //        if (ImGui::Button("stop recording of recording")) {
 //            m_Competition->DoingRecordingOfRecordings = false;
-//            std::string out = fmt::format("{}rec/{}_{}", m_Info->ArgosDirectory, m_Competition->Config.Tournament.FileName, m_Competition->Config.Tournament.CurrentRound);
+//            std::string out = fmt::format("{}rec/{}_{}", m_Info->StaticDirectory, m_Competition->Config.Tournament.FileName, m_Competition->Config.Tournament.CurrentRound);
 //            std::cout << out << std::endl;
 //            std::string dir = out + "/";
 //
@@ -5528,7 +5528,7 @@ void argos::rgms::DrawTowerState(nes::PPUx* ppux, int x, int y,
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-SMBCompPointsComponent::SMBCompPointsComponent(argos::RuntimeConfig* info, SMBComp* comp)
+SMBCompPointsComponent::SMBCompPointsComponent(sta::RuntimeConfig* info, SMBComp* comp)
     : ISMBCompSingleWindowComponent("Points", "points", false)
     , m_Info(info)
     , m_Competition(comp)
@@ -5659,7 +5659,7 @@ void SMBCompPointsComponent::DoControls()
     }
 }
 
-void argos::rgms::StepSMBCompPoints(SMBComp* comp, SMBCompPoints* points)
+void sta::rgms::StepSMBCompPoints(SMBComp* comp, SMBCompPoints* points)
 {
     const std::vector<SMBCompPlayer>& players = comp->Config.Players.Players;
     for (auto & player : players) {
@@ -5675,7 +5675,7 @@ void argos::rgms::StepSMBCompPoints(SMBComp* comp, SMBCompPoints* points)
     }
 }
 
-void argos::rgms::DrawPointsSize(const SMBComp* comp, int* w, int* h)
+void sta::rgms::DrawPointsSize(const SMBComp* comp, int* w, int* h)
 {
     *w = 240;
 
@@ -5697,7 +5697,7 @@ struct PointEntry {
     int Y;
 };
 
-void argos::rgms::DrawPoints(nes::PPUx* ppux, int x, int y,
+void sta::rgms::DrawPoints(nes::PPUx* ppux, int x, int y,
         const nes::Palette& palette,
         const nes::PatternTable& font,
         const SMBComp* comp)
@@ -5862,7 +5862,7 @@ struct TimeEntry {
     std::string Text;
 };
 
-void argos::rgms::DrawFinalTimes(nes::PPUx* ppux, int x, int y,
+void sta::rgms::DrawFinalTimes(nes::PPUx* ppux, int x, int y,
         const nes::Palette& palette,
         const nes::PatternTable& font,
         SMBComp* comp)
@@ -6078,7 +6078,7 @@ bool SMBCompAppAux::OnFrame()
 
 //////////////////////////////////////////////////////////////////////////////
 
-SMBCompCompetitionComponent::SMBCompCompetitionComponent(argos::RuntimeConfig* info, SMBComp* comp)
+SMBCompCompetitionComponent::SMBCompCompetitionComponent(sta::RuntimeConfig* info, SMBComp* comp)
     : ISMBCompSingleWindowComponent("The Competition", "competition", true)
     , m_Info(info)
     , m_Competition(comp)
@@ -6185,7 +6185,7 @@ void SMBCompCompetitionComponent::DoControls()
                     //    thread->StopRecording();
                     //}
                 } else {
-                    recordingPath = fmt::format("{}rec/{}_{}_{}.rec", m_Info->ArgosDirectory, util::GetTimestampNow(),
+                    recordingPath = fmt::format("{}rec/{}_{}_{}.rec", m_Info->StaticDirectory, util::GetTimestampNow(),
                             m_Competition->Config.Tournament.FileName,
                             player.Names.ShortName);
                     //if (ImGui::Button("start recording")) {
@@ -6238,7 +6238,7 @@ void SMBCompCompetitionComponent::DoControls()
     //        }
 
     //        std::string recordingPath = fmt::format("{}rec/{}_{}_{}_{}.rec",
-    //                m_Info->ArgosDirectory, util::GetTimestampNow(),
+    //                m_Info->StaticDirectory, util::GetTimestampNow(),
     //                m_Competition->Config.Tournament.FileName,
     //                m_Competition->Config.Tournament.CurrentRound,
     //                player.Names.ShortName);
@@ -6281,12 +6281,12 @@ void SMBCompCompetitionComponent::DoControls()
     }
     if (ImGui::Button("4 round complete")) {
         std::string resultspath = fmt::format("{}/results_{}_{}.txt",
-                m_Info->ArgosDirectory,
+                m_Info->StaticDirectory,
                 m_Competition->Config.Tournament.FileName,
                 m_Competition->Config.Tournament.CurrentRound + 1);
         if (util::FileExists(resultspath)) {
             std::string resultspath2 = fmt::format("{}/results_{}_{}_{}.txt",
-                    m_Info->ArgosDirectory,
+                    m_Info->StaticDirectory,
                     m_Competition->Config.Tournament.FileName,
                     m_Competition->Config.Tournament.CurrentRound + 1,
                     util::GetTimestampNow());
@@ -6338,7 +6338,7 @@ void SMBCompCompetitionComponent::DoControls()
 
 }
 
-bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timings, const SMBCompPlayer& player,
+bool sta::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timings, const SMBCompPlayer& player,
         std::string* text, int64_t* elapsedt)
 {
     if (!timings) {
@@ -6386,7 +6386,7 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-//SMBCompGhostViewComponent::SMBCompGhostViewComponent(argos::RuntimeConfig* info, SMBComp* comp)
+//SMBCompGhostViewComponent::SMBCompGhostViewComponent(sta::RuntimeConfig* info, SMBComp* comp)
 //    : ISMBCompSingleWindowComponent("Ghost View", "ghostview", false)
 //    , m_Info(info)
 //    , m_Competition(comp)
@@ -6415,7 +6415,7 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 //        return;
 //    }
 //
-//    std::string out = fmt::format("{}rec/{}_ghost", m_Info->ArgosDirectory, ginfo.Recording);
+//    std::string out = fmt::format("{}rec/{}_ghost", m_Info->StaticDirectory, ginfo.Recording);
 //    std::string dir = out + "/";
 //    std::cout << dir << std::endl;
 //    util::fs::remove_all(dir);
@@ -6453,7 +6453,7 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 //        int skippedRecs = 0;
 //        m_GhostInfo.clear();
 //
-//        util::ForFileOfExtensionInDirectory(m_Info->ArgosDirectory + "rec/", ".rec", [&](util::fs::path p){
+//        util::ForFileOfExtensionInDirectory(m_Info->StaticDirectory + "rec/", ".rec", [&](util::fs::path p){
 //            std::string recname = p.stem();
 //
 //            std::istringstream is(recname);
@@ -7044,7 +7044,7 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 //
 //////////////////////////////////////////////////////////////////////////////////
 //
-//SMBCompPointTransitionComponent::SMBCompPointTransitionComponent(argos::RuntimeConfig* info, SMBComp* comp)
+//SMBCompPointTransitionComponent::SMBCompPointTransitionComponent(sta::RuntimeConfig* info, SMBComp* comp)
 //    : ISMBCompSingleWindowComponent("Points Transition", "pointstransition", false)
 //    , m_Info(info)
 //    , m_Competition(comp)
@@ -7080,7 +7080,7 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 //    rgmui::Mat("ppp", m);
 //
 //    if (ImGui::Button("save times")) {
-//        std::string pth = fmt::format("{}rec/{}_time.png", m_Info->ArgosDirectory, m_Competition->Config.Tournament.FileName);
+//        std::string pth = fmt::format("{}rec/{}_time.png", m_Info->StaticDirectory, m_Competition->Config.Tournament.FileName);
 //        cv::imwrite(pth, m);
 //    }
 //
@@ -7088,7 +7088,7 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 //        m_Begin = m;
 //    }
 //    if (ImGui::Button("save points transition")) {
-//        std::string out = fmt::format("{}rec/{}_points", m_Info->ArgosDirectory, m_Competition->Config.Tournament.FileName);
+//        std::string out = fmt::format("{}rec/{}_points", m_Info->StaticDirectory, m_Competition->Config.Tournament.FileName);
 //        std::string dir = out + "/";
 //
 //
@@ -7160,9 +7160,9 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 //    }
 //}
 //
-//static void InitRecreatePlayers(std::string ArgosDirectory, std::vector<RecreatePlayerInfo>* players)
+//static void InitRecreatePlayers(std::string StaticDirectory, std::vector<RecreatePlayerInfo>* players)
 //{
-//    std::string data = ArgosDirectory + "recreate.json";
+//    std::string data = StaticDirectory + "recreate.json";
 //    std::ifstream ifs(data);
 //    nlohmann::json j;
 //    ifs >> j;
@@ -7189,7 +7189,7 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 //    }
 //}
 //
-//RecreateApp::RecreateApp(argos::RuntimeConfig* info)
+//RecreateApp::RecreateApp(sta::RuntimeConfig* info)
 //    : m_Info(info)
 //    , m_PTS(0)
 //{
@@ -7197,7 +7197,7 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 //    video::StaticVideoThreadConfig cfg = video::StaticVideoThreadConfig::Defaults();
 //    cfg.StaticVideoBufferCfg.BufferSize = static_cast<size_t>(1324) * static_cast<size_t>(1024 * 1024);
 //    m_VideoThread = std::make_unique<video::StaticVideoThread>(std::make_unique<video::CVVideoCaptureSource>(
-//                info->ArgosDirectory + "recreate.mp4"), cfg);
+//                info->StaticDirectory + "recreate.mp4"), cfg);
 //
 //    //m_Players.emplace_back();
 //    //m_Players.back().Name = "kosmic";
@@ -7224,7 +7224,7 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 //    //m_Players.back().Name = "jeremy";
 //    //m_Players.back().PTSOffset = 0;
 //    m_ActivePlayer = nullptr;
-//    InitRecreatePlayers(m_Info->ArgosDirectory, &m_Players);
+//    InitRecreatePlayers(m_Info->StaticDirectory, &m_Players);
 //    if (!m_Players.empty()) {
 //        m_ActivePlayer = &m_Players.back();
 //    }
@@ -7232,7 +7232,7 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 //
 //RecreateApp::~RecreateApp()
 //{
-//    std::string data = m_Info->ArgosDirectory + "recreate.json";
+//    std::string data = m_Info->StaticDirectory + "recreate.json";
 //    nlohmann::json j(m_Players);
 //
 //    std::ofstream ofs(data);
@@ -7511,7 +7511,7 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 //    return true;
 //}
 //
-//SMBCompRecreateComponent::SMBCompRecreateComponent(argos::RuntimeConfig* info, SMBComp* comp)
+//SMBCompRecreateComponent::SMBCompRecreateComponent(sta::RuntimeConfig* info, SMBComp* comp)
 //    : ISMBCompSingleWindowComponent("recreate tas", "recreatetas", false)
 //    , m_Info(info)
 //    , m_Competition(comp)
@@ -7527,7 +7527,7 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 //{
 //}
 //
-//void argos::rgms::EmuToOutput(int frameIndex, int* startIndex, nes::ControllerState cs,
+//void sta::rgms::EmuToOutput(int frameIndex, int* startIndex, nes::ControllerState cs,
 //        const nes::NestopiaNESEmulator& emu, smb::SMBMessageProcessorOutput* out,
 //        const smb::SMBBackgroundNametables& nametables)
 //{
@@ -7698,7 +7698,7 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 //{
 ////    if (m_Players.empty()) {
 ////        if (ImGui::Button("init players")) {
-////            InitRecreatePlayers(m_Info->ArgosDirectory, &m_Players);
+////            InitRecreatePlayers(m_Info->StaticDirectory, &m_Players);
 ////            m_Ghosts.clear();
 ////
 ////
@@ -7774,7 +7774,7 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 ////        if (!m_Competition->DoingRecordingOfRecordings) {
 ////            if (ImGui::Button("do recording of recording 2")) {
 ////                m_FrameCount = 0;
-////                std::string out = fmt::format("{}rec/{}", m_Info->ArgosDirectory, m_Competition->Config.Tournament.FileName);
+////                std::string out = fmt::format("{}rec/{}", m_Info->StaticDirectory, m_Competition->Config.Tournament.FileName);
 ////                std::cout << out << std::endl;
 ////                std::string dir = out + "/";
 ////                util::fs::remove_all(dir);
@@ -7787,7 +7787,7 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 ////        } else {
 ////            if (ImGui::Button("stop recording of recording") || m_FrameCount > 20600) {
 ////                m_Competition->DoingRecordingOfRecordings = false;
-////                std::string out = fmt::format("{}rec/{}", m_Info->ArgosDirectory, m_Competition->Config.Tournament.FileName);
+////                std::string out = fmt::format("{}rec/{}", m_Info->StaticDirectory, m_Competition->Config.Tournament.FileName);
 ////                std::cout << out << std::endl;
 ////                std::string dir = out + "/";
 ////
@@ -7823,7 +7823,7 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 ////            if (ImGui::Button("export")) {
 ////                for (int gi = 0; gi < m_Ghosts.size(); gi++) {
 ////
-////                    std::string out = fmt::format("{}rec/tas_anyp2_{}", m_Info->ArgosDirectory, m_Ghosts[gi].ShortName);
+////                    std::string out = fmt::format("{}rec/tas_anyp2_{}", m_Info->StaticDirectory, m_Ghosts[gi].ShortName);
 ////                    std::string dir = out + "/";
 ////                    std::cout << dir << std::endl;
 ////                    util::fs::remove_all(dir);
@@ -7908,7 +7908,7 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 //
 //////////////////////////////////////////////////////////////////////////////////
 //
-//SMBCompCreditsComponent::SMBCompCreditsComponent(argos::RuntimeConfig* info, SMBComp* comp)
+//SMBCompCreditsComponent::SMBCompCreditsComponent(sta::RuntimeConfig* info, SMBComp* comp)
 //    : ISMBCompSingleWindowComponent("Credits", "credits", false)
 //    , m_Info(info)
 //    , m_Competition(comp)
@@ -7921,17 +7921,17 @@ bool argos::rgms::TimingsToText(SMBComp* comp, const SMBCompPlayerTimings* timin
 //    , m_Rec(false)
 //{
 //    //m_Credits = util::ReadFileToString(fmt::format("{}credits.txt",
-//    m_Info->ArgosDirectory));
+//    m_Info->StaticDirectory));
 //}
 //
 //SMBCompCreditsComponent::~SMBCompCreditsComponent()
 //{
-//    //util::WriteStringToFile(fmt::format("{}credits.txt", m_Info->ArgosDirectory), m_Credits);
+//    //util::WriteStringToFile(fmt::format("{}credits.txt", m_Info->StaticDirectory), m_Credits);
 //}
 //
 //void SMBCompCreditsComponent::DoControls()
 //{
-//    std::string out = fmt::format("{}rec/credits", m_Info->ArgosDirectory);
+//    std::string out = fmt::format("{}rec/credits", m_Info->StaticDirectory);
 //    std::string dir = out + "/";
 //
 //    rgmui::SliderIntExt("y", &m_CreditY, -4096, 4096);
@@ -8014,7 +8014,7 @@ static void MyMusicFinished()
     }
 }
 
-SMBCompSoundComponent::SMBCompSoundComponent(argos::RuntimeConfig* info, SMBComp* comp)
+SMBCompSoundComponent::SMBCompSoundComponent(sta::RuntimeConfig* info, SMBComp* comp)
     : ISMBCompSingleWindowComponent("Sound", "sound", true)
     , m_Info(info)
     , m_Competition(comp)
@@ -8430,7 +8430,7 @@ void SMBCompSoundComponent::DoControls()
 
 //////////////////////////////////////////////////////////////////////////////////
 //
-//SMBCompFixedOverlay::SMBCompFixedOverlay(argos::RuntimeConfig* info, SMBComp* comp)
+//SMBCompFixedOverlay::SMBCompFixedOverlay(sta::RuntimeConfig* info, SMBComp* comp)
 //    : ISMBCompSingleWindowComponent("Overlay", "overlay", false)
 //    , m_Info(info)
 //    , m_Comp(comp)
@@ -8441,7 +8441,7 @@ void SMBCompSoundComponent::DoControls()
 //    m_Mat = cv::Mat::zeros(270, 480, CV_8UC3);
 //    m_ThanksMat = cv::Mat::zeros(480, 1824, CV_8UC3);
 //
-//    util::ForFileOfExtensionInDirectory(fmt::format("{}data/rgmty/", m_Info->ArgosDirectory), "mp4", [&](util::fs::path p){
+//    util::ForFileOfExtensionInDirectory(fmt::format("{}data/rgmty/", m_Info->StaticDirectory), "mp4", [&](util::fs::path p){
 //        m_ThanksPaths.push_back(p.string());
 //        return true;
 //    });
@@ -8530,7 +8530,7 @@ void SMBCompSoundComponent::DoControls()
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-SMBCompReplayComponent::SMBCompReplayComponent(argos::RuntimeConfig* info, SMBComp* comp)
+SMBCompReplayComponent::SMBCompReplayComponent(sta::RuntimeConfig* info, SMBComp* comp)
     : ISMBCompSingleWindowComponent("Replay", "replay", true)
     , m_Info(info)
     , m_Competition(comp)
@@ -8721,7 +8721,7 @@ bool SMBCompReplayComponent::DoReplay(cv::Mat aux)
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-//SMBCompTxtDisplay::SMBCompTxtDisplay(argos::RuntimeConfig* info, SMBComp* comp)
+//SMBCompTxtDisplay::SMBCompTxtDisplay(sta::RuntimeConfig* info, SMBComp* comp)
 //    : ISMBCompSingleWindowComponent("Txt", "txt", true)
 //    , m_Info(info)
 //    , m_Comp(comp)
@@ -8741,7 +8741,7 @@ bool SMBCompReplayComponent::DoReplay(cv::Mat aux)
 //{
 //    m_Stems.clear();
 //
-//    util::ForFileOfExtensionInDirectory(fmt::format("{}data/txt/", m_Info->ArgosDirectory), "txt", [&](util::fs::path p){
+//    util::ForFileOfExtensionInDirectory(fmt::format("{}data/txt/", m_Info->StaticDirectory), "txt", [&](util::fs::path p){
 //        m_Stems.push_back(p.stem().string());
 //        return true;
 //    });
@@ -8800,7 +8800,7 @@ bool SMBCompReplayComponent::DoReplay(cv::Mat aux)
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-SMBCompTournamentComponent::SMBCompTournamentComponent(argos::RuntimeConfig* info, SMBComp* comp)
+SMBCompTournamentComponent::SMBCompTournamentComponent(sta::RuntimeConfig* info, SMBComp* comp)
     : ISMBCompSimpleWindowContainerComponent("Tournament", true)
 {
     RegisterWindow(std::make_shared<SMBCompTournamentSeatsWindow>(info, comp));
@@ -8821,7 +8821,7 @@ void SMBCompTournamentComponent::LoadTournament(const std::string& path)
     m_Manager->LoadTournament(path);
 }
 
-SMBCompTournamentSeatsWindow::SMBCompTournamentSeatsWindow(argos::RuntimeConfig* info, SMBComp* comp)
+SMBCompTournamentSeatsWindow::SMBCompTournamentSeatsWindow(sta::RuntimeConfig* info, SMBComp* comp)
     : ISMBCompSimpleWindowComponent("seats")
     , m_Info(info)
     , m_Comp(comp)
@@ -8870,7 +8870,7 @@ void SMBCompTournamentSeatsWindow::DoControls()
     }
 }
 
-SMBCompTournamentPlayersWindow::SMBCompTournamentPlayersWindow(argos::RuntimeConfig* info, SMBComp* comp)
+SMBCompTournamentPlayersWindow::SMBCompTournamentPlayersWindow(sta::RuntimeConfig* info, SMBComp* comp)
     : ISMBCompSimpleWindowComponent("players")
     , m_Info(info)
     , m_Comp(comp)
@@ -8981,7 +8981,7 @@ void SMBCompTournamentPlayersWindow::DoControls()
     ImGui::Checkbox("updating three colors", &m_UpdatingThreeColors);
 }
 
-SMBCompTournamentScheduleWindow::SMBCompTournamentScheduleWindow(argos::RuntimeConfig* info, SMBComp* comp)
+SMBCompTournamentScheduleWindow::SMBCompTournamentScheduleWindow(sta::RuntimeConfig* info, SMBComp* comp)
     : ISMBCompSimpleWindowComponent("schedule")
     , m_Info(info)
     , m_Comp(comp)
@@ -9037,7 +9037,7 @@ void SMBCompTournamentScheduleWindow::DoControls()
 
         ImGui::EndTable();
     }
-    std::string p = fmt::format("{}/{}.txt", m_Info->ArgosDirectory, m_Comp->Config.Tournament.FileName);
+    std::string p = fmt::format("{}/{}.txt", m_Info->StaticDirectory, m_Comp->Config.Tournament.FileName);
     rgmui::CopyableText(p);
     if (ImGui::Button("fromtxt")) {
         if (util::FileExists(p)) {
@@ -9113,7 +9113,7 @@ void SMBCompTournamentScheduleWindow::SetToRound(int i)
     }
 }
 
-SMBCompTournamentManagerWindow::SMBCompTournamentManagerWindow(argos::RuntimeConfig* info, SMBComp* comp)
+SMBCompTournamentManagerWindow::SMBCompTournamentManagerWindow(sta::RuntimeConfig* info, SMBComp* comp)
     : ISMBCompSimpleWindowComponent("manager")
     , m_Info(info)
     , m_Comp(comp)
@@ -9128,7 +9128,7 @@ SMBCompTournamentManagerWindow::~SMBCompTournamentManagerWindow()
 void SMBCompTournamentManagerWindow::UpdatePaths()
 {
     m_Paths.clear();
-    util::ForFileOfExtensionInDirectory(fmt::format("{}", m_Info->ArgosDirectory), ".cfg", [&](util::fs::path p){
+    util::ForFileOfExtensionInDirectory(fmt::format("{}", m_Info->StaticDirectory), ".cfg", [&](util::fs::path p){
         m_Paths.push_back(p.string());
         return true;
     });
@@ -9181,7 +9181,7 @@ void SMBCompTournamentManagerWindow::DoControls()
         ImGui::EndCombo();
     }
     if (ImGui::Button("save")) {
-        std::string path = fmt::format("{}/{}.cfg", m_Info->ArgosDirectory, m_Comp->Config.Tournament.FileName);
+        std::string path = fmt::format("{}/{}.cfg", m_Info->StaticDirectory, m_Comp->Config.Tournament.FileName);
         std::ofstream of(path);
         m_CurrentPath = path;
 
@@ -9210,7 +9210,7 @@ void SMBCompTournamentManagerWindow::DoControls()
     }
 }
 
-SMBCompTournamentColorsWindow::SMBCompTournamentColorsWindow(argos::RuntimeConfig* info, SMBComp* comp)
+SMBCompTournamentColorsWindow::SMBCompTournamentColorsWindow(sta::RuntimeConfig* info, SMBComp* comp)
     : ISMBCompSimpleWindowComponent("t colors")
     , m_Info(info)
     , m_Comp(comp)
@@ -9283,7 +9283,7 @@ void SMBCompTournamentColorsWindow::DoControls()
     rgmui::Mat("m", m);
 }
 
-SMBCompTournamentResultsWindow::SMBCompTournamentResultsWindow(argos::RuntimeConfig* info, SMBComp* comp)
+SMBCompTournamentResultsWindow::SMBCompTournamentResultsWindow(sta::RuntimeConfig* info, SMBComp* comp)
     : ISMBCompSimpleWindowComponent("results")
     , m_Info(info)
     , m_Comp(comp)
@@ -9301,7 +9301,7 @@ void SMBCompTournamentResultsWindow::DoControls()
         m_Totals.clear();
         for (int i = 0; i < m_Comp->Config.Tournament.Schedule.size(); i++) {
             std::string resultspath = fmt::format("{}/{}_{}.txt",
-                    m_Info->ArgosDirectory,
+                    m_Info->StaticDirectory,
                     m_Comp->Config.Tournament.FileName,
                     i + 1);
             if (util::FileExists(resultspath)) {
@@ -9373,7 +9373,7 @@ void SMBCompTournamentResultsWindow::DoControls()
         std::reverse(sortedPoints.begin(), sortedPoints.end());
 
         std::string pointPath = fmt::format("{}/data/txt/{}_results.txt",
-                m_Info->ArgosDirectory,
+                m_Info->StaticDirectory,
                 m_Comp->Config.Tournament.FileName);
         std::ofstream ofs(pointPath);
         ofs << std::endl;
@@ -9418,7 +9418,7 @@ void SMBCompTournamentResultsWindow::DoControls()
     }
 }
 
-void argos::rgms::InitializeSMBRaceCategories(smb::SMBDatabase* db, SMBRaceCategories* cats)
+void sta::rgms::InitializeSMBRaceCategories(smb::SMBDatabase* db, SMBRaceCategories* cats)
 {
     db->GetRouteNames(&cats->CategoryNames);
     for (auto & name : cats->CategoryNames) {
@@ -9433,7 +9433,7 @@ void argos::rgms::InitializeSMBRaceCategories(smb::SMBDatabase* db, SMBRaceCateg
 
 }
 
-//void argos::rgms::InitializeSMBRaceCategories(SMBRaceCategories* cats)
+//void sta::rgms::InitializeSMBRaceCategories(SMBRaceCategories* cats)
 //{
 //    if (!db || !cats) throw std::invalid_argument("invalid argument to initialize smb race categories");
 //
@@ -9474,7 +9474,7 @@ void argos::rgms::InitializeSMBRaceCategories(smb::SMBDatabase* db, SMBRaceCateg
 //}
 
 
-const std::vector<std::array<uint8_t, 3>>& argos::rgms::GetColorMapColors(ColorMapType cmap) {
+const std::vector<std::array<uint8_t, 3>>& sta::rgms::GetColorMapColors(ColorMapType cmap) {
     static std::vector<std::array<uint8_t, 3>> BREWER_RDBU = {
         {0x67, 0x00, 0x1f},
         {0xb2, 0x18, 0x2b},
@@ -9556,7 +9556,7 @@ const std::vector<std::array<uint8_t, 3>>& argos::rgms::GetColorMapColors(ColorM
     return BREWER_YLORBR;
 }
 
-std::array<uint8_t, 3> argos::rgms::ColorMapColor(ColorMapType cmap, double v) {
+std::array<uint8_t, 3> sta::rgms::ColorMapColor(ColorMapType cmap, double v) {
     const std::vector<std::array<uint8_t, 3>>& cs = GetColorMapColors(cmap);
     if (cs.size() < 2) {
         throw std::invalid_argument("invalid color map");
@@ -9586,7 +9586,7 @@ std::array<uint8_t, 3> argos::rgms::ColorMapColor(ColorMapType cmap, double v) {
     return result;
 }
 
-std::array<uint8_t, 3> argos::rgms::ColorBrewerQualitative(int i)
+std::array<uint8_t, 3> sta::rgms::ColorBrewerQualitative(int i)
 {
     static std::vector<std::array<uint8_t, 3>> BREWER_QUALITATIVE = {
         {0xc7, 0xd3, 0x8d},
@@ -9607,7 +9607,7 @@ std::array<uint8_t, 3> argos::rgms::ColorBrewerQualitative(int i)
     return BREWER_QUALITATIVE.at(((i % s) + s) % s);
 }
 
-void argos::rgms::RenderSMBToPPUX(const SMBFrameInfo& frame, const nes::FramePalette& fpal, smb::SMBNametableCachePtr nametables,
+void sta::rgms::RenderSMBToPPUX(const SMBFrameInfo& frame, const nes::FramePalette& fpal, smb::SMBNametableCachePtr nametables,
         nes::PPUx* ppux, nes::NESDatabase::RomSPtr rom)
 {
     auto& nesPalette = nes::DefaultPaletteBGR();
@@ -9749,9 +9749,9 @@ void RecReviewDB::InsertRecording(const db::rec_recording& recording)
     sqliteext::StepAndFinalizeOrThrow(stmt);
 }
 
-RecReviewApp::RecReviewApp(argos::RuntimeConfig* config)
+RecReviewApp::RecReviewApp(sta::RuntimeConfig* config)
     : m_Config(config)
-    , m_Database(config->ArgosPathTo("argos.db"))
+    , m_Database(config->StaticPathTo("static.db"))
 {
     RegisterComponent(std::make_shared<RecRecordingsComponent>(config, &m_Database));
 }
@@ -9766,10 +9766,10 @@ bool RecReviewApp::OnFrame()
 }
 
 
-RecRecordingsComponent::RecRecordingsComponent(argos::RuntimeConfig* config, RecReviewDB* db)
+RecRecordingsComponent::RecRecordingsComponent(sta::RuntimeConfig* config, RecReviewDB* db)
     : m_Config(config)
     , m_Database(db)
-    , m_SMBDatabase(config->ArgosPathTo("smb.db"))
+    , m_SMBDatabase(config->StaticPathTo("smb.db"))
     //, m_ReplayStartTime(1667673985)
     , m_ReplayStartTime(1688620861)
     , m_InCount(0)
@@ -9777,7 +9777,7 @@ RecRecordingsComponent::RecRecordingsComponent(argos::RuntimeConfig* config, Rec
     , m_TimesWithStuffIndex(0)
 {
     if (!m_SMBDatabase.IsInit()) {
-        throw std::runtime_error("SMB Database is not initialized. Run 'argos smb db init'");
+        throw std::runtime_error("SMB Database is not initialized. Run 'static smb db init'");
     }
     Init();
 }
@@ -9872,11 +9872,11 @@ void RecRecordingsComponent::Init()
     //}
 }
 
-void RecRecordingsComponent::ScanArgosDirectory()
+void RecRecordingsComponent::ScanStaticDirectory()
 {
     std::vector<std::string> paths;
     util::ForFileOfExtensionInDirectory(
-            fmt::format("{}rec/", m_Config->ArgosDirectory),
+            fmt::format("{}rec/", m_Config->StaticDirectory),
             "rec", [&](util::fs::path p){
         paths.push_back(p.string());
         return true;
@@ -9938,8 +9938,8 @@ void RecRecordingsComponent::NewTime()
 void RecRecordingsComponent::OnFrame()
 {
     if (ImGui::Begin("recordings")) {
-        if (ImGui::Button("scan argos directory")) {
-            ScanArgosDirectory();
+        if (ImGui::Button("scan static directory")) {
+            ScanStaticDirectory();
             Init();
         }
         if (rgmui::SliderIntExt("replay start", &m_ReplayStartTime, m_StartTime, m_EndTime)) {
@@ -10079,7 +10079,7 @@ SMBMessageProcessorOutputPtr LatencySource::GetNextProcessorOutput()
 }
 
 
-SMBCompLatencyHandler::SMBCompLatencyHandler(argos::RuntimeConfig* info,
+SMBCompLatencyHandler::SMBCompLatencyHandler(sta::RuntimeConfig* info,
         SMBComp* comp)
     : ISMBCompSingleWindowComponent("Latency", "latency", true)
     , m_Info(info)

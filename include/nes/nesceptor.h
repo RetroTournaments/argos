@@ -2,29 +2,29 @@
 //
 // Copyright (C) 2024 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ARGOS_NESCEPTOR_HEADER
-#define ARGOS_NESCEPTOR_HEADER
+#ifndef STATIC_NESCEPTOR_HEADER
+#define STATIC_NESCEPTOR_HEADER
 
 #include "nes/nes.h"
 #include "ext/jsonext/jsonext.h"
 
-namespace argos::nesceptor
+namespace sta::nesceptor
 {
 
 inline constexpr int NESCEPTOR_BAUD = 4000000;
@@ -101,18 +101,18 @@ enum class MessageType : uint8_t
     RAM_WRITE       = 0x05, // size = 3, data[0] = value, data[1] = lower 8 bits, data[2] = higher 3 bits
 
     UNUSED_2        = 0x06,
-                            
+
     // All size 1, just with the data as expected
     PPUCTRL_WRITE   = 0x07, // Address 0x2000, bits data[0] = VPHB SINN (
                             //      NMI enable (V), PPU master/slave (P), sprite height (H)
-                            //      background tile select (B), sprite tile select (S), 
+                            //      background tile select (B), sprite tile select (S),
                             //      increment mode (I), nametable select(NN)
     PPUMASK_WRITE   = 0x08, // Address 0x2001, write
                             // BGRs bMmG, color emphasis (BGR), sprite enable (s), background enable (b),
                             // sprite left column enable (M), background left column enable (m), greyscale (G)
-    PPUSTATUS_READ  = 0x09, // Address 0x2002, read  VS0 (vblank, sprite 0 hit, sprite overflow (O): 
+    PPUSTATUS_READ  = 0x09, // Address 0x2002, read  VS0 (vblank, sprite 0 hit, sprite overflow (O):
                             // resets write pair for 0x2005, 0x2006
-    OAMADDR_WRITE   = 0x0a, // Address 0x2003, write 
+    OAMADDR_WRITE   = 0x0a, // Address 0x2003, write
     OAMDATA_WRITE   = 0x0b, // Address 0x2004, write
     OAMDATA_READ    = 0x0c, // Address 0x2004, read
     PPUSCROLL_WRITE = 0x0d, // Address 0x2005, write

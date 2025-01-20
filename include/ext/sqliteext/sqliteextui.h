@@ -2,29 +2,29 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ARGOS_EXT_SQLITEEXTUI_HEADER
-#define ARGOS_EXT_SQLITEEXTUI_HEADER
+#ifndef EXT_SQLITEEXTUI_HEADER
+#define EXT_SQLITEEXTUI_HEADER
 
 #include "rgmui/rgmui.h"
 #include "ext/sqliteext/sqliteext.h"
 
-namespace argos::sqliteext::ui
+namespace sqliteext::ui
 {
 
 void DoSchemaDisplay(const char* label, const char* schema);
@@ -64,7 +64,7 @@ bool DoDBViewTable(const char* label, std::vector<T>* items, int* selected_id, i
             if (selected_id) {
                 selected = this_id == *selected_id;
             }
-            
+
             changed = dorow(&items->at(i), &selected, &scroll, user_data) || changed;
 
             if (selected_id && selected) {
@@ -95,7 +95,7 @@ bool DoDBViewTable(const char* label, std::vector<T>* items, int* selected_id, i
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class DBSchemaComponent : public rgmui::IApplicationComponent
+class DBSchemaComponent : public sta::rgmui::IApplicationComponent
 {
 public:
     DBSchemaComponent(sqliteext::SQLiteExtDB* db, std::string title = "");

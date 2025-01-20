@@ -2,30 +2,30 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "ext/opencvext/opencvext.h"
 
-using namespace argos::opencvext;
+using namespace opencvext;
 
-bool argos::opencvext::CVMatsEqual(const cv::Mat Mat1, const cv::Mat Mat2)
+bool opencvext::CVMatsEqual(const cv::Mat Mat1, const cv::Mat Mat2)
 {
     if (Mat1.dims != Mat2.dims ||
-        Mat1.size != Mat2.size || 
+        Mat1.size != Mat2.size ||
         Mat1.elemSize() != Mat2.elemSize()) {
         return false;
     }
@@ -47,7 +47,7 @@ bool argos::opencvext::CVMatsEqual(const cv::Mat Mat1, const cv::Mat Mat2)
     return false;
 }
 
-cv::Mat argos::opencvext::CropWithZeroPadding(cv::Mat img, cv::Rect cropRect)
+cv::Mat opencvext::CropWithZeroPadding(cv::Mat img, cv::Rect cropRect)
 {
     if (cropRect.width < 0) {
         cropRect.x += cropRect.width;
@@ -76,7 +76,7 @@ cv::Mat argos::opencvext::CropWithZeroPadding(cv::Mat img, cv::Rect cropRect)
     return m;
 }
 
-cv::Mat argos::opencvext::ResizePrefNearest(cv::Mat in, float scale)
+cv::Mat opencvext::ResizePrefNearest(cv::Mat in, float scale)
 {
     cv::Mat out = in;
     if (scale && scale != 1.0f) {
@@ -97,9 +97,9 @@ cv::Mat argos::opencvext::ResizePrefNearest(cv::Mat in, float scale)
     return out;
 }
 
-cv::Mat argos::opencvext::ConstructPaletteImage(
+cv::Mat opencvext::ConstructPaletteImage(
     const uint8_t* imgData,
-    int width, int height, 
+    int width, int height,
     const uint8_t* paletteData,
     PaletteDataOrder paletteDataOrder
 )
@@ -129,7 +129,7 @@ cv::Mat argos::opencvext::ConstructPaletteImage(
     return m;
 }
 
-cv::Mat argos::opencvext::RGB565ToCVMat(const uint16_t* data, unsigned width, unsigned height, size_t pitch)
+cv::Mat opencvext::RGB565ToCVMat(const uint16_t* data, unsigned width, unsigned height, size_t pitch)
 {
     static std::array<uint8_t, 0b00100000> RB_LOOKUP;
     static std::array<uint8_t, 0b01000000> G_LOOKUP;
@@ -160,9 +160,9 @@ cv::Mat argos::opencvext::RGB565ToCVMat(const uint16_t* data, unsigned width, un
 
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
-            *o++ = RB_LOOKUP[(*data & 0b0000000000011111) >>  0]; 
-            *o++ =  G_LOOKUP[(*data & 0b0000011111100000) >>  5]; 
-            *o++ = RB_LOOKUP[(*data & 0b1111100000000000) >> 11]; 
+            *o++ = RB_LOOKUP[(*data & 0b0000000000011111) >>  0];
+            *o++ =  G_LOOKUP[(*data & 0b0000011111100000) >>  5];
+            *o++ = RB_LOOKUP[(*data & 0b1111100000000000) >> 11];
 
             data++;
         }
@@ -171,7 +171,7 @@ cv::Mat argos::opencvext::RGB565ToCVMat(const uint16_t* data, unsigned width, un
     return out;
 }
 
-cv::Mat argos::opencvext::ResizeTo(cv::Mat img, int width, int height, cv::InterpolationFlags smaller, cv::InterpolationFlags larger)
+cv::Mat opencvext::ResizeTo(cv::Mat img, int width, int height, cv::InterpolationFlags smaller, cv::InterpolationFlags larger)
 {
     if (img.empty()) {
         return cv::Mat::zeros(height, width, CV_8UC3);

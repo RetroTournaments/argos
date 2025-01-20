@@ -2,18 +2,18 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -27,10 +27,10 @@
 #include "ext/sqliteext/sqliteext.h"
 #include "ext/opencvext/opencvext.h"
 
-using namespace argos;
-using namespace argos::smb;
+using namespace sta;
+using namespace sta::smb;
 
-AreaID argos::smb::column_area_id(sqlite3_stmt* stmt, int column)
+AreaID sta::smb::column_area_id(sqlite3_stmt* stmt, int column)
 {
     int v = sqlite3_column_int(stmt, column);
     if (v < 0 || v > std::numeric_limits<uint16_t>::max()) {
@@ -39,7 +39,7 @@ AreaID argos::smb::column_area_id(sqlite3_stmt* stmt, int column)
     return static_cast<AreaID>(v);
 }
 
-void argos::smb::column_minimap(sqlite3_stmt* stmt, int column, smb::MinimapImage* minimap)
+void sta::smb::column_minimap(sqlite3_stmt* stmt, int column, smb::MinimapImage* minimap)
 {
     int sz = sqlite3_column_bytes(stmt, column);
     if (sz != smb::MINIMAP_NUM_BYTES) {
@@ -51,12 +51,12 @@ void argos::smb::column_minimap(sqlite3_stmt* stmt, int column, smb::MinimapImag
     }
 }
 
-const uint8_t* argos::smb::rom_chr0(nes::NESDatabase::RomSPtr rom)
+const uint8_t* sta::smb::rom_chr0(nes::NESDatabase::RomSPtr rom)
 {
     return rom->data() + 0x8010;
 }
 
-const uint8_t* argos::smb::rom_chr1(nes::NESDatabase::RomSPtr rom)
+const uint8_t* sta::smb::rom_chr1(nes::NESDatabase::RomSPtr rom)
 {
     return rom->data() + 0x9010;
 }
@@ -158,12 +158,12 @@ bool SMBDatabase::IsInit()
     return true;
 }
 
-argos::nes::NESDatabase::RomSPtr SMBDatabase::GetBaseRom()
+sta::nes::NESDatabase::RomSPtr SMBDatabase::GetBaseRom()
 {
     return GetRomCached(1);
 }
 
-argos::smb::SMBNametableCachePtr SMBDatabase::GetNametableCache()
+sta::smb::SMBNametableCachePtr SMBDatabase::GetNametableCache()
 {
     if (!m_NametableCache) {
         m_NametableCache = std::make_shared<SMBNametableCache>(this);
@@ -640,7 +640,7 @@ static bool DoInitializeNametablePages(SMBDatabase* database)
     return true;
 }
 
-bool argos::smb::InitializeSMBDatabase(SMBDatabase* database,
+bool sta::smb::InitializeSMBDatabase(SMBDatabase* database,
         const std::string& smb_data_path,
         const std::vector<uint8_t>& smb_rom)
 {

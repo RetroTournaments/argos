@@ -2,26 +2,26 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "rgmui/rgmui.h"
 
-using namespace argos::rgmui;
-using namespace argos::util;
+using namespace sta::rgmui;
+using namespace sta::util;
 
 struct
 {
@@ -29,16 +29,16 @@ struct
     bool SliderExtIsHovered = false;
 } g_ImGuiExtContext;
 
-bool argos::rgmui::SliderExtWasHovered()
+bool sta::rgmui::SliderExtWasHovered()
 {
     return g_ImGuiExtContext.SliderExtWasHovered;
 }
-void argos::rgmui::SliderExtIsHovered()
+void sta::rgmui::SliderExtIsHovered()
 {
     g_ImGuiExtContext.SliderExtIsHovered = true;
 }
 
-void argos::rgmui::NewFrame()
+void sta::rgmui::NewFrame()
 {
     g_ImGuiExtContext.SliderExtWasHovered = g_ImGuiExtContext.SliderExtIsHovered;
     g_ImGuiExtContext.SliderExtIsHovered = false;
@@ -158,11 +158,11 @@ void IApplication::RegisterComponent(std::shared_ptr<IApplicationComponent> comp
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool argos::rgmui::KeyUp(const SDL_Event& e, SDL_Keycode k) {
+bool sta::rgmui::KeyUp(const SDL_Event& e, SDL_Keycode k) {
     return e.type == SDL_KEYUP && e.key.keysym.sym == k;
 }
 
-bool argos::rgmui::KeyUpWithCtrl(const SDL_Event& e, SDL_Keycode k) {
+bool sta::rgmui::KeyUpWithCtrl(const SDL_Event& e, SDL_Keycode k) {
     if (KeyUp(e, k)) {
         const uint8_t* keystates = SDL_GetKeyboardState(nullptr);
         if (keystates[SDL_SCANCODE_LCTRL] || keystates[SDL_SCANCODE_RCTRL]) {
@@ -172,11 +172,11 @@ bool argos::rgmui::KeyUpWithCtrl(const SDL_Event& e, SDL_Keycode k) {
     return false;
 }
 
-bool argos::rgmui::KeyDown(const SDL_Event& e, SDL_Keycode k) {
+bool sta::rgmui::KeyDown(const SDL_Event& e, SDL_Keycode k) {
     return e.type == SDL_KEYDOWN && e.key.keysym.sym == k;
 }
 
-bool argos::rgmui::KeyDownWithCtrl(const SDL_Event& e, SDL_Keycode k) {
+bool sta::rgmui::KeyDownWithCtrl(const SDL_Event& e, SDL_Keycode k) {
     if (KeyDown(e, k)) {
         const uint8_t* keystates = SDL_GetKeyboardState(nullptr);
         if (keystates[SDL_SCANCODE_LCTRL] || keystates[SDL_SCANCODE_RCTRL]) {
@@ -186,25 +186,25 @@ bool argos::rgmui::KeyDownWithCtrl(const SDL_Event& e, SDL_Keycode k) {
     return false;
 }
 
-bool argos::rgmui::ShiftIsDown()
+bool sta::rgmui::ShiftIsDown()
 {
     const uint8_t* keystates = SDL_GetKeyboardState(nullptr);
     return keystates[SDL_SCANCODE_LSHIFT] || keystates[SDL_SCANCODE_RSHIFT];
 }
 
-bool argos::rgmui::CtrlIsDown()
+bool sta::rgmui::CtrlIsDown()
 {
     const uint8_t* keystates = SDL_GetKeyboardState(nullptr);
     return keystates[SDL_SCANCODE_LCTRL] || keystates[SDL_SCANCODE_RCTRL];
 }
 
-bool argos::rgmui::AltIsDown()
+bool sta::rgmui::AltIsDown()
 {
     const uint8_t* keystates = SDL_GetKeyboardState(nullptr);
     return keystates[SDL_SCANCODE_LALT] || keystates[SDL_SCANCODE_RALT];
 }
 
-bool argos::rgmui::ArrowKeyHelper(const SDL_Event& e, std::function<void(int dx, int dy)> cback,
+bool sta::rgmui::ArrowKeyHelper(const SDL_Event& e, std::function<void(int dx, int dy)> cback,
         int shiftMultiplier) {
     if (e.type == SDL_KEYDOWN) {
         int dx = 0;
@@ -323,7 +323,7 @@ void EventQueue::PumpQueue() {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool argos::rgmui::IsAnyPopupOpen() {
+bool sta::rgmui::IsAnyPopupOpen() {
     return ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopupId + ImGuiPopupFlags_AnyPopupLevel);
 }
 
@@ -337,7 +337,7 @@ static int InputTextCallback(ImGuiInputTextCallbackData* data) {
     return 0;
 }
 
-bool argos::rgmui::InputText(const char* label, std::string* str,
+bool sta::rgmui::InputText(const char* label, std::string* str,
         ImGuiInputTextFlags flags)
 {
     flags |= ImGuiInputTextFlags_CallbackResize;
@@ -363,7 +363,7 @@ bool argos::rgmui::InputText(const char* label, std::string* str,
     return ret;
 }
 
-bool argos::rgmui::InputTextMulti(const char* label, std::string* str, const ImVec2& size,
+bool sta::rgmui::InputTextMulti(const char* label, std::string* str, const ImVec2& size,
         ImGuiInputTextFlags flags)
 {
     flags |= ImGuiInputTextFlags_CallbackResize;
@@ -389,7 +389,7 @@ bool argos::rgmui::InputTextMulti(const char* label, std::string* str, const ImV
     return ret;
 }
 
-void argos::rgmui::CopyableText(const std::string& text) {
+void sta::rgmui::CopyableText(const std::string& text) {
     ImGui::PushID(text.c_str());
     ImGui::InputText("##copy", const_cast<char*>(text.c_str()), text.capacity() + 1,
             ImGuiInputTextFlags_ReadOnly);
@@ -407,16 +407,16 @@ void argos::rgmui::CopyableText(const std::string& text) {
 
 }
 
-void argos::rgmui::RedText(const char* text)
+void sta::rgmui::RedText(const char* text)
 {
     ImGui::TextColored({1.0f, 0.0f, 0.0f, 1.0f}, "%s", text);
 }
-void argos::rgmui::GreenText(const char* text)
+void sta::rgmui::GreenText(const char* text)
 {
     ImGui::TextColored({0.0f, 1.0f, 0.0f, 1.0f}, "%s", text);
 }
 
-bool argos::rgmui::InputColor(const char* label, ImU32* color, bool withAlpha) {
+bool sta::rgmui::InputColor(const char* label, ImU32* color, bool withAlpha) {
     ImVec4 c = ImGui::ColorConvertU32ToFloat4(*color);
     if (withAlpha) {
         if (ImGui::ColorEdit4(label, &c.x)) {
@@ -432,7 +432,7 @@ bool argos::rgmui::InputColor(const char* label, ImU32* color, bool withAlpha) {
     return false;
 }
 
-ImVec4 argos::rgmui::PaletteColorToImVec4(uint8_t paletteIndex, const uint8_t* palette, bool bgrorder)
+ImVec4 sta::rgmui::PaletteColorToImVec4(uint8_t paletteIndex, const uint8_t* palette, bool bgrorder)
 {
     const uint8_t* s = palette + static_cast<int>(paletteIndex) * 3;
     ImVec4 c;
@@ -449,7 +449,7 @@ ImVec4 argos::rgmui::PaletteColorToImVec4(uint8_t paletteIndex, const uint8_t* p
     return c;
 }
 
-bool argos::rgmui::InputPaletteIndex(const char* label, uint8_t* paletteIndex,
+bool sta::rgmui::InputPaletteIndex(const char* label, uint8_t* paletteIndex,
         const uint8_t* palette, int paletteSize, // will access x3
         bool bgrorder, int numcols)
 {
@@ -544,7 +544,7 @@ static bool SliderExt(T* v, T min, T max, bool allowArrowKeys, bool allowMouseWh
     return changed;
 }
 
-bool argos::rgmui::SliderUint8Ext(const char* label, uint8_t* v, uint8_t min, uint8_t max,
+bool sta::rgmui::SliderUint8Ext(const char* label, uint8_t* v, uint8_t min, uint8_t max,
         ImGuiSliderFlags flags, bool allowArrowKeys, bool allowMouseWheel, uint8_t singleMove, uint8_t shiftMult) {
     if (!v) throw std::invalid_argument("null v disallowed");
     int iv = static_cast<int>(*v);
@@ -554,7 +554,7 @@ bool argos::rgmui::SliderUint8Ext(const char* label, uint8_t* v, uint8_t min, ui
     return ret;
 }
 
-bool argos::rgmui::SliderIntExt(const char* label, int* v, int min, int max,
+bool sta::rgmui::SliderIntExt(const char* label, int* v, int min, int max,
         const char* format, ImGuiSliderFlags flags,
         bool allowArrowKeys, bool allowMouseWheel,
         int singleMove, int shiftMult) {
@@ -563,7 +563,7 @@ bool argos::rgmui::SliderIntExt(const char* label, int* v, int min, int max,
     return changed;
 }
 
-bool argos::rgmui::SliderFloatExt(const char* label, float* v, float min, float max,
+bool sta::rgmui::SliderFloatExt(const char* label, float* v, float min, float max,
         const char* format, ImGuiSliderFlags flags,
         bool allowArrowKeys, bool allowMouseWheel,
         float singleMove, float shiftMult) {
@@ -573,7 +573,7 @@ bool argos::rgmui::SliderFloatExt(const char* label, float* v, float min, float 
 }
 
 
-void argos::rgmui::Mat(const char* label, const cv::Mat& img) {
+void sta::rgmui::Mat(const char* label, const cv::Mat& img) {
     if (!img.isContinuous()) {
         cv::Mat m = img.clone();
         assert(m.isContinuous());
@@ -769,7 +769,7 @@ Vector2I MatAnnotator::HoveredPixel() const
     return ScreenPosToMatPos2I(ImGui::GetMousePos());
 }
 
-bool argos::rgmui::ArrowKeyHelperInFrame(int* dx, int* dy, int shiftMultiplier) {
+bool sta::rgmui::ArrowKeyHelperInFrame(int* dx, int* dy, int shiftMultiplier) {
     int tdx = 0;
     int tdy = 0;
     if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow)) {
@@ -815,7 +815,7 @@ PushPopID::~PushPopID()
     ImGui::PopID();
 }
 
-bool argos::rgmui::InputVectorInt(const char* label, std::vector<int>* vec)
+bool sta::rgmui::InputVectorInt(const char* label, std::vector<int>* vec)
 {
     ImGui::PushID(label);
     bool changed = false;
@@ -839,7 +839,7 @@ bool argos::rgmui::InputVectorInt(const char* label, std::vector<int>* vec)
     return changed;
 }
 
-ImGuiWindowFlags argos::rgmui::SliderExtWasHoveredFlag(ImGuiWindowFlags flags)
+ImGuiWindowFlags sta::rgmui::SliderExtWasHoveredFlag(ImGuiWindowFlags flags)
 {
     if (SliderExtWasHovered()) {
         flags |= ImGuiWindowFlags_NoScrollWithMouse;
@@ -849,7 +849,7 @@ ImGuiWindowFlags argos::rgmui::SliderExtWasHoveredFlag(ImGuiWindowFlags flags)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool argos::rgmui::PopupLeftRightHelper(const char* left, std::function<void()> onLeft,
+bool sta::rgmui::PopupLeftRightHelper(const char* left, std::function<void()> onLeft,
         const char* right, std::function<void()> onRight)
 {
     bool ret = false;
@@ -891,16 +891,16 @@ bool argos::rgmui::PopupLeftRightHelper(const char* left, std::function<void()> 
 
 }
 
-bool argos::rgmui::PopupYesNoHelper(std::function<void()> onYes, std::function<void()> onNo)
+bool sta::rgmui::PopupYesNoHelper(std::function<void()> onYes, std::function<void()> onNo)
 {
     return PopupLeftRightHelper("Yes", onYes, "No", onNo);
 }
-bool argos::rgmui::PopupOkCancelHelper(std::function<void()> onOk, std::function<void()> onCancel)
+bool sta::rgmui::PopupOkCancelHelper(std::function<void()> onOk, std::function<void()> onCancel)
 {
     return PopupLeftRightHelper("OK", onOk, "Cancel", onCancel);
 }
 
-bool argos::rgmui::HandleCombo4Scroll(size_t* idx, size_t n)
+bool sta::rgmui::HandleCombo4Scroll(size_t* idx, size_t n)
 {
     if (ImGui::IsItemHovered()) {
         g_ImGuiExtContext.SliderExtIsHovered = true;

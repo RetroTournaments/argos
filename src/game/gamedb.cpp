@@ -2,26 +2,26 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "game/gamedb.h"
 
-using namespace argos;
-using namespace argos::game;
+using namespace sta;
+using namespace sta::game;
 
 GameDatabase::GameDatabase(const std::string& path)
     : SQLiteExtDB(path)
@@ -74,11 +74,11 @@ const char* GameDatabase::KVBlobSchema()
 );)";
 }
 
-template<typename T> 
+template<typename T>
 static bool DoMySelect(GameDatabase* db, const char* table, const char* key, std::function<T(sqlite3_stmt*, int)> func, T* value)
 {
     sqlite3_stmt* stmt;
-    sqliteext::PrepareOrThrow(db->m_Database, 
+    sqliteext::PrepareOrThrow(db->m_Database,
             "SELECT value FROM " + std::string(table) + " WHERE key = ?", &stmt);
     sqlite3_bind_text(stmt, 1, key, -1, SQLITE_STATIC);
     while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -90,7 +90,7 @@ static bool DoMySelect(GameDatabase* db, const char* table, const char* key, std
     return false;
 }
 
-template<typename T> 
+template<typename T>
 static T DoMySelect2(GameDatabase* db, const char* table, const char* key, std::function<T(sqlite3_stmt*, int)> func)
 {
     T ret;
@@ -103,13 +103,13 @@ static T DoMySelect2(GameDatabase* db, const char* table, const char* key, std::
 static void DoMyUpdate(GameDatabase* db, const char* table, const char* key, std::function<void(sqlite3_stmt*, int)> bind)
 {
     sqlite3_stmt* stmt;
-    sqliteext::PrepareOrThrow(db->m_Database, 
+    sqliteext::PrepareOrThrow(db->m_Database,
             "INSERT OR IGNORE INTO " + std::string(table) + " (key, value) VALUES (?, ?)", &stmt);
     sqlite3_bind_text(stmt, 1, key, -1, SQLITE_STATIC);
     bind(stmt, 2);
     sqliteext::StepAndFinalizeOrThrow(stmt);
 
-    sqliteext::PrepareOrThrow(db->m_Database, 
+    sqliteext::PrepareOrThrow(db->m_Database,
             "UPDATE " + std::string(table) + " SET value = ? WHERE key = ?", &stmt);
     bind(stmt, 1);
     sqlite3_bind_text(stmt, 2, key, -1, SQLITE_STATIC);

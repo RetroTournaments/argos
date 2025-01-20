@@ -12,12 +12,12 @@ git lfs install
 
 # clone the repository, and necessary data
 cd ~/repos/
-git clone --recurse-submodules https://github.com/RetroTournaments/argos.git
+git clone --recurse-submodules https://github.com/RetroTournaments/static.git
 git lfs pull origin main
 
 
 # Build the main executable
-cd ~/repos/argos
+cd ~/repos/static
 mkdir build && cd build
 cmake -G Ninja ..
 ninja

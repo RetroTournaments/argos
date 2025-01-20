@@ -2,31 +2,31 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <fstream>
 
-#include "argos/main.h"
+#include "static/main.h"
 #include "util/arg.h"
 #include "util/file.h"
 
-using namespace argos;
-using namespace argos::util;
-using namespace argos::main;
+using namespace sta;
+using namespace sta::util;
+using namespace sta::main;
 
 class ConfigCommand
 {
@@ -49,14 +49,14 @@ private:
 REGISTER_COMMAND(config, "edit / manage the global configuration file",
 R"(
 EXAMPLES
-    argos config
+    static config
 
 USAGE:
-    argos config [--set-defaults | --restore-last]
+    static config [--set-defaults | --restore-last]
 
 DESCRIPTION:
     The 'config' command allows the operator to edit / manage the main global
-    configuration parameters for argos.
+    configuration parameters for static.
 
     If no options are given then the current config is backed up, and an editor is
     opened to modify the config.
@@ -148,7 +148,7 @@ int ConfigCommand::SetDefaults()
     }
 
     RuntimeConfig config = RuntimeConfig::Defaults();
-    config.ArgosDirectory = m_RuntimeConfig->ArgosDirectory;
+    config.StaticDirectory = m_RuntimeConfig->StaticDirectory;
 
     std::ofstream ofs(configPath);
     if (!ofs.good()) {

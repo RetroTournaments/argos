@@ -2,24 +2,24 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ARGOS_NES_NES_HEADER
-#define ARGOS_NES_NES_HEADER
+#ifndef STATIC_NES_NES_HEADER
+#define STATIC_NES_NES_HEADER
 
 #include <array>
 #include <mutex>
@@ -30,7 +30,7 @@
 #include <sstream>
 #include <functional>
 
-namespace argos::nes
+namespace sta::nes
 {
 
 inline constexpr int FRAME_WIDTH  = 256;
@@ -40,13 +40,13 @@ typedef std::array<uint8_t, FRAME_SIZE> Frame;
 
 inline constexpr int NTSC_FPS_NUMERATOR = 39375000;
 inline constexpr int NTSC_FPS_DENOMINATOR = 655171;
-inline double NTSC_FPS = 
+inline double NTSC_FPS =
     static_cast<double>(NTSC_FPS_NUMERATOR) / static_cast<double>(NTSC_FPS_DENOMINATOR);
 // www.nesdev.org/wiki/cpu
 inline constexpr int NTSC_SUBCARRIER_FREQUENCY_NUMERATOR_MHZ = 315;
 inline constexpr int NTSC_SUBCARRIER_FREQUENCY_DENOMINATOR_MHZ = 88;
 inline constexpr int NTSC_CLOCK_DIVISOR = 12;
-inline double NTSC_US_PER_M2 = 
+inline double NTSC_US_PER_M2 =
     static_cast<double>(NTSC_SUBCARRIER_FREQUENCY_DENOMINATOR_MHZ * 2) /
     static_cast<double>(NTSC_SUBCARRIER_FREQUENCY_NUMERATOR_MHZ);
 inline double NTSC_MS_PER_M2 = NTSC_US_PER_M2 / 1000.0;
@@ -85,7 +85,7 @@ inline constexpr int NAMETABLE_HEIGHT_BYTES = 30;
 inline constexpr int FRAMEPALETTE_SIZE = 0x20;
 typedef std::array<uint8_t, FRAMEPALETTE_SIZE> FramePalette;
 // The name is a bit of a misnomer, because the palette can actually be changed
-// within a frame 
+// within a frame
 
 inline constexpr int RAM_SIZE = 0x0800;
 typedef std::array<uint8_t, RAM_SIZE> Ram;

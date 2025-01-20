@@ -2,18 +2,18 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -21,7 +21,7 @@
 #include "game/gamedbui.h"
 #include "util/string.h"
 
-using namespace argos::game::ui;
+using namespace sta::game::ui;
 
 GameDBComponent::GameDBComponent(GameDatabase* db)
 {
@@ -54,7 +54,7 @@ int KVIntComponent::GetValue(sqlite3_stmt* stmt, int column)
     return sqlite3_column_int(stmt, column);
 }
 
-void KVIntComponent::DoColumn(const std::string& key, int* value, bool* selected, 
+void KVIntComponent::DoColumn(const std::string& key, int* value, bool* selected,
         sqliteext::ui::BasicColumnType type, bool* changed, int* scroll)
 {
     sqliteext::ui::IntColumn(0, value, selected, type, changed, scroll);
@@ -93,7 +93,7 @@ double KVRealComponent::GetValue(sqlite3_stmt* stmt, int column)
     return sqlite3_column_double(stmt, column);
 }
 
-void KVRealComponent::DoColumn(const std::string& key, double* value, bool* selected, 
+void KVRealComponent::DoColumn(const std::string& key, double* value, bool* selected,
         sqliteext::ui::BasicColumnType type, bool* changed, int* scroll)
 {
     sqliteext::ui::DoubleColumn(0, value, selected, type, changed, scroll);
@@ -133,7 +133,7 @@ std::string KVTextComponent::GetValue(sqlite3_stmt* stmt, int column)
     return sqliteext::column_str(stmt, column);
 }
 
-void KVTextComponent::DoColumn(const std::string& key, std::string* value, bool* selected, 
+void KVTextComponent::DoColumn(const std::string& key, std::string* value, bool* selected,
         sqliteext::ui::BasicColumnType type, bool* changed, int* scroll)
 {
     sqliteext::ui::TextColumn(0, value, selected, type, changed, scroll);

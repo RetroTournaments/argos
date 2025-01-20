@@ -2,18 +2,18 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -27,11 +27,11 @@
 #include "nes/nes.h"
 #include "util/string.h"
 
-using namespace argos::nes;
+using namespace sta::nes;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-const Palette& argos::nes::DefaultPaletteRGB()
+const Palette& sta::nes::DefaultPaletteRGB()
 {
     static Palette p = {
         0x52, 0x52, 0x52,  0x01, 0x1a, 0x51,
@@ -70,7 +70,7 @@ const Palette& argos::nes::DefaultPaletteRGB()
     return p;
 }
 
-const Palette& argos::nes::DefaultPaletteBGR()
+const Palette& sta::nes::DefaultPaletteBGR()
 {
     static Palette p = {
         0x52, 0x52, 0x52,  0x51, 0x1a, 0x01,
@@ -111,7 +111,7 @@ const Palette& argos::nes::DefaultPaletteBGR()
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void argos::nes::SetControllerStateButtonPressed(ControllerState* state, Button button, bool pressed)
+void sta::nes::SetControllerStateButtonPressed(ControllerState* state, Button button, bool pressed)
 {
     *state = (*state) & ~button;
     if (pressed) {
@@ -119,7 +119,7 @@ void argos::nes::SetControllerStateButtonPressed(ControllerState* state, Button 
     }
 }
 
-void argos::nes::ToggleControllerStateButton(ControllerState* state, Button button)
+void sta::nes::ToggleControllerStateButton(ControllerState* state, Button button)
 {
     SetControllerStateButtonPressed(state, button, !(*state & button));
 }
@@ -639,7 +639,7 @@ static bool GetLine(std::istream& is, std::string& line)
     return true;
 }
 
-void argos::nes::ReadFM2File(std::istream& is,
+void sta::nes::ReadFM2File(std::istream& is,
         std::vector<nes::ControllerState>* inputs,
         FM2Header* header)
 {
@@ -720,7 +720,7 @@ void argos::nes::ReadFM2File(std::istream& is,
     }
 }
 
-std::string argos::nes::ControllerStateToFM2Line(const nes::ControllerState& state)
+std::string sta::nes::ControllerStateToFM2Line(const nes::ControllerState& state)
 {
     static const std::array<char, 8> BUTTONS {
         'R', 'L', 'D', 'U', 'T', 'S', 'B', 'A',
@@ -736,7 +736,7 @@ std::string argos::nes::ControllerStateToFM2Line(const nes::ControllerState& sta
     return v;
 }
 
-void argos::nes::WriteFM2File(std::ostream& os,
+void sta::nes::WriteFM2File(std::ostream& os,
         const std::vector<ControllerState>& inputs,
         const FM2Header& header)
 {

@@ -2,18 +2,18 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -24,11 +24,11 @@
 #include "ext/nfdext/nfdext.h"
 #include "ext/sdlext/sdlextui.h"
 
-using namespace argos;
-using namespace argos::smbui;
-using namespace argos::smb;
+using namespace sta;
+using namespace sta::smbui;
+using namespace sta::smb;
 
-bool argos::smbui::AreaIDCombo(const char* label, smb::AreaID* id)
+bool sta::smbui::AreaIDCombo(const char* label, smb::AreaID* id)
 {
     bool changed = false;
     if (!id) {

@@ -2,30 +2,30 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ARGOS_GAME_GAMEDBUI_HEADER
-#define ARGOS_GAME_GAMEDBUI_HEADER
+#ifndef STATIC_GAME_GAMEDBUI_HEADER
+#define STATIC_GAME_GAMEDBUI_HEADER
 
 #include "game/gamedb.h"
 #include "rgmui/rgmui.h"
 #include "ext/sqliteext/sqliteextui.h"
 
-namespace argos::game::ui
+namespace sta::game::ui
 {
 
 class GameDBComponent : public rgmui::IApplicationComponent
@@ -139,7 +139,7 @@ public:
     virtual ~KVIntComponent();
 
     virtual int GetValue(sqlite3_stmt* stmt, int column) override final;
-    virtual void DoColumn(const std::string& key, int* value, bool* selected, 
+    virtual void DoColumn(const std::string& key, int* value, bool* selected,
             sqliteext::ui::BasicColumnType type, bool* changed, int* scroll) override final;
     virtual bool DoInsertControls() override final;
 
@@ -156,7 +156,7 @@ public:
     virtual ~KVRealComponent();
 
     virtual double GetValue(sqlite3_stmt* stmt, int column) override final;
-    virtual void DoColumn(const std::string& key, double* value, bool* selected, 
+    virtual void DoColumn(const std::string& key, double* value, bool* selected,
             sqliteext::ui::BasicColumnType type, bool* changed, int* scroll) override final;
     virtual bool DoInsertControls() override final;
 
@@ -173,7 +173,7 @@ public:
     virtual ~KVTextComponent();
 
     virtual std::string GetValue(sqlite3_stmt* stmt, int column) override final;
-    virtual void DoColumn(const std::string& key, std::string* value, bool* selected, 
+    virtual void DoColumn(const std::string& key, std::string* value, bool* selected,
             sqliteext::ui::BasicColumnType type, bool* changed, int* scroll) override final;
     virtual bool DoInsertControls() override final;
 

@@ -1,1 +1,1 @@
-argos rgms smbcomp --name /home/matthew/.argos/gdq.cfg --aux-display 1
+static rgms smbcomp --name /home/matthew/.static/gdq.cfg --aux-display 1

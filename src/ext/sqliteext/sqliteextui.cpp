@@ -2,28 +2,28 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "ext/sqliteext/sqliteextui.h"
 
-using namespace argos::sqliteext;
-using namespace argos::sqliteext::ui;
+using namespace sqliteext;
+using namespace sqliteext::ui;
 
-void argos::sqliteext::ui::DoSchemaDisplay(const char* label, const char* schema)
+void sqliteext::ui::DoSchemaDisplay(const char* label, const char* schema)
 {
     std::string title = fmt::format("{}::schema", label);
     if (ImGui::CollapsingHeader(title.c_str())) {
@@ -36,20 +36,20 @@ void argos::sqliteext::ui::DoSchemaDisplay(const char* label, const char* schema
     }
 }
 
-void argos::sqliteext::ui::CheckScrollExt(int* scroll)
+void sqliteext::ui::CheckScrollExt(int* scroll)
 {
     if (!ImGui::IsItemHovered()) {
         return;
     }
 
-    rgmui::SliderExtIsHovered();
+    sta::rgmui::SliderExtIsHovered();
     auto& io = ImGui::GetIO();
     if (io.MouseWheel != 0) {
         *scroll = -io.MouseWheel;
     }
 }
 
-void argos::sqliteext::ui::IntColumn(int column, int* v, bool* selected, BasicColumnType type, bool* changed, int* scroll)
+void sqliteext::ui::IntColumn(int column, int* v, bool* selected, BasicColumnType type, bool* changed, int* scroll)
 {
     ImGui::PushID(column);
     ImGui::TableNextColumn();
@@ -75,7 +75,7 @@ void argos::sqliteext::ui::IntColumn(int column, int* v, bool* selected, BasicCo
     ImGui::PopID();
 }
 
-void argos::sqliteext::ui::DoubleColumn(int column, double* v, bool* selected, BasicColumnType type, bool* changed, int* scroll)
+void sqliteext::ui::DoubleColumn(int column, double* v, bool* selected, BasicColumnType type, bool* changed, int* scroll)
 {
     ImGui::PushID(column);
     ImGui::TableNextColumn();
@@ -101,7 +101,7 @@ void argos::sqliteext::ui::DoubleColumn(int column, double* v, bool* selected, B
     ImGui::PopID();
 }
 
-void argos::sqliteext::ui::TextColumn(int column, std::string* v, bool* selected, BasicColumnType type, bool* changed, int* scroll)
+void sqliteext::ui::TextColumn(int column, std::string* v, bool* selected, BasicColumnType type, bool* changed, int* scroll)
 {
     ImGui::PushID(column);
     ImGui::TableNextColumn();
@@ -111,7 +111,7 @@ void argos::sqliteext::ui::TextColumn(int column, std::string* v, bool* selected
         CheckScrollExt(scroll);
     } else if (type == BasicColumnType::EDITABLE) {
         ImGui::SetNextItemWidth(-FLT_MIN);
-        if (rgmui::InputText("##value", v)) {
+        if (sta::rgmui::InputText("##value", v)) {
             *changed = true;
         }
         if (ImGui::IsItemActivated()) {
@@ -127,7 +127,7 @@ void argos::sqliteext::ui::TextColumn(int column, std::string* v, bool* selected
     ImGui::PopID();
 }
 
-bool argos::sqliteext::ui::ButtonColumn(int column, const char* label, int* scroll)
+bool sqliteext::ui::ButtonColumn(int column, const char* label, int* scroll)
 {
     ImGui::PushID(column);
     ImGui::TableNextColumn();
@@ -155,7 +155,7 @@ DBSchemaComponent::DBSchemaComponent(sqliteext::SQLiteExtDB* db, std::string tit
     }
 
     try {
-        db->ExecOrThrow("SELECT name, sql FROM sqlite_master WHERE type='table' ORDER BY name;", 
+        db->ExecOrThrow("SELECT name, sql FROM sqlite_master WHERE type='table' ORDER BY name;",
                 [&](int argc, char** data, char**){
                     assert(argc == 2);
                     m_TableSchemas.emplace_back(std::string(data[0]), std::string(data[1]));

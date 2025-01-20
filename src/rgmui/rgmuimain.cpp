@@ -2,25 +2,25 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "rgmui/rgmuimain.h"
 
-void argos::rgmui::InitializeDefaultLogger(const std::string& name) {
+void sta::rgmui::InitializeDefaultLogger(const std::string& name) {
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
     auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(name + ".log", true);
     std::vector<std::shared_ptr<spdlog::sinks::sink>> sinks = {console_sink, file_sink};
@@ -28,17 +28,17 @@ void argos::rgmui::InitializeDefaultLogger(const std::string& name) {
     spdlog::set_default_logger(logger);
 }
 
-void argos::rgmui::LogAndDisplayException(const std::string& s) {
+void sta::rgmui::LogAndDisplayException(const std::string& s) {
     spdlog::error(s);
     std::cerr << s << std::endl;
 }
 
-void argos::rgmui::LogAndDisplayException(const std::exception& e) {
+void sta::rgmui::LogAndDisplayException(const std::exception& e) {
     std::string error = fmt::format("uncaught exception: '{}'", e.what());
     LogAndDisplayException(error);
 }
 
-void argos::rgmui::WindowAppMainLoop(
+void sta::rgmui::WindowAppMainLoop(
         Window* window, IApplication* application,
         util::mclock::duration minimumFrameDuration) {
     SDL_Event e;

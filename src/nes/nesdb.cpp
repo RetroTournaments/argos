@@ -2,27 +2,27 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "nes/nesdb.h"
 
-using namespace argos::nes;
+using namespace sta::nes;
 
-void argos::nes::column_inputs(sqlite3_stmt* stmt, int column, std::vector<nes::ControllerState>* inputs) {
+void sta::nes::column_inputs(sqlite3_stmt* stmt, int column, std::vector<nes::ControllerState>* inputs) {
     if (!inputs) return;
 
     int sz = sqlite3_column_bytes(stmt, column);
@@ -30,7 +30,7 @@ void argos::nes::column_inputs(sqlite3_stmt* stmt, int column, std::vector<nes::
     inputs->assign(dat, dat + sz);
 }
 
-void argos::nes::column_frame_palette(sqlite3_stmt* stmt, int column, nes::FramePalette* palette)
+void sta::nes::column_frame_palette(sqlite3_stmt* stmt, int column, nes::FramePalette* palette)
 {
     int sz = sqlite3_column_bytes(stmt, column);
     if (sz != nes::FRAMEPALETTE_SIZE) {
@@ -42,7 +42,7 @@ void argos::nes::column_frame_palette(sqlite3_stmt* stmt, int column, nes::Frame
     }
 }
 
-void argos::nes::column_nametable(sqlite3_stmt* stmt, int column, nes::NameTable* nametable)
+void sta::nes::column_nametable(sqlite3_stmt* stmt, int column, nes::NameTable* nametable)
 {
     int sz = sqlite3_column_bytes(stmt, column);
     if (sz != nes::NAMETABLE_SIZE) {
@@ -54,7 +54,7 @@ void argos::nes::column_nametable(sqlite3_stmt* stmt, int column, nes::NameTable
     }
 }
 
-void argos::nes::column_pattern_table(sqlite3_stmt* stmt, int column, nes::PatternTable* pattern_table)
+void sta::nes::column_pattern_table(sqlite3_stmt* stmt, int column, nes::PatternTable* pattern_table)
 {
     int sz = sqlite3_column_bytes(stmt, 0);
     if (sz != nes::PATTERNTABLE_SIZE) {

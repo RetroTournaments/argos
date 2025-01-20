@@ -1,7 +1,7 @@
 NESBox README
 -------------
 
-We need a more efficient way to setup, transport, and use ARGOS and host STA events.
+We need a more efficient way to setup, transport, and use Static and host STA events.
 Therefore we will use the time-tested approach of 'putting things in a box.'
 
 The NESBox should contain _all_ relevant hardware in a safe and contained environment.
@@ -116,7 +116,7 @@ Now I can just turn it on and then ssh in no worries :D
 ## Get video / audio capture sorted on the nesbox
 ```
 pacman -S ffmpeg git usbutils alsa-utils sof-firmware alsa-ucm-conf
-git clone https://github.com/RetroTournaments/argos.git
+git clone https://github.com/RetroTournaments/static.git
 ```
 
 ```
@@ -164,7 +164,7 @@ To launch tmux on startup, but I didn't really like this. Commented out at the m
 sudo pacman -S tmux
 ```
 
-Then set up the .bashrc which includes the snippet to start tmux / attach to the 'argos' tmux session
+Then set up the .bashrc which includes the snippet to start tmux / attach to the 'static' tmux session
 
 ## x/ graphics
 
@@ -246,4 +246,4 @@ So then we can parse dmesg with this information so long as we are consistent in
 Or I suppose I could swap them via some config after checking.
 
 
-git clone --recurse-submodules matthew@nesrack:/home/matthew/repos/argos
+git clone --recurse-submodules matthew@nesrack:/home/matthew/repos/static

@@ -2,46 +2,46 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <fstream>
 
-#include "argos/argosdb.h"
-#include "argos/main.h"
+#include "static/staticdb.h"
+#include "static/main.h"
 #include "util/file.h"
 
-using namespace argos;
-using namespace argos::util;
-using namespace argos::main;
+using namespace sta;
+using namespace sta::util;
+using namespace sta::main;
 
 ////////////////////////////////////////////////////////////////////////////////
 // The 'db' command is to
-REGISTER_COMMAND(db, "edit / manage application data stored in argos.db",
+REGISTER_COMMAND(db, "edit / manage application data stored in static.db",
 R"(
 EXAMPLES
-    argos db
-    argos db --reset
+    static db
+    static db --reset
 
 USAGE:
-    argos db [--reset ]
+    static db [--reset ]
 
 DESCRIPTION:
     The 'db' command allows the operator to edit / manage the application data
-    stored in argos.db
+    stored in static.db
 
     If no options are given then sqlite3 is opened to manage the database.
 
@@ -53,21 +53,21 @@ OPTIONS:
         Print the path to database.
 )")
 {
-    EnsureArgosDirectoryWriteable(*config);
+    EnsureStaticDirectoryWriteable(*config);
 
-    std::string argosdbpath = config->ArgosPathTo("argos.db");
+    std::string staticdbpath = config->StaticPathTo("static.db");
 
     if (argc == 0) {
-        ArgosDB db(argosdbpath);
+        StaticDB db(staticdbpath);
         return db.SystemLaunchSQLite3WithExamples();
     } else {
         std::string arg(argv[0]);
         if (arg == "--reset") {
-            fs::remove(argosdbpath);
-            ArgosDB db(argosdbpath);
+            fs::remove(staticdbpath);
+            StaticDB db(staticdbpath);
             return 0;
         } else if (arg == "path" || arg == "--path") {
-            std::cout << argosdbpath << std::endl;
+            std::cout << staticdbpath << std::endl;
             return 0;
         } else {
             Error("unrecognized argument. '{}'", arg);

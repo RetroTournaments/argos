@@ -2,23 +2,23 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "argos/main.h"
+#include "static/main.h"
 #include "util/arg.h"
 #include "util/file.h"
 
@@ -28,11 +28,11 @@
 #include "smb/smbdb.h"
 #include "smb/smbdbui.h"
 
-using namespace argos;
-using namespace argos::util;
-using namespace argos::main;
+using namespace sta;
+using namespace sta::util;
+using namespace sta::main;
 
-static bool GetSMBRom(int argc, char** argv, const argos::RuntimeConfig* config, std::vector<uint8_t>* rom)
+static bool GetSMBRom(int argc, char** argv, const sta::RuntimeConfig* config, std::vector<uint8_t>* rom)
 {
     std::string rom_path;
     ArgReadString(&argc, &argv, &rom_path);
@@ -42,7 +42,7 @@ static bool GetSMBRom(int argc, char** argv, const argos::RuntimeConfig* config,
     if (rom_path == "") {
         rom_path = config->SourcePathTo("data/smb/smb.nes");
         if (FileExists(rom_path)) {
-            argos::util::ReadFileToVector(rom_path, rom);
+            sta::util::ReadFileToVector(rom_path, rom);
         } else {
             rom_path = config->SourcePathTo("data/smb/blob.bin");
             if (FileExists(rom_path)) {
@@ -62,15 +62,15 @@ static bool GetSMBRom(int argc, char** argv, const argos::RuntimeConfig* config,
                     std::cerr << "Maybe you need to run 'git lfs pull origin main' in "
                               << config->SourceDirectory << std::endl;
                 }
-            } else if (argos::nfdext::FileOpenDialog(&rom_path)) {
-                argos::util::ReadFileToVector(rom_path, rom);
+            } else if (nfdext::FileOpenDialog(&rom_path)) {
+                sta::util::ReadFileToVector(rom_path, rom);
             } else {
                 Error("Must provide the base smb rom");
                 return false;
             }
         }
     } else {
-        argos::util::ReadFileToVector(rom_path, rom);
+        sta::util::ReadFileToVector(rom_path, rom);
     }
 
     if (rom->size() != smb::BASE_ROM_SIZE) {
@@ -79,10 +79,10 @@ static bool GetSMBRom(int argc, char** argv, const argos::RuntimeConfig* config,
         return false;
     }
 
-    auto sum = argos::opensslext::ComputeMD5Sum(rom->data(), rom->size());
+    auto sum = opensslext::ComputeMD5Sum(rom->data(), rom->size());
     bool md5correct = true;
     for (size_t i = 0; i < MD5_DIGEST_LENGTH; i++) {
-        if (sum[i] != argos::smb::BASE_ROM_MD5[i]) {
+        if (sum[i] != sta::smb::BASE_ROM_MD5[i]) {
             md5correct = false;
         }
     }
@@ -95,7 +95,7 @@ static bool GetSMBRom(int argc, char** argv, const argos::RuntimeConfig* config,
         std::cerr << "\n";
         std::cerr << "expected : ";
         for (size_t i = 0; i < MD5_DIGEST_LENGTH; i++) {
-            std::cerr << fmt::format("{:02x}", argos::smb::BASE_ROM_MD5[i]);
+            std::cerr << fmt::format("{:02x}", sta::smb::BASE_ROM_MD5[i]);
         }
         std::cerr << "\n";
         return false;
@@ -104,8 +104,8 @@ static bool GetSMBRom(int argc, char** argv, const argos::RuntimeConfig* config,
     return true;
 }
 
-// argos smb db init
-int DoSMBDBInit(const argos::RuntimeConfig* config, smb::SMBDatabase* orig, int argc, char** argv)
+// static smb db init
+int DoSMBDBInit(const sta::RuntimeConfig* config, smb::SMBDatabase* orig, int argc, char** argv)
 {
     if (argc > 1) {
         Error("expected at most one argument (the path to the smb rom)");
@@ -137,20 +137,20 @@ int DoSMBDBInit(const argos::RuntimeConfig* config, smb::SMBDatabase* orig, int 
     return 0;
 }
 
-bool SMBDBInit(const argos::RuntimeConfig* config, smb::SMBDatabase* smbdb) {
+bool SMBDBInit(const sta::RuntimeConfig* config, smb::SMBDatabase* smbdb) {
     if (!smbdb->IsInit()) {
         if (DoSMBDBInit(config, smbdb, 0, nullptr)) {
-            Error("SMB Database is not initialized. Run 'argos smb db init'");
+            Error("SMB Database is not initialized. Run 'static smb db init'");
             return false;
         }
     }
     return true;
 }
 
-// 'argos smb db'
-int DoSMBDB(const argos::RuntimeConfig* config, smb::SMBDatabase* smbdb, int argc, char** argv)
+// 'static smb db'
+int DoSMBDB(const sta::RuntimeConfig* config, smb::SMBDatabase* smbdb, int argc, char** argv)
 {
-    EnsureArgosDirectoryWriteable(*config);
+    EnsureStaticDirectoryWriteable(*config);
 
     std::string arg;
     if (!ArgReadString(&argc, &argv, &arg)) {
@@ -164,9 +164,9 @@ int DoSMBDB(const argos::RuntimeConfig* config, smb::SMBDatabase* smbdb, int arg
             return 1;
         }
         smbui::SMBDatabaseApplication app(smbdb);
-        return RunIApplication(config, "argos smb db", &app);
+        return RunIApplication(config, "static smb db", &app);
     } else if (arg ==  "path") {
-        std::cout << config->ArgosPathTo("smb.db") << std::endl;;
+        std::cout << config->StaticPathTo("smb.db") << std::endl;;
         return 0;
     } else if (arg ==  "init") {
         return DoSMBDBInit(config, smbdb, argc, argv);
@@ -182,11 +182,11 @@ int DoSMBDB(const argos::RuntimeConfig* config, smb::SMBDatabase* smbdb, int arg
 REGISTER_COMMAND(smb, "Nintendo Entertainment System, Super Mario Bros., 1985",
 R"(
 EXAMPLES:
-    argos smb db init
-    argos smb db ui
+    static smb db init
+    static smb db ui
 
 USAGE:
-    argos smb <action> [<args>...]
+    static smb <action> [<args>...]
 
 DESCRIPTION:
     The 'smb' command is for the Nintendo Entertainment System game 'Super
@@ -213,7 +213,7 @@ OPTIONS:
         return 1;
     }
 
-    smb::SMBDatabase smbdb(config->ArgosPathTo("smb.db"));
+    smb::SMBDatabase smbdb(config->StaticPathTo("smb.db"));
 
     if (action == "db") {
         return DoSMBDB(config, &smbdb, argc, argv);

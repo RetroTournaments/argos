@@ -2,18 +2,18 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -25,9 +25,9 @@
 #include "util/string.h"
 #include "util/file.h"
 
-using namespace argos::util;
+using namespace sta::util;
 
-void argos::util::ForFileInDirectory(const std::string& directory,
+void sta::util::ForFileInDirectory(const std::string& directory,
         std::function<bool(fs::path p)> cback)
 {
     for (const auto & entry : fs::directory_iterator(directory)) {
@@ -37,7 +37,7 @@ void argos::util::ForFileInDirectory(const std::string& directory,
     }
 }
 
-void argos::util::ForFileOfExtensionInDirectory(const std::string& directory,
+void sta::util::ForFileOfExtensionInDirectory(const std::string& directory,
         const std::string& extension, std::function<bool(fs::path p)> cback)
 {
     for (const auto & entry : fs::directory_iterator(directory)) {
@@ -49,17 +49,17 @@ void argos::util::ForFileOfExtensionInDirectory(const std::string& directory,
     }
 }
 
-bool argos::util::FileExists(const std::string& path)
+bool sta::util::FileExists(const std::string& path)
 {
     return fs::exists(path);
 }
 
-size_t argos::util::FileSize(const std::string& path)
+size_t sta::util::FileSize(const std::string& path)
 {
     return fs::file_size(path);
 }
 
-size_t argos::util::ReadFileToVector(const std::string& path, std::vector<uint8_t>* contents)
+size_t sta::util::ReadFileToVector(const std::string& path, std::vector<uint8_t>* contents)
 {
     std::ifstream ifs(path, std::ios::in | std::ios::binary);
     if (!ifs.good()) {
@@ -71,7 +71,7 @@ size_t argos::util::ReadFileToVector(const std::string& path, std::vector<uint8_
     return static_cast<int>(contents->size());
 }
 
-void argos::util::WriteVectorToFile(const std::string& path, const std::vector<uint8_t>& contents)
+void sta::util::WriteVectorToFile(const std::string& path, const std::vector<uint8_t>& contents)
 {
     std::ofstream ofs(path, std::ios::out | std::ios::binary);
     if (!ofs.good()) {
@@ -80,7 +80,7 @@ void argos::util::WriteVectorToFile(const std::string& path, const std::vector<u
     ofs.write(reinterpret_cast<const char*>(contents.data()), contents.size());
 }
 
-std::string argos::util::ReadFileToString(const std::string& path)
+std::string sta::util::ReadFileToString(const std::string& path)
 {
     std::ifstream ifs(path);
     if (!ifs.good()) {
@@ -89,7 +89,7 @@ std::string argos::util::ReadFileToString(const std::string& path)
     return std::string(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
 }
 
-void argos::util::WriteStringToFile(const std::string& path, const std::string& str)
+void sta::util::WriteStringToFile(const std::string& path, const std::string& str)
 {
     std::ofstream ofs(path);
     if (!ofs.good()) {

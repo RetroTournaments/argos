@@ -2,18 +2,18 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -27,7 +27,7 @@
 #include "zmq.hpp"
 #include "zmq_addon.hpp"
 
-#include "argos/main.h"
+#include "static/main.h"
 #include "util/arg.h"
 #include "util/serial.h"
 #include "util/clock.h"
@@ -36,9 +36,9 @@
 #include "rgmui/rgmuimain.h"
 #include "smb/rgms.h"
 
-using namespace argos;
-using namespace argos::util;
-using namespace argos::main;
+using namespace sta;
+using namespace sta::util;
+using namespace sta::main;
 
 struct Lister {
     std::string Item;
@@ -192,7 +192,7 @@ static void DoSerialWatchConsole(std::string path, int baud) {
     }
 }
 
-static int DoWatch(int argc, char** argv, const argos::RuntimeConfig* config)
+static int DoWatch(int argc, char** argv, const sta::RuntimeConfig* config)
 {
     int r = 0;
     std::string item;
@@ -280,16 +280,16 @@ static int DoWatch(int argc, char** argv, const argos::RuntimeConfig* config)
     return r;
 }
 
-static int DoTransmitStuff(const std::string& ttypath, const std::string& target, const std::string& name, const argos::RuntimeConfig* config, bool norecord) {
-    smb::SMBDatabase db(config->ArgosPathTo("smb.db"));
+static int DoTransmitStuff(const std::string& ttypath, const std::string& target, const std::string& name, const sta::RuntimeConfig* config, bool norecord) {
+    smb::SMBDatabase db(config->StaticPathTo("smb.db"));
     auto nametables = db.GetNametableCache();
 
-    util::fs::create_directories(fmt::format("{}rec/", config->ArgosDirectory));
-    std::string recordingPath = fmt::format("{}rec/{}_{}.rec", config->ArgosDirectory,
+    util::fs::create_directories(fmt::format("{}rec/", config->StaticDirectory));
+    std::string recordingPath = fmt::format("{}rec/{}_{}.rec", config->StaticDirectory,
             util::GetTimestampNow(), name);
 
-    argos::rgms::SMBSerialProcessorThreadInfo tinfo;
-    argos::rgms::SMBSerialProcessorThread thread(ttypath, nametables);
+    sta::rgms::SMBSerialProcessorThreadInfo tinfo;
+    sta::rgms::SMBSerialProcessorThread thread(ttypath, nametables);
     if (!norecord) {
         thread.StartRecording(recordingPath);
     }
@@ -335,7 +335,7 @@ static int DoTransmitStuff(const std::string& ttypath, const std::string& target
     return 0;
 }
 
-static int DoTransmit(int argc, char** argv, argos::RuntimeConfig* config)
+static int DoTransmit(int argc, char** argv, sta::RuntimeConfig* config)
 {
     if (argc < 3 || argc > 4) {
         Error("transmit <tty> <target> <name>");
@@ -385,7 +385,7 @@ static int DoReceive(int argc, char** argv)
     return DoReceiveStuff(bindings);
 }
 
-static int DoSMBComp(int argc, char** argv, argos::RuntimeConfig* config)
+static int DoSMBComp(int argc, char** argv, sta::RuntimeConfig* config)
 {
     void* sharedMem = nullptr;
 
@@ -425,12 +425,12 @@ static int DoSMBComp(int argc, char** argv, argos::RuntimeConfig* config)
 
         int pid = fork();
         if (pid == 0) {
-            argos::rgms::SMBCompAppAux app2(sharedMem);
+            sta::rgms::SMBCompAppAux app2(sharedMem);
 
             rgmui::Window window("RGMS SMB Comp 2", 1920, 1080, -1, -1, dno, nullptr, nullptr, SDL_WINDOW_BORDERLESS);
             rgmui::WindowAppMainLoop(&window, &app2, std::chrono::microseconds(15000));
         } else {
-            argos::rgms::SMBCompApp app(config);
+            sta::rgms::SMBCompApp app(config);
             if (name != "") {
                 app.LoadNamedConfig(name);
             }
@@ -439,7 +439,7 @@ static int DoSMBComp(int argc, char** argv, argos::RuntimeConfig* config)
             RunIApplication(config, "RGMS SMB Comp", &app);
         }
     } else {
-        argos::rgms::SMBCompApp app(config);
+        sta::rgms::SMBCompApp app(config);
         if (name != "") {
             app.LoadNamedConfig(name);
         }
@@ -449,9 +449,9 @@ static int DoSMBComp(int argc, char** argv, argos::RuntimeConfig* config)
     return 0;
 }
 
-static int DoRecReview(int argc, char** argv, argos::RuntimeConfig* config)
+static int DoRecReview(int argc, char** argv, sta::RuntimeConfig* config)
 {
-    argos::rgms::RecReviewApp app(config);
+    sta::rgms::RecReviewApp app(config);
     RunIApplication(config, "RGMS Rec Review", &app); //, 2400, 1180, pdno);
     return 0;
 }
@@ -461,10 +461,10 @@ static int DoRecReview(int argc, char** argv, argos::RuntimeConfig* config)
 REGISTER_COMMAND(rgms, "RGMS",
 R"(
 EXAMPLES:
-    argos rgms smbcomp --name /home/matthew/.argos/anyp.cfg --aux-display 1
-    argos rgms list serial
-    argos rgms watch serial --tty /dev/ttyUSB1
-    argos rgms transmit serial /dev/ttyUSB1 tcp://0.0.0.0:5555 seat1
+    static rgms smbcomp --name /home/matthew/.static/anyp.cfg --aux-display 1
+    static rgms list serial
+    static rgms watch serial --tty /dev/ttyUSB1
+    static rgms transmit serial /dev/ttyUSB1 tcp://0.0.0.0:5555 seat1
 
 USAGE:
 

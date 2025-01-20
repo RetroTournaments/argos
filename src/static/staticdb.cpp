@@ -2,18 +2,18 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -24,10 +24,10 @@
 #define SDL_WINDOWPOS_CENTERED         SDL_WINDOWPOS_CENTERED_DISPLAY(0)
 #endif
 
-#include "argos/argosdb.h"
+#include "static/staticdb.h"
 
-using namespace argos;
-using namespace argos::db;
+using namespace sta;
+using namespace sta::db;
 
 AppCache AppCache::Defaults(const char* name, int display)
 {
@@ -59,17 +59,17 @@ void AppCache::SetWinRect(const util::Rect2I& rect)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-ArgosDB::ArgosDB(const std::string& path)
+StaticDB::StaticDB(const std::string& path)
     : sqliteext::SQLiteExtDB(path)
 {
     ExecOrThrow(AppCacheSchema());
 }
 
-ArgosDB::~ArgosDB()
+StaticDB::~StaticDB()
 {
 }
 
-bool ArgosDB::LoadAppCache(AppCache* cache)
+bool StaticDB::LoadAppCache(AppCache* cache)
 {
     if (!cache) return false;
 
@@ -96,11 +96,11 @@ bool ArgosDB::LoadAppCache(AppCache* cache)
     return ret;
 }
 
-void ArgosDB::SaveAppCache(const AppCache& cache)
+void StaticDB::SaveAppCache(const AppCache& cache)
 {
     sqlite3_stmt* stmt;
     sqliteext::PrepareOrThrow(m_Database, R"(
-        UPDATE app_cache 
+        UPDATE app_cache
         SET window_x=?, window_y=?, width=?, height=?, display=?, ini_data=? WHERE name = ?;
     )", &stmt);
 
@@ -123,7 +123,7 @@ void ArgosDB::SaveAppCache(const AppCache& cache)
     bindexec();
 }
 
-const char* ArgosDB::AppCacheSchema()
+const char* StaticDB::AppCacheSchema()
 {
     return R"(CREATE TABLE IF NOT EXISTS app_cache (
     name            TEXT PRIMARY KEY,

@@ -2,18 +2,18 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -23,7 +23,7 @@
 #include "nes/ppux.h"
 #include "util/bitmanip.h"
 
-using namespace argos::nes;
+using namespace sta::nes;
 
 EffectInfo EffectInfo::Defaults()
 {
@@ -34,7 +34,7 @@ EffectInfo EffectInfo::Defaults()
     return ei;
 }
 
-void argos::nes::NextOAMx(OAMxEntry* oamx, int x8, int y8, uint8_t tileIndex, uint8_t attributes)
+void sta::nes::NextOAMx(OAMxEntry* oamx, int x8, int y8, uint8_t tileIndex, uint8_t attributes)
 {
     oamx->X += x8 * 8;
     oamx->Y += y8 * 8;

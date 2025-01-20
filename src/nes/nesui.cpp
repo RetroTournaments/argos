@@ -2,18 +2,18 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -27,8 +27,8 @@
 #include "ext/nfdext/nfdext.h"
 #include "util/bitmanip.h"
 
-using namespace argos;
-using namespace argos::nesui;
+using namespace sta;
+using namespace sta::nesui;
 
 NESPaletteComponentOptions NESPaletteComponentOptions::Defaults()
 {
@@ -40,13 +40,13 @@ NESPaletteComponentOptions NESPaletteComponentOptions::Defaults()
 }
 
 NESPaletteComponent::NESPaletteComponent(const std::string& windowName)
-    : NESPaletteComponent(windowName, 
+    : NESPaletteComponent(windowName,
             NESPaletteComponentOptions::Defaults(),
             nes::DefaultPaletteBGR())
 {
 }
 
-NESPaletteComponent::NESPaletteComponent(const std::string& windowName, 
+NESPaletteComponent::NESPaletteComponent(const std::string& windowName,
                         NESPaletteComponentOptions options,
                         nes::Palette initialPalette)
     : m_WindowName(windowName)
@@ -71,7 +71,7 @@ bool NESPaletteComponent::Controls(nes::Palette* palette, const NESPaletteCompon
 {
     bool changed = false;
     int colorIndex = 0;
-    if (ImGui::BeginTable("palette", 16, ImGuiTableFlags_SizingFixedSame 
+    if (ImGui::BeginTable("palette", 16, ImGuiTableFlags_SizingFixedSame
                 | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX)) {
         for (int row = 0; row < 4; row++) {
             ImGui::TableNextRow();
@@ -86,7 +86,7 @@ bool NESPaletteComponent::Controls(nes::Palette* palette, const NESPaletteCompon
                     std::swap(rgb[0], rgb[2]);
                 }
 
-                ImGuiColorEditFlags flags = 
+                ImGuiColorEditFlags flags =
                     ImGuiColorEditFlags_NoAlpha |
                     ImGuiColorEditFlags_NoInputs |
                     ImGuiColorEditFlags_NoLabel;
@@ -227,7 +227,7 @@ static bool FramePaletteComponentPopup(uint8_t* fpalEntry, const FramePaletteCom
         changed = true;
     }
 
-    if (ImGui::BeginTable("p2", 16, ImGuiTableFlags_SizingFixedSame 
+    if (ImGui::BeginTable("p2", 16, ImGuiTableFlags_SizingFixedSame
                 | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX)) {
         int paletteIndex = 0;
         for (int row = 0; row < 4; row++) {
@@ -261,7 +261,7 @@ bool FramePaletteComponent::Controls(nes::FramePalette* framePalette, const Fram
 {
     bool changed = false;
 
-    if (ImGui::BeginTable("palette", 16, ImGuiTableFlags_SizingFixedSame 
+    if (ImGui::BeginTable("palette", 16, ImGuiTableFlags_SizingFixedSame
                 | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX)) {
         int paletteIndex = 0;
         for (int row = 0; row < 2; row++) {
@@ -365,7 +365,7 @@ ControllerGeometry ControllerGeometry::Defaults()
     g.SelectStart.ButtonInset.Height = 11.9f;
     g.SelectStart.ButtonInset.Button.OffsetX = (25.3f / 2.0f) - 10.0f / 2;
     g.SelectStart.ButtonInset.Button.Width = 10.0f;
-    g.SelectStart.ButtonInset.Button.Height = 4.6f; 
+    g.SelectStart.ButtonInset.Button.Height = 4.6f;
 
     g.ABButtons.CenterX = (96.6f + 93.4f) / 2.0f;
     g.ABButtons.CenterY = g.SelectStart.ButtonInset.CenterY;
@@ -425,7 +425,7 @@ ImVec2 nesui::DrawController(
         nes::ControllerState state,
         const ControllerColors& colors,
         const ControllerGeometry& g,
-        float ox, float oy, float scale, 
+        float ox, float oy, float scale,
         ImDrawList* list, ButtonLocations* buttons)
 {
     auto C = [&](float x, float y) {
@@ -457,7 +457,7 @@ ImVec2 nesui::DrawController(
     {
         auto o = g.DarkRegion.Offset;
         list->AddRectFilled(
-                C(o, g.Boundary.Height - o - g.DarkRegion.Height), 
+                C(o, g.Boundary.Height - o - g.DarkRegion.Height),
                 C(g.Boundary.Width - o, g.Boundary.Height - o),
                 CL(colors.Dark), V(g.DarkRegion.Radius));
     }
@@ -651,7 +651,7 @@ ImVec2 nesui::DrawDogbone(
         nes::ControllerState state,
         const ControllerColors& colors,
         const DogboneGeometry& g,
-        float ox, float oy, float scale, 
+        float ox, float oy, float scale,
         ImDrawList* list, ButtonLocations* buttons)
 {
     auto C = [&](float x, float y) {
@@ -925,7 +925,7 @@ bool NESControllerComponent::Controls(nes::ControllerState* state, NESController
         if (ImGui::InvisibleButton("button", ImVec2(w, h))) {
             nes::ToggleControllerStateButton(state, static_cast<nes::Button>(b));
         }
-        
+
         b <<= 1;
     }
     ImGui::SetCursorScreenPos(curpos);
@@ -1025,7 +1025,7 @@ static ImU32 TextColor(bool highlighted, const NESInputsComponentOptions* option
     return ImGui::ColorConvertFloat4ToU32((highlighted) ? options->HighlightTextColor : options->TextColor);
 }
 
-static bool DoInputChevrons(ImVec2 screenPos, int inputIndex, const NESInputsComponentOptions* options, 
+static bool DoInputChevrons(ImVec2 screenPos, int inputIndex, const NESInputsComponentOptions* options,
         const NESInputLineSize& size, NESInputsComponentState* state)
 {
 
@@ -1228,7 +1228,7 @@ static void InitInputLineSize(const NESInputsComponentOptions& options, int fram
     size->Width += options.ColumnPadding;
 }
 
-static void EnsureInputSize(std::vector<nes::ControllerState>* inputs, 
+static void EnsureInputSize(std::vector<nes::ControllerState>* inputs,
         const NESInputsComponentOptions* options, NESInputsComponentState* state)
 {
     size_t orig = inputs->size();
@@ -1280,7 +1280,7 @@ bool NESInputsComponent::Controls(std::vector<nes::ControllerState>* inputs,
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove;
     if (options->AllowTargetChange && state->MouseWasHoveringChevron) {
         flags |= ImGuiWindowFlags_NoScrollWithMouse;
-        
+
         auto& io = ImGui::GetIO();
         if (io.MouseWheel != 0) {
             state->TargetIndex -= io.MouseWheel;
@@ -1568,7 +1568,7 @@ NESEmuNametableComponentOptions NESEmuNametableComponentOptions::Defaults()
     return options;
 }
 
-bool NESEmuNametableComponent::Controls(const nes::NameTable& nt, 
+bool NESEmuNametableComponent::Controls(const nes::NameTable& nt,
         const nes::PatternTable& pt, const nes::FramePalette& fp,
         NESEmuNametableComponentOptions* options)
 {
@@ -1664,7 +1664,7 @@ bool nesui::smb::DoAction(nesui::smb::InputAction action,
             if (from != to && from > 0) {
                 ChangeInputTo(from - 1, (*inputs)[from - 1] | nes::Button::A);
             }
-            break; 
+            break;
         }
         case InputAction::SMB_JUMP_LATER: {
             auto [from, to] = FindPreviousJump(target, *inputs);
@@ -1730,7 +1730,7 @@ bool nesui::smb::DoAction(nesui::smb::InputAction action,
                 if ((*inputs)[s] & nes::Button::A) {
                     auto [from, to] = FindPreviousJump(target, *inputs);
                     s = from;
-                } 
+                }
 
                 int nchanges = 0;
                 for (int i = 0; i < 35; i++) {

@@ -2,18 +2,18 @@
 //
 // Copyright (C) 2023 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -21,10 +21,10 @@
 #include "smb/smb.h"
 #include "fmt/fmt.h"
 
-using namespace argos;
-using namespace argos::smb;
+using namespace sta;
+using namespace sta::smb;
 
-AreaID argos::smb::AreaIDFromRAM(uint8_t area_data_low, uint8_t area_data_high)
+AreaID sta::smb::AreaIDFromRAM(uint8_t area_data_low, uint8_t area_data_high)
 {
     uint16_t area_id = static_cast<uint16_t>(area_data_high);
     area_id <<= 8;
@@ -32,7 +32,7 @@ AreaID argos::smb::AreaIDFromRAM(uint8_t area_data_low, uint8_t area_data_high)
     return static_cast<AreaID>(area_id);
 }
 
-const std::vector<AreaID>& argos::smb::KnownAreaIDs()
+const std::vector<AreaID>& sta::smb::KnownAreaIDs()
 {
     static std::vector<AreaID> s_AreaIDs = {
         AreaID::WATER_AREA_1,
@@ -73,7 +73,7 @@ const std::vector<AreaID>& argos::smb::KnownAreaIDs()
     return s_AreaIDs;
 }
 
-std::string argos::smb::ToString(smb::AreaID area_id)
+std::string sta::smb::ToString(smb::AreaID area_id)
 {
     static std::unordered_map<smb::AreaID, std::string> s_AreaStrings = {
         {smb::AreaID::WATER_AREA_1        , "WATER_AREA_1        0xAE08"},
@@ -118,7 +118,7 @@ std::string argos::smb::ToString(smb::AreaID area_id)
     return it->second;
 }
 
-bool argos::smb::AreaIDEnd(AreaID area_id, int* end) {
+bool sta::smb::AreaIDEnd(AreaID area_id, int* end) {
     static std::unordered_map<uint16_t, int> s_KnownEnds = {
         {0xAE47, 3072},
         {0xA46D, 2608},
@@ -159,7 +159,7 @@ bool argos::smb::AreaIDEnd(AreaID area_id, int* end) {
     return false;
 }
 
-bool argos::smb::AreaIDMusic(AreaID area_id, MusicTrack* track) {
+bool sta::smb::AreaIDMusic(AreaID area_id, MusicTrack* track) {
     static std::unordered_map<smb::AreaID, MusicTrack> s_KnownMusic = {
         {smb::AreaID::WATER_AREA_1        , smb::MusicTrack::WATER},
         {smb::AreaID::WATER_AREA_2        , smb::MusicTrack::WATER},
@@ -206,7 +206,7 @@ bool argos::smb::AreaIDMusic(AreaID area_id, MusicTrack* track) {
     return false;
 }
 
-const std::vector<SoundEffect>& argos::smb::AudibleSoundEffects()
+const std::vector<SoundEffect>& sta::smb::AudibleSoundEffects()
 {
     static std::vector<SoundEffect> s_Effects = {
         SoundEffect::SMALL_JUMP,
@@ -232,7 +232,7 @@ const std::vector<SoundEffect>& argos::smb::AudibleSoundEffects()
     return s_Effects;
 }
 
-std::string argos::smb::ToString(SoundEffect effect)
+std::string sta::smb::ToString(SoundEffect effect)
 {
     switch (effect) {
         case(SoundEffect::SILENCE): return "SoundEffect::SILENCE";
@@ -262,7 +262,7 @@ std::string argos::smb::ToString(SoundEffect effect)
 }
 
 
-const std::vector<MusicTrack>& argos::smb::AudibleMusicTracks()
+const std::vector<MusicTrack>& sta::smb::AudibleMusicTracks()
 {
     static std::vector<MusicTrack> s_Tracks = {
         MusicTrack::STAR_POWER,
@@ -284,7 +284,7 @@ const std::vector<MusicTrack>& argos::smb::AudibleMusicTracks()
     return s_Tracks;
 }
 
-std::string argos::smb::ToString(MusicTrack track)
+std::string sta::smb::ToString(MusicTrack track)
 {
     switch(track) {
         case(MusicTrack::SILENCE): return "MusicTrack::SILENCE";
@@ -308,7 +308,7 @@ std::string argos::smb::ToString(MusicTrack track)
     return "MusicTrack::UNKNOWN";
 }
 
-const MinimapPalette& argos::smb::DefaultMinimapPalette()
+const MinimapPalette& sta::smb::DefaultMinimapPalette()
 {
     static MinimapPalette p = {
         0x00, 0x3d, 0x2d, 0x1d
@@ -316,7 +316,7 @@ const MinimapPalette& argos::smb::DefaultMinimapPalette()
     return p;
 }
 
-const MinimapPaletteBGR& argos::smb::DefaultMinimapPaletteBGR()
+const MinimapPaletteBGR& sta::smb::DefaultMinimapPaletteBGR()
 {
     static MinimapPaletteBGR b = {
         0xff, 0xff, 0xff,
@@ -327,7 +327,7 @@ const MinimapPaletteBGR& argos::smb::DefaultMinimapPaletteBGR()
     return b;
 }
 
-void argos::smb::RenderMinimapToPPUx(int x, int y, int sx, int ex,
+void sta::smb::RenderMinimapToPPUx(int x, int y, int sx, int ex,
         const MinimapImage& img, const MinimapPalette& miniPal, const nes::Palette& nesPal, nes::PPUx* ppux)
 {
     if (!ppux) return;
@@ -339,7 +339,7 @@ void argos::smb::RenderMinimapToPPUx(int x, int y, int sx, int ex,
     RenderMinimapToPPUx(x, y, effects, img, miniPal, nesPal, ppux);
 }
 
-void argos::smb::RenderMinimapToPPUx(int x, int y, const nes::EffectInfo& effects,
+void sta::smb::RenderMinimapToPPUx(int x, int y, const nes::EffectInfo& effects,
         const MinimapImage& img, const MinimapPalette& miniPal,
         const nes::Palette& nesPal, nes::PPUx* ppux)
 {
@@ -448,7 +448,7 @@ bool Route::InCategory(AreaID id, int apx, int world, int level, int* categoryX,
 
 }
 
-bool argos::smb::IsMarioTile(uint8_t tileIndex)
+bool sta::smb::IsMarioTile(uint8_t tileIndex)
 {
     return (tileIndex >= 0x00 && tileIndex <= 0x4f ||
             tileIndex >= 0x58 && tileIndex <= 0x5a ||

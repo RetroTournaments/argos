@@ -2,18 +2,18 @@
 //
 // Copyright (C) 2024 Matthew Deutsch
 //
-// Argos is free software; you can redistribute it and/or modify
+// Static is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
-// Argos is distributed in the hope that it will be useful,
+// Static is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Argos; if not, write to the Free Software
+// along with Static; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -24,9 +24,9 @@
 
 #include "nes/nesceptor.h"
 
-using namespace argos::nesceptor;
+using namespace sta::nesceptor;
 
-bool argos::nesceptor::IsMessageParseError(MessageParseStatus status)
+bool sta::nesceptor::IsMessageParseError(MessageParseStatus status)
 {
     if (status == MessageParseStatus::WARNING_BYTE_IGNORED_WAITING ||
         status == MessageParseStatus::AGAIN ||
@@ -36,7 +36,7 @@ bool argos::nesceptor::IsMessageParseError(MessageParseStatus status)
     return true;
 }
 
-void argos::nesceptor::DebugPrintMessage(const MessageParseInfo& message, std::ostream& os)
+void sta::nesceptor::DebugPrintMessage(const MessageParseInfo& message, std::ostream& os)
 {
     auto OutByte = [&](uint8_t byte) {
         os << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(byte);
@@ -85,7 +85,7 @@ MessageParseInfo MessageParseInfo::InitialState()
     return message;
 }
 
-MessageParseStatus argos::nesceptor::ProgressMessageParse(MessageParseInfo* message, uint8_t nextByte)
+MessageParseStatus sta::nesceptor::ProgressMessageParse(MessageParseInfo* message, uint8_t nextByte)
 {
     switch (message->state) {
         case MessageParseState::WAITING_FOR_TYPE_BYTE: {
@@ -130,7 +130,7 @@ MessageParseStatus argos::nesceptor::ProgressMessageParse(MessageParseInfo* mess
                 message->state = MessageParseState::WAITING_FOR_TYPE_BYTE;
                 return MessageParseStatus::ERROR_INVALID_DATA_HIGH_BIT_SET;
             }
-                                                    
+
             message->data[message->index] |= nextByte;
             message->index++;
             if (message->index == message->size) {
@@ -205,7 +205,7 @@ static void TestProgressMessageParse()
     TestProgressMessageParse4();
 }
 
-void argos::nesceptor::ExtractRamWrite(const MessageParseInfo& message, RamWrite* write)
+void sta::nesceptor::ExtractRamWrite(const MessageParseInfo& message, RamWrite* write)
 {
     if (!write) return;
 
@@ -220,7 +220,7 @@ RAMMessageState RAMMessageState::InitialState()
     return r;
 }
 
-void argos::nesceptor::ProcessMessage(const MessageParseInfo& message, RAMMessageState* ram)
+void sta::nesceptor::ProcessMessage(const MessageParseInfo& message, RAMMessageState* ram)
 {
     auto t = static_cast<MessageType>(message.type);
     if (t != MessageType::RAM_WRITE) {
@@ -251,7 +251,7 @@ PPUMessageState PPUMessageState::InitialState()
     return s;
 }
 
-void argos::nesceptor::ProcessMessage(const MessageParseInfo& message, PPUMessageState* ppu)
+void sta::nesceptor::ProcessMessage(const MessageParseInfo& message, PPUMessageState* ppu)
 {
     auto t = static_cast<MessageType>(message.type);
     switch (t) {
@@ -301,7 +301,7 @@ void argos::nesceptor::ProcessMessage(const MessageParseInfo& message, PPUMessag
         }
         case MessageType::PPU_DATA_WRITE: {
             if (ppu->PPUAddress >= 0x3F00 && ppu->PPUAddress <= 0x3FFF) {
-                uint16_t a = (ppu->PPUAddress - 0x3F00) % argos::nes::FRAMEPALETTE_SIZE;
+                uint16_t a = (ppu->PPUAddress - 0x3F00) % sta::nes::FRAMEPALETTE_SIZE;
                 ppu->PPUFramePalette[a] = message.data[0];
                 if ((a % 4) == 0) {
                     if (a >= 0x0f) {
@@ -364,7 +364,7 @@ void argos::nesceptor::ProcessMessage(const MessageParseInfo& message, PPUMessag
 
     //if (message.data[1] == 0x07) {
     //    if (ppu->PPUAddress >= 0x3F00 && ppu->PPUAddress <= 0x3FFF) {
-    //        uint16_t a = (ppu->PPUAddress - 0x3F00) % argos::nes::FRAMEPALETTE_SIZE;
+    //        uint16_t a = (ppu->PPUAddress - 0x3F00) % sta::nes::FRAMEPALETTE_SIZE;
     //        ppu->PPUFramePalette[a] = message.data[0];
     //        if ((a % 4) == 0) {
     //            if (a >= 0x0f) {
@@ -405,7 +405,7 @@ ControllerMessageState ControllerMessageState::InitialState()
     return cont;
 }
 
-void argos::nesceptor::ProcessMessage(const MessageParseInfo& message, ControllerMessageState* controller)
+void sta::nesceptor::ProcessMessage(const MessageParseInfo& message, ControllerMessageState* controller)
 {
     auto t = static_cast<MessageType>(message.type);
     if (t != MessageType::CONTROLLER_INFO) {
@@ -438,7 +438,7 @@ NESMessageState NESMessageState::InitialState()
     return nm;
 }
 
-void argos::nesceptor::ProcessMessage(const MessageParseInfo& message, NESMessageState* nes)
+void sta::nesceptor::ProcessMessage(const MessageParseInfo& message, NESMessageState* nes)
 {
     auto t = static_cast<MessageType>(message.type);
     if (t == MessageType::RST_LOW) {
